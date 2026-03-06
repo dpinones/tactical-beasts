@@ -9,6 +9,13 @@ import {
   HStack,
   Spinner,
   Code,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalCloseButton,
+  useDisclosure,
 } from "@chakra-ui/react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -42,24 +49,22 @@ export function HomePage() {
 
   const [joinInput, setJoinInput] = useState("");
   const [statusMsg, setStatusMsg] = useState("");
+  const [friendOpen, setFriendOpen] = useState(false);
+  const configsModal = useDisclosure();
 
   const handleCreate = () => {
     clearSelectedBeasts();
     navigate("/team-select/create");
   };
 
-  const handleJoin = (gameId?: number) => {
-    const id = gameId || parseInt(joinInput);
+  const handleJoin = () => {
+    const id = parseInt(joinInput);
     if (!id || isNaN(id)) {
       setStatusMsg("Enter a valid game ID");
       return;
     }
     clearSelectedBeasts();
     navigate(`/team-select/join/${id}`);
-  };
-
-  const handleLogout = () => {
-    logout();
   };
 
   // --- Not logged in ---
@@ -73,7 +78,6 @@ export function HomePage() {
         gap={8}
         p={4}
       >
-        {/* Title */}
         <VStack gap={2}>
           <Heading
             size="2xl"
@@ -86,12 +90,10 @@ export function HomePage() {
             Tactical Beasts
           </Heading>
           <Text fontSize="sm" color="text.secondary" textAlign="center" maxW="400px">
-            Tactical turn-based PvP combat with Loot Survivor beasts on
-            Starknet.
+            Tactical turn-based PvP combat with Loot Survivor beasts on Starknet.
           </Text>
         </VStack>
 
-        {/* Login buttons */}
         <Flex gap={4}>
           {isLoadingWallet && connectionStatus !== "selecting" ? (
             <Spinner size="lg" color="green.400" />
@@ -108,11 +110,7 @@ export function HomePage() {
                 Login
               </Button>
               {allowGuest && (
-                <Button
-                  variant="secondary"
-                  size="lg"
-                  onClick={connectAsGuest}
-                >
+                <Button variant="secondary" size="lg" onClick={connectAsGuest}>
                   Guest
                 </Button>
               )}
@@ -120,7 +118,6 @@ export function HomePage() {
           )}
         </Flex>
 
-        {/* Version */}
         <Text fontSize="xs" color="text.muted" position="absolute" bottom={4}>
           v0.1.0 MVP
         </Text>
@@ -128,11 +125,18 @@ export function HomePage() {
     );
   }
 
-  // --- Logged in: Lobby ---
+  // --- Logged in ---
   return (
-    <Flex direction="column" minH="100vh" p={6} maxW="800px" mx="auto">
-      {/* Header */}
-      <Flex justify="space-between" align="center" mb={6}>
+    <Flex direction="column" minH="100vh">
+      {/* Top bar */}
+      <Flex
+        justify="space-between"
+        align="center"
+        px={6}
+        py={4}
+        borderBottom="1px solid"
+        borderColor="surface.border"
+      >
         <Heading
           size="lg"
           fontFamily="heading"
@@ -142,98 +146,226 @@ export function HomePage() {
         >
           Tactical Beasts
         </Heading>
-        <Flex align="center" gap={3}>
-          <Text fontSize="xs" color="text.secondary">
-            {accountType === "controller" ? "Controller" : "Guest"} |{" "}
+
+        <HStack gap={3}>
+          {/* Play with Friend dropdown */}
+          <Box position="relative">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setFriendOpen(!friendOpen)}
+            >
+              Play with Friend
+            </Button>
+            {friendOpen && (
+              <Box
+                position="absolute"
+                right={0}
+                top="100%"
+                mt={2}
+                bg="surface.panel"
+                border="1px solid"
+                borderColor="surface.border"
+                borderRadius="3px"
+                p={4}
+                w="280px"
+                zIndex={10}
+                boxShadow="panel"
+              >
+                <VStack align="stretch" gap={3}>
+                  <Text fontSize="xs" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em">
+                    Play with Friend
+                  </Text>
+                  <Text fontSize="xs" color="text.muted">
+                    Coming soon — invite friends by Controller name.
+                  </Text>
+                  <Button variant="ghost" size="sm" onClick={() => setFriendOpen(false)}>
+                    Close
+                  </Button>
+                </VStack>
+              </Box>
+            )}
+          </Box>
+
+          <Text fontSize="xs" color="text.muted">
             {truncateAddr(finalAccount?.address || "")}
           </Text>
-          <Button size="sm" variant="ghost" onClick={handleLogout}>
+          <Button size="sm" variant="ghost" onClick={logout}>
             Logout
           </Button>
+        </HStack>
+      </Flex>
+
+      {/* Main content: two halves */}
+      <Flex flex={1}>
+        {/* Left half — buttons */}
+        <Flex
+          direction="column"
+          w="50%"
+          justify="center"
+          align="center"
+          p={8}
+        >
+          <VStack gap={4} w="100%" maxW="360px">
+            <Button
+              variant="primary"
+              size="lg"
+              w="100%"
+              h="60px"
+              fontSize="md"
+              onClick={handleCreate}
+            >
+              Create Game
+            </Button>
+
+            <HStack w="100%" gap={2}>
+              <Input
+                placeholder="Game ID"
+                value={joinInput}
+                onChange={(e) => setJoinInput(e.target.value)}
+                type="number"
+                size="lg"
+                flex={1}
+              />
+              <Button
+                variant="primary"
+                size="lg"
+                onClick={handleJoin}
+                minW="100px"
+                h="48px"
+              >
+                Join
+              </Button>
+            </HStack>
+
+            <Box h="1px" bg="surface.border" w="100%" my={2} />
+
+            <Button
+              variant="secondary"
+              size="lg"
+              w="100%"
+              h="60px"
+              fontSize="md"
+              onClick={() => navigate("/matchmaking")}
+            >
+              Matchmaking
+            </Button>
+
+            <Button
+              variant="secondary"
+              size="lg"
+              w="100%"
+              h="60px"
+              fontSize="md"
+              onClick={() => navigate("/my-beasts")}
+            >
+              My Beasts
+            </Button>
+
+            <HStack w="100%" gap={4}>
+              <Button
+                variant="ghost"
+                size="lg"
+                flex={1}
+                h="50px"
+                onClick={() => navigate("/profile")}
+              >
+                Profile
+              </Button>
+              <Button
+                variant="ghost"
+                size="lg"
+                flex={1}
+                h="50px"
+                onClick={configsModal.onOpen}
+              >
+                Configs
+              </Button>
+            </HStack>
+
+            {statusMsg && (
+              <Code
+                p={3}
+                borderRadius="3px"
+                fontSize="xs"
+                bg="surface.card"
+                color="text.secondary"
+                border="1px solid"
+                borderColor="surface.border"
+                w="100%"
+                textAlign="center"
+              >
+                {statusMsg}
+              </Code>
+            )}
+          </VStack>
+        </Flex>
+
+        {/* Right half — placeholder for beast images */}
+        <Flex
+          direction="column"
+          w="50%"
+          justify="center"
+          align="center"
+          p={8}
+          borderLeft="1px solid"
+          borderColor="surface.border"
+        >
+          <VStack gap={4}>
+            <Box
+              w="280px"
+              h="280px"
+              border="1px solid"
+              borderColor="surface.border"
+              borderRadius="3px"
+              bg="surface.panel"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+            >
+              <Text fontSize="xs" color="text.muted" textAlign="center" px={4}>
+                Beast artwork coming soon
+              </Text>
+            </Box>
+            <Text fontSize="xs" color="text.secondary" textAlign="center" maxW="300px">
+              Defeated beasts will appear here
+            </Text>
+          </VStack>
         </Flex>
       </Flex>
 
-      {/* Create Game */}
-      <Box
-        bg="surface.panel"
-        border="1px solid"
-        borderColor="surface.border"
-        borderRadius="3px"
-        p={5}
-        mb={4}
-      >
-        <VStack align="stretch" gap={3}>
-          <Text
-            fontFamily="heading"
-            fontSize="sm"
-            fontWeight="600"
-            color="green.300"
-            textTransform="uppercase"
-            letterSpacing="0.1em"
-          >
-            New Game
-          </Text>
-          <Text fontSize="xs" color="text.secondary">
-            Create a match and share the Game ID with your opponent.
-          </Text>
-          <Button variant="primary" onClick={handleCreate}>
-            Create Game
-          </Button>
-        </VStack>
-      </Box>
-
-      {/* Join Game */}
-      <Box
-        bg="surface.panel"
-        border="1px solid"
-        borderColor="surface.border"
-        borderRadius="3px"
-        p={5}
-        mb={4}
-      >
-        <VStack align="stretch" gap={3}>
-          <Text
-            fontFamily="heading"
-            fontSize="sm"
-            fontWeight="600"
-            color="green.300"
-            textTransform="uppercase"
-            letterSpacing="0.1em"
-          >
-            Join Game
-          </Text>
-          <HStack>
-            <Input
-              placeholder="Game ID"
-              value={joinInput}
-              onChange={(e) => setJoinInput(e.target.value)}
-              type="number"
-            />
-            <Button
-              variant="primary"
-              onClick={() => handleJoin()}
-              minW="100px"
-            >
-              Join
-            </Button>
-          </HStack>
-        </VStack>
-      </Box>
-
-      {/* Status message */}
-      {statusMsg && (
-        <Code
-          p={3}
-          borderRadius="3px"
-          fontSize="xs"
-          bg="surface.card"
-          color="text.secondary"
-          border="1px solid"
-          borderColor="surface.border"
-        >
-          {statusMsg}
-        </Code>
-      )}
+      {/* Configs Modal */}
+      <Modal isOpen={configsModal.isOpen} onClose={configsModal.onClose} isCentered>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Settings</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={6}>
+            <VStack align="stretch" gap={4}>
+              <Box>
+                <Text fontSize="xs" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em" mb={1}>
+                  Account
+                </Text>
+                <Text fontSize="sm">
+                  {accountType === "controller" ? "Controller" : "Guest"} | {truncateAddr(finalAccount?.address || "")}
+                </Text>
+              </Box>
+              <Box>
+                <Text fontSize="xs" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em" mb={1}>
+                  Chain
+                </Text>
+                <Text fontSize="sm">{CHAIN || "Slot (local)"}</Text>
+              </Box>
+              <Box>
+                <Text fontSize="xs" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em" mb={1}>
+                  Sound
+                </Text>
+                <Text fontSize="sm" color="text.muted">Coming soon</Text>
+              </Box>
+            </VStack>
+          </ModalBody>
+        </ModalContent>
+      </Modal>
     </Flex>
   );
 }

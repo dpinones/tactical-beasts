@@ -13,7 +13,6 @@ import {
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "../dojo/WalletContext";
-import { useOpenGames } from "../hooks/useGameQuery";
 import { useGameStore } from "../stores/gameStore";
 
 const CHAIN = import.meta.env.VITE_CHAIN;
@@ -39,7 +38,6 @@ export function HomePage() {
   const allowGuest = CHAIN !== "mainnet" && CHAIN !== "sepolia";
   const isLoggedIn = !!finalAccount;
 
-  const { games: openGames } = useOpenGames();
   const { clearSelectedBeasts } = useGameStore();
 
   const [joinInput, setJoinInput] = useState("");
@@ -219,58 +217,6 @@ export function HomePage() {
               Join
             </Button>
           </HStack>
-        </VStack>
-      </Box>
-
-      {/* Open Games */}
-      <Box
-        bg="surface.panel"
-        border="1px solid"
-        borderColor="surface.border"
-        borderRadius="3px"
-        p={5}
-        mb={4}
-      >
-        <VStack align="stretch" gap={3}>
-          <Text
-            fontFamily="heading"
-            fontSize="sm"
-            fontWeight="600"
-            color="green.300"
-            textTransform="uppercase"
-            letterSpacing="0.1em"
-          >
-            Open Games
-          </Text>
-          {openGames.length === 0 ? (
-            <Text fontSize="xs" color="text.muted">
-              No open games
-            </Text>
-          ) : (
-            openGames.map((g) => (
-              <Flex
-                key={g.game_id}
-                justify="space-between"
-                align="center"
-                bg="surface.card"
-                p={3}
-                borderRadius="3px"
-                border="1px solid"
-                borderColor="surface.border"
-              >
-                <Text fontSize="sm">
-                  Game #{g.game_id} — {truncateAddr(g.player1)}
-                </Text>
-                <Button
-                  size="sm"
-                  variant="primary"
-                  onClick={() => handleJoin(g.game_id)}
-                    >
-                  Join
-                </Button>
-              </Flex>
-            ))
-          )}
         </VStack>
       </Box>
 

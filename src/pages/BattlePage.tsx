@@ -314,9 +314,8 @@ export function BattlePage() {
   const handleConfirmActions = useCallback(async () => {
     if (!gameId) return;
 
-    const aliveBeasts = myBeasts.filter((b) => b.alive);
-    const orderedActions: GameAction[] = aliveBeasts.map((b) => {
-      const idx = Number(b.beast_index);
+    // Send actions in selection order (actionHistory), then any remaining as WAIT
+    const orderedActions: GameAction[] = actionHistory.map((idx) => {
       return (
         actions.get(idx) || {
           beastIndex: idx,
@@ -327,6 +326,20 @@ export function BattlePage() {
         }
       );
     });
+    // Append any alive beasts not in history as WAIT
+    const aliveBeasts = myBeasts.filter((b) => b.alive);
+    for (const b of aliveBeasts) {
+      const idx = Number(b.beast_index);
+      if (!actionHistory.includes(idx)) {
+        orderedActions.push({
+          beastIndex: idx,
+          actionType: ActionType.WAIT,
+          targetIndex: 0,
+          targetRow: 0,
+          targetCol: 0,
+        });
+      }
+    }
 
     const res = await executeTurn(gameId, orderedActions);
     if (res) {
@@ -341,6 +354,7 @@ export function BattlePage() {
     gameId,
     myBeasts,
     actions,
+    actionHistory,
     executeTurn,
     addBattleEvent,
     game,
@@ -472,6 +486,7 @@ export function BattlePage() {
               myBeasts={myBeasts}
               enemyBeasts={enemyBeasts}
               actions={actions}
+              actionHistory={actionHistory}
               potionToggle={potionToggle}
               potionUsed={potionUsed}
               onTogglePotion={() => setPotionToggle((v) => !v)}

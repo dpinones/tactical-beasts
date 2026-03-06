@@ -6,6 +6,7 @@ interface PlannedActionsProps {
   myBeasts: BeastStateModel[];
   enemyBeasts: BeastStateModel[];
   actions: Map<number, GameAction>;
+  actionHistory: number[];
   potionToggle: boolean;
   potionUsed: boolean;
   onTogglePotion: () => void;
@@ -38,6 +39,7 @@ export function PlannedActions({
   myBeasts,
   enemyBeasts,
   actions,
+  actionHistory,
   potionToggle,
   potionUsed,
   onTogglePotion,
@@ -93,9 +95,12 @@ export function PlannedActions({
           Planned Actions
         </Text>
         <VStack gap={1} align="stretch">
-          {aliveBeasts.map((beast, i) => {
-            const idx = Number(beast.beast_index);
+          {/* Actions in execution order (selection order) */}
+          {actionHistory.map((idx, i) => {
+            const beast = aliveBeasts.find((b) => Number(b.beast_index) === idx);
+            if (!beast) return null;
             const action = actions.get(idx);
+            if (!action) return null;
             const bType = Number(beast.beast_type) as BeastType;
             const typeName = getTypeName(bType);
             const color = getTypeColor(bType);
@@ -107,7 +112,7 @@ export function PlannedActions({
                 gap={1.5}
                 px={1.5}
                 py={1}
-                bg={action ? "rgba(255,215,0,0.05)" : "transparent"}
+                bg="rgba(255,215,0,0.05)"
                 borderRadius="2px"
               >
                 <Text fontSize="8px" color="text.muted" fontFamily="mono" fontWeight="700" w="12px">
@@ -116,12 +121,41 @@ export function PlannedActions({
                 <Text fontSize="8px" color={color} fontFamily="mono" fontWeight="600" minW="40px">
                   {typeName}
                 </Text>
-                <Text fontSize="8px" color={action ? "gold.400" : "text.muted"} fontFamily="mono" flex={1} noOfLines={1}>
-                  {action ? describeAction(action, enemyBeasts) : "(awaiting...)"}
+                <Text fontSize="8px" color="gold.400" fontFamily="mono" flex={1} noOfLines={1}>
+                  {describeAction(action, enemyBeasts)}
                 </Text>
               </Flex>
             );
           })}
+          {/* Pending beasts without action */}
+          {aliveBeasts
+            .filter((b) => !actions.has(Number(b.beast_index)))
+            .map((beast) => {
+              const bType = Number(beast.beast_type) as BeastType;
+              const typeName = getTypeName(bType);
+              const color = getTypeColor(bType);
+
+              return (
+                <Flex
+                  key={Number(beast.beast_index)}
+                  align="center"
+                  gap={1.5}
+                  px={1.5}
+                  py={1}
+                  borderRadius="2px"
+                >
+                  <Text fontSize="8px" color="text.muted" fontFamily="mono" fontWeight="700" w="12px">
+                    -
+                  </Text>
+                  <Text fontSize="8px" color={color} fontFamily="mono" fontWeight="600" minW="40px">
+                    {typeName}
+                  </Text>
+                  <Text fontSize="8px" color="text.muted" fontFamily="mono" flex={1} noOfLines={1}>
+                    (awaiting...)
+                  </Text>
+                </Flex>
+              );
+            })}
         </VStack>
       </Box>
 

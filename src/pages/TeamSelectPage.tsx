@@ -16,11 +16,11 @@ import { useDojo } from "../dojo/DojoContext";
 import { useGameActions } from "../hooks/useGameActions";
 import { useGameQuery, usePlayerProfile, useMapState, mapStateToObstacles } from "../hooks/useGameQuery";
 import { useGameStore } from "../stores/gameStore";
-import { loadBeastCatalog } from "../data/beasts";
+import { useOwnedBeasts } from "../hooks/useOwnedBeasts";
 import { BeastCard } from "../components/BeastCard";
 import { HexGrid } from "../components/HexGrid";
 import { OBSTACLES } from "../domain/hexGrid";
-import { GameStatus, BeastType, ZERO_ADDR } from "../domain/types";
+import { GameStatus, BeastType, CatalogBeast, ZERO_ADDR } from "../domain/types";
 import { updateRecentBeasts } from "../services/supabase";
 
 type Phase = "creating" | "joining" | "lobby" | "select" | "confirming" | "waiting" | "error";
@@ -47,7 +47,34 @@ export function TeamSelectPage() {
   );
   const [gameId, setGameId] = useState<number | null>(joinGameId);
 
-  const catalog = useMemo(() => loadBeastCatalog(), []);
+  const { beasts: ownedBeasts, isLoading: beastsLoading } = useOwnedBeasts();
+
+  // Convert OwnedBeast to CatalogBeast for BeastCard compatibility
+  const catalog = useMemo((): CatalogBeast[] => {
+    return ownedBeasts.map((b) => {
+      const typeStr = b.type === "Magic" ? "Magical" : b.type;
+      const bType = b.type === "Magic" || b.type === "Magical" ? BeastType.Magical
+        : b.type === "Hunter" ? BeastType.Hunter
+        : BeastType.Brute;
+      return {
+        tokenId: b.token_id,
+        name: `${b.prefix ? `"${b.prefix} ${b.suffix}" ` : ""}${b.name}`,
+        beastId: b.id,
+        beast: b.name,
+        type: bType,
+        typeName: typeStr,
+        tier: b.tier,
+        level: b.level,
+        health: b.health,
+        power: b.power,
+        prefix: b.prefix || "",
+        suffix: b.suffix || "",
+        adventurersKilled: b.adventurers_killed,
+        shiny: b.shiny,
+        animated: b.animated,
+      };
+    });
+  }, [ownedBeasts]);
 
   const filteredBeasts = useMemo(() => {
     let result = catalog;
@@ -328,6 +355,16 @@ export function TeamSelectPage() {
 
           {/* Beast catalog */}
           <Box flex={1} overflowY="auto" mb={4}>
+            {beastsLoading ? (
+              <Flex justify="center" py={8}>
+                <Spinner color="green.400" size="lg" />
+              </Flex>
+            ) : catalog.length === 0 ? (
+              <Flex direction="column" align="center" py={8} gap={2}>
+                <Text color="text.secondary" fontSize="sm">No beasts found</Text>
+                <Text color="text.muted" fontSize="xs">Play Loot Survivor to earn beast NFTs</Text>
+              </Flex>
+            ) : (
             <SimpleGrid columns={{ base: 2, md: 3, lg: 3 }} gap={3}>
               {filteredBeasts.map((beast) => (
                 <BeastCard
@@ -339,6 +376,7 @@ export function TeamSelectPage() {
                 />
               ))}
             </SimpleGrid>
+            )}
           </Box>
         </Box>
 

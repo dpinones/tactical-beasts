@@ -1,6 +1,7 @@
 import { Box } from "@chakra-ui/react";
 import {
   ARENA_ROWS,
+  OBSTACLES,
   hexToPixel,
   hexPoints,
   isObstacle,
@@ -19,6 +20,7 @@ interface HexGridProps {
   highlightType?: "move" | "attack";
   myPlayerIndex: number;
   actions?: Map<number, GameAction>;
+  obstacles?: HexCoord[];
 }
 
 export function HexGrid({
@@ -32,6 +34,7 @@ export function HexGrid({
   highlightType = "move",
   myPlayerIndex,
   actions = new Map(),
+  obstacles = OBSTACLES,
 }: HexGridProps) {
   const maxCols = Math.max(...ARENA_ROWS);
   const w = Math.sqrt(3) * hexSize;
@@ -56,7 +59,7 @@ export function HexGrid({
   }
 
   function getCellClass(row: number, col: number): string {
-    if (isObstacle(row, col)) return "hex-cell--obstacle";
+    if (isObstacle(row, col, obstacles)) return "hex-cell--obstacle";
     if (isHighlighted(row, col)) {
       return highlightType === "attack"
         ? "hex-cell--attack-range"
@@ -267,7 +270,7 @@ export function HexGrid({
                 />
 
                 {/* Obstacle marker */}
-                {isObstacle(row, col) && (
+                {isObstacle(row, col, obstacles) && (
                   <g style={{ pointerEvents: "none" }}>
                     <line x1={x - 5} y1={y - 5} x2={x + 5} y2={y + 5} stroke="#556655" strokeWidth={1.5} />
                     <line x1={x + 5} y1={y - 5} x2={x - 5} y2={y + 5} stroke="#556655" strokeWidth={1.5} />

@@ -38,7 +38,7 @@ pub mod game_system {
     use crate::elements::achievements::{ACHIEVEMENT_COUNT, Achievement, AchievementTrait};
     use crate::events::index::{GameCreated, GameFinished, PlayerJoined};
     use crate::logic::{beast, board, combat};
-    use crate::models::index::{BeastState, Game, GameConfig, GameToken, GameTokens, MatchmakingQueue, PlayerProfile, PlayerState};
+    use crate::models::index::{BeastState, Game, GameConfig, GameToken, GameTokens, MapState, MatchmakingQueue, PlayerProfile, PlayerState};
     use crate::systems::collection::{ICollectionDispatcher, ICollectionDispatcherTrait, NAME as COLLECTION_NAME};
     use crate::types::Action;
     use super::{IGameSystem, IMinigameTokenData};
@@ -421,6 +421,12 @@ pub mod game_system {
         game.player2 = caller;
         world.write_model(@game);
 
+        // Generate dynamic obstacles for this match
+        let map_state = board::generate_obstacles(
+            game_id, game.player1, caller, starknet::get_block_timestamp(),
+        );
+        world.write_model(@map_state);
+
         world.emit_event(@PlayerJoined { game_id, player2: caller, time: starknet::get_block_timestamp() });
     }
 
@@ -463,7 +469,8 @@ pub mod game_system {
 
         if action.action_type == ACTION_MOVE {
             assert!(board::is_valid_cell(action.target_row, action.target_col), "Invalid cell");
-            assert!(!board::is_obstacle(action.target_row, action.target_col), "Cell is obstacle");
+            let map_state: MapState = world.read_model(game_id);
+            assert!(!board::is_obstacle_in_map(map_state, action.target_row, action.target_col), "Cell is obstacle");
 
             let dist = board::hex_distance(
                 attacker_beast.position_row, attacker_beast.position_col, action.target_row, action.target_col,

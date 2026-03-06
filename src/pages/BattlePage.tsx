@@ -20,7 +20,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDojo } from "../dojo/DojoContext";
 import { useGameActions } from "../hooks/useGameActions";
-import { useGameQuery, useBeastStates } from "../hooks/useGameQuery";
+import { useGameQuery, useBeastStates, useMapState, mapStateToObstacles } from "../hooks/useGameQuery";
 import { useGameStore } from "../stores/gameStore";
 import { HexGrid } from "../components/HexGrid";
 import { BeastHUD } from "../components/BeastHUD";
@@ -36,6 +36,7 @@ import {
   ZERO_ADDR,
 } from "../domain/types";
 import {
+  OBSTACLES,
   getValidMoveTargets,
   getCellsInRange,
   hexDistance,
@@ -63,6 +64,11 @@ export function BattlePage() {
   const { executeTurn, abandonGame, isLoading } = useGameActions();
   const { game, refetch: refetchGame } = useGameQuery(gameId);
   const { beasts, refetch: refetchBeasts } = useBeastStates(gameId);
+  const { mapState } = useMapState(gameId);
+  const obstacles = useMemo(() => {
+    if (!mapState) return OBSTACLES;
+    return mapStateToObstacles(mapState);
+  }, [mapState]);
   const { battleLog, addBattleEvent, clearBattleLog } = useGameStore();
   const abandonModal = useDisclosure();
 
@@ -167,10 +173,11 @@ export function BattlePage() {
         col: Number(selectedBeast.position_col),
       },
       moveRange,
-      occupiedCells
+      occupiedCells,
+      obstacles
     );
     setHighlightedCells(validMoves);
-  }, [selectedBeast, occupiedCells]);
+  }, [selectedBeast, occupiedCells, obstacles]);
 
   const handleChooseAttack = useCallback(() => {
     if (!selectedBeast) return;
@@ -489,6 +496,7 @@ export function BattlePage() {
               highlightType={highlightType}
               myPlayerIndex={myPlayerIndex}
               actions={actions}
+              obstacles={obstacles}
             />
           </Box>
 

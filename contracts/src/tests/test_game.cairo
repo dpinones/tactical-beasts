@@ -1,7 +1,8 @@
 use dojo::model::{ModelStorage, ModelStorageTest};
 use starknet::testing::{set_account_contract_address, set_block_timestamp, set_contract_address};
 use crate::constants::{GAME_STATUS_FINISHED, GAME_STATUS_PLAYING, GAME_STATUS_WAITING, MAX_ROUNDS, WIN_BONUS};
-use crate::models::index::{BeastState, Game, GameToken, GameTokens, MatchmakingQueue, PlayerProfile};
+use crate::logic::board;
+use crate::models::index::{BeastState, Game, GameToken, GameTokens, MapState, MatchmakingQueue, PlayerProfile};
 use crate::systems::game_system::{
     IGameSystemDispatcherTrait, IMinigameTokenDataDispatcher, IMinigameTokenDataDispatcherTrait,
 };
@@ -752,4 +753,93 @@ fn test_profile_accumulates_across_games() {
     let profile: PlayerProfile = world.read_model(attacker_addr);
     assert!(profile.games_played == 2, "Should have 2 games played");
     assert!(profile.wins == 2, "Should have 2 wins");
+}
+
+// --- Map State (Dynamic Obstacles) ---
+
+#[test]
+fn test_join_game_generates_obstacles() {
+    let (world, systems) = spawn_game();
+
+    set_player(PLAYER1());
+    let game_id = systems.game.create_game();
+
+    set_player(PLAYER2());
+    systems.game.join_game(game_id);
+
+    let map_state: MapState = world.read_model(game_id);
+
+    // Collect all 6 obstacle positions
+    let obstacles: [(u8, u8); 6] = [
+        (map_state.obstacle_1_row, map_state.obstacle_1_col),
+        (map_state.obstacle_2_row, map_state.obstacle_2_col),
+        (map_state.obstacle_3_row, map_state.obstacle_3_col),
+        (map_state.obstacle_4_row, map_state.obstacle_4_col),
+        (map_state.obstacle_5_row, map_state.obstacle_5_col),
+        (map_state.obstacle_6_row, map_state.obstacle_6_col),
+    ];
+
+    // Verify all obstacles are valid cells and not spawn positions
+    let mut i: u32 = 0;
+    loop {
+        if i >= 6 {
+            break;
+        }
+        let (row, col) = *obstacles.span().at(i);
+        assert!(board::is_valid_cell(row, col), "Obstacle ({},{}) is not a valid cell", row, col);
+
+        // Check not a spawn position
+        let mut is_spawn = false;
+        let mut p: u8 = 1;
+        loop {
+            if p > 2 {
+                break;
+            }
+            let mut b: u8 = 0;
+            loop {
+                if b >= 3 {
+                    break;
+                }
+                let (sr, sc) = board::get_spawn_position(p, b);
+                if sr == row && sc == col {
+                    is_spawn = true;
+                }
+                b += 1;
+            };
+            p += 1;
+        };
+        assert!(!is_spawn, "Obstacle ({},{}) is a spawn position", row, col);
+
+        i += 1;
+    };
+
+    // Verify no duplicate obstacles
+    let mut j: u32 = 0;
+    loop {
+        if j >= 6 {
+            break;
+        }
+        let mut k: u32 = j + 1;
+        loop {
+            if k >= 6 {
+                break;
+            }
+            let (r1, c1) = *obstacles.span().at(j);
+            let (r2, c2) = *obstacles.span().at(k);
+            assert!(r1 != r2 || c1 != c2, "Duplicate obstacle at ({},{})", r1, c1);
+            k += 1;
+        };
+        j += 1;
+    };
+
+    // Verify is_obstacle_in_map works
+    let mut m: u32 = 0;
+    loop {
+        if m >= 6 {
+            break;
+        }
+        let (r, c) = *obstacles.span().at(m);
+        assert!(board::is_obstacle_in_map(map_state, r, c), "is_obstacle_in_map failed for ({},{})", r, c);
+        m += 1;
+    };
 }

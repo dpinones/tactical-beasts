@@ -92,6 +92,23 @@ export interface GameTokens {
 	p2_token_id: BigNumberish;
 }
 
+// Type definition for `tactical_beats::models::index::MapState` struct
+export interface MapState {
+	game_id: BigNumberish;
+	obstacle_1_row: BigNumberish;
+	obstacle_1_col: BigNumberish;
+	obstacle_2_row: BigNumberish;
+	obstacle_2_col: BigNumberish;
+	obstacle_3_row: BigNumberish;
+	obstacle_3_col: BigNumberish;
+	obstacle_4_row: BigNumberish;
+	obstacle_4_col: BigNumberish;
+	obstacle_5_row: BigNumberish;
+	obstacle_5_col: BigNumberish;
+	obstacle_6_row: BigNumberish;
+	obstacle_6_col: BigNumberish;
+}
+
 // Type definition for `tactical_beats::models::index::MatchmakingQueue` struct
 export interface MatchmakingQueue {
 	id: BigNumberish;
@@ -284,6 +301,7 @@ export interface SchemaType extends ISchemaType {
 		GameConfig: GameConfig,
 		GameToken: GameToken,
 		GameTokens: GameTokens,
+		MapState: MapState,
 		MatchmakingQueue: MatchmakingQueue,
 		PlayerProfile: PlayerProfile,
 		PlayerState: PlayerState,
@@ -380,6 +398,21 @@ export const schema: SchemaType = {
 			match_id: 0,
 			p1_token_id: 0,
 			p2_token_id: 0,
+		},
+		MapState: {
+			game_id: 0,
+			obstacle_1_row: 0,
+			obstacle_1_col: 0,
+			obstacle_2_row: 0,
+			obstacle_2_col: 0,
+			obstacle_3_row: 0,
+			obstacle_3_col: 0,
+			obstacle_4_row: 0,
+			obstacle_4_col: 0,
+			obstacle_5_row: 0,
+			obstacle_5_col: 0,
+			obstacle_6_row: 0,
+			obstacle_6_col: 0,
 		},
 		MatchmakingQueue: {
 			id: 0,
@@ -528,6 +561,7 @@ export enum ModelsMapping {
 	GameConfig = 'tactical_beats-GameConfig',
 	GameToken = 'tactical_beats-GameToken',
 	GameTokens = 'tactical_beats-GameTokens',
+	MapState = 'tactical_beats-MapState',
 	MatchmakingQueue = 'tactical_beats-MatchmakingQueue',
 	PlayerProfile = 'tactical_beats-PlayerProfile',
 	PlayerState = 'tactical_beats-PlayerState',

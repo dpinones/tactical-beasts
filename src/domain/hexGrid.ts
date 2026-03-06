@@ -31,8 +31,8 @@ export function isValidCell(row: number, col: number): boolean {
   return col >= 0 && col < ARENA_ROWS[row];
 }
 
-export function isObstacle(row: number, col: number): boolean {
-  return OBSTACLES.some((o) => o.row === row && o.col === col);
+export function isObstacle(row: number, col: number, obstacles: HexCoord[] = OBSTACLES): boolean {
+  return obstacles.some((o) => o.row === row && o.col === col);
 }
 
 export function hexDistance(a: HexCoord, b: HexCoord): number {
@@ -73,11 +73,12 @@ export function getCellsInRange(pos: HexCoord, range: number): HexCoord[] {
 export function getValidMoveTargets(
   pos: HexCoord,
   moveRange: number,
-  occupiedCells: HexCoord[]
+  occupiedCells: HexCoord[],
+  obstacles: HexCoord[] = OBSTACLES
 ): HexCoord[] {
   return getCellsInRange(pos, moveRange).filter(
     (cell) =>
-      !isObstacle(cell.row, cell.col) &&
+      !isObstacle(cell.row, cell.col, obstacles) &&
       !occupiedCells.some((o) => o.row === cell.row && o.col === cell.col)
   );
 }

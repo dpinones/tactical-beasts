@@ -57,8 +57,8 @@
       ]
     },
     {
-      "address": "0x517aa9218e4ccb63e1565a02748ae2af66b3823678d411a6a03dc64cbb3d3a0",
-      "class_hash": "0x2086bc1f701599a9d330bfebc98111dbd4b342c3bc1624467cff39047f60ebb",
+      "address": "0x48490006d11d95e9b20c73036d6ea77b0c30076cc157b188757af39b9773b32",
+      "class_hash": "0xe8326220977849ad577ce9858e85bc07d7f3a70544967e798ebc00f4bc56c",
       "init_calldata": [],
       "tag": "TB-game_system",
       "selector": "0x69e31139e40dc9c3cbdcbe65c1c8ee089a640efb42486fb78465d0fd6a75711",
@@ -374,6 +374,78 @@
       "class_hash": "0x783b7b7ee70ddb574eb52f7e27b123089be059f8f09d6a0f1cee4cbbdb2b550",
       "tag": "TB-GameTokens",
       "selector": "0x428c8f5ea68fd85df59eadb1c476415b3cbaa1514c53cb76fbc73f9a87996cd"
+    },
+    {
+      "members": [
+        {
+          "name": "game_id",
+          "type": "core::integer::u32",
+          "key": true
+        },
+        {
+          "name": "obstacle_1_row",
+          "type": "core::integer::u8",
+          "key": false
+        },
+        {
+          "name": "obstacle_1_col",
+          "type": "core::integer::u8",
+          "key": false
+        },
+        {
+          "name": "obstacle_2_row",
+          "type": "core::integer::u8",
+          "key": false
+        },
+        {
+          "name": "obstacle_2_col",
+          "type": "core::integer::u8",
+          "key": false
+        },
+        {
+          "name": "obstacle_3_row",
+          "type": "core::integer::u8",
+          "key": false
+        },
+        {
+          "name": "obstacle_3_col",
+          "type": "core::integer::u8",
+          "key": false
+        },
+        {
+          "name": "obstacle_4_row",
+          "type": "core::integer::u8",
+          "key": false
+        },
+        {
+          "name": "obstacle_4_col",
+          "type": "core::integer::u8",
+          "key": false
+        },
+        {
+          "name": "obstacle_5_row",
+          "type": "core::integer::u8",
+          "key": false
+        },
+        {
+          "name": "obstacle_5_col",
+          "type": "core::integer::u8",
+          "key": false
+        },
+        {
+          "name": "obstacle_6_row",
+          "type": "core::integer::u8",
+          "key": false
+        },
+        {
+          "name": "obstacle_6_col",
+          "type": "core::integer::u8",
+          "key": false
+        }
+      ],
+      "class_hash": "0x7133bbffad6c1cd949d8a7717fd45c0c0b0e46297a80d4d70202a6c09d12408",
+      "tag": "TB-MapState",
+      "selector": "0x6db0d9c5afa5d6a306487206f859002009a97d8ce3454c7c8eded600a8ccdb2"
     },
     {
       "members": [
@@ -4139,6 +4211,118 @@
     },
     {
       "type": "struct",
+      "name": "tactical_beats::models::index::MapState",
+      "members": [
+        {
+          "name": "game_id",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "obstacle_1_row",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_1_col",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_2_row",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_2_col",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_3_row",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_3_col",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_4_row",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_4_col",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_5_row",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_5_col",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_6_row",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_6_col",
+          "type": "core::integer::u8"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "tactical_beats::models::index::MapStateValue",
+      "members": [
+        {
+          "name": "obstacle_1_row",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_1_col",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_2_row",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_2_col",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_3_row",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_3_col",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_4_row",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_4_col",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_5_row",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_5_col",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_6_row",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_6_col",
+          "type": "core::integer::u8"
+        }
+      ]
+    },
+    {
+      "type": "struct",
       "name": "tactical_beats::models::index::MatchmakingQueue",
       "members": [
         {
@@ -4320,6 +4504,12 @@
     {
       "type": "event",
       "name": "tactical_beats::models::index::m_GameTokens::Event",
+      "kind": "enum",
+      "variants": []
+    },
+    {
+      "type": "event",
+      "name": "tactical_beats::models::index::m_MapState::Event",
       "kind": "enum",
       "variants": []
     },

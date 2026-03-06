@@ -1,5 +1,6 @@
 use crate::constants::{ADVANTAGE, DISADVANTAGE, MIN_DAMAGE, NEUTRAL, TYPE_BRUTE, TYPE_HUNTER, TYPE_MAGICAL};
 use crate::logic::{beast, board, combat};
+use crate::models::index::MapState;
 
 // --- Type advantage ---
 
@@ -119,20 +120,35 @@ fn test_valid_cells() {
 }
 
 #[test]
-fn test_obstacles() {
-    assert!(board::is_obstacle(2, 2));
-    assert!(board::is_obstacle(2, 5));
-    assert!(board::is_obstacle(3, 1));
-    assert!(board::is_obstacle(3, 5));
-    assert!(board::is_obstacle(4, 2));
-    assert!(board::is_obstacle(4, 5));
-    assert!(!board::is_obstacle(0, 0));
-    assert!(!board::is_obstacle(3, 3));
+fn test_obstacles_in_map() {
+    let map_state = MapState {
+        game_id: 1,
+        obstacle_1_row: 2,
+        obstacle_1_col: 2,
+        obstacle_2_row: 2,
+        obstacle_2_col: 5,
+        obstacle_3_row: 3,
+        obstacle_3_col: 1,
+        obstacle_4_row: 3,
+        obstacle_4_col: 5,
+        obstacle_5_row: 4,
+        obstacle_5_col: 2,
+        obstacle_6_row: 4,
+        obstacle_6_col: 5,
+    };
+    assert!(board::is_obstacle_in_map(map_state, 2, 2));
+    assert!(board::is_obstacle_in_map(map_state, 2, 5));
+    assert!(board::is_obstacle_in_map(map_state, 3, 1));
+    assert!(board::is_obstacle_in_map(map_state, 3, 5));
+    assert!(board::is_obstacle_in_map(map_state, 4, 2));
+    assert!(board::is_obstacle_in_map(map_state, 4, 5));
+    assert!(!board::is_obstacle_in_map(map_state, 0, 0));
+    assert!(!board::is_obstacle_in_map(map_state, 3, 3));
 }
 
 #[test]
 fn test_spawn_positions_valid() {
-    // All spawn positions should be valid cells and not obstacles
+    // All spawn positions should be valid cells
     let mut player: u8 = 1;
     loop {
         if player > 2 {
@@ -145,7 +161,6 @@ fn test_spawn_positions_valid() {
             }
             let (row, col) = board::get_spawn_position(player, i);
             assert!(board::is_valid_cell(row, col), "Spawn ({},{}) invalid", row, col);
-            assert!(!board::is_obstacle(row, col), "Spawn ({},{}) is obstacle", row, col);
             i += 1;
         }
         player += 1;

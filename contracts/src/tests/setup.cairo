@@ -39,6 +39,7 @@ fn setup_namespace() -> NamespaceDef {
             TestResource::Model(models::m_GameTokens::TEST_CLASS_HASH),
             TestResource::Model(models::m_MatchmakingQueue::TEST_CLASS_HASH),
             TestResource::Model(models::m_PlayerProfile::TEST_CLASS_HASH),
+            TestResource::Model(models::m_MapState::TEST_CLASS_HASH),
             TestResource::Model(achievement_models::m_AchievementDefinition::TEST_CLASS_HASH),
             TestResource::Model(achievement_models::m_AchievementCompletion::TEST_CLASS_HASH),
             TestResource::Model(achievement_models::m_AchievementAdvancement::TEST_CLASS_HASH),

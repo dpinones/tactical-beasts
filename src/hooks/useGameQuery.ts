@@ -6,12 +6,15 @@ import {
   GET_ALL_BEAST_STATES,
   GET_PLAYER_STATE,
   GET_PLAYER_PROFILE,
+  GET_MAP_STATE,
 } from "../queries/gameQueries";
 import type {
   GameModel,
   BeastStateModel,
   PlayerStateModel,
   PlayerProfileModel,
+  MapStateModel,
+  HexCoord,
 } from "../domain/types";
 
 const NS = (import.meta.env.VITE_DOJO_NAMESPACE || "TB").toLowerCase();
@@ -226,4 +229,61 @@ export function usePlayerProfile(player: string | null) {
   }, [player, fetchProfile]);
 
   return { profile, loading, refetch: fetchProfile };
+}
+
+function parseMapStateNode(node: any): MapStateModel {
+  return {
+    game_id: Number(node.game_id),
+    obstacle_1_row: Number(node.obstacle_1_row),
+    obstacle_1_col: Number(node.obstacle_1_col),
+    obstacle_2_row: Number(node.obstacle_2_row),
+    obstacle_2_col: Number(node.obstacle_2_col),
+    obstacle_3_row: Number(node.obstacle_3_row),
+    obstacle_3_col: Number(node.obstacle_3_col),
+    obstacle_4_row: Number(node.obstacle_4_row),
+    obstacle_4_col: Number(node.obstacle_4_col),
+    obstacle_5_row: Number(node.obstacle_5_row),
+    obstacle_5_col: Number(node.obstacle_5_col),
+    obstacle_6_row: Number(node.obstacle_6_row),
+    obstacle_6_col: Number(node.obstacle_6_col),
+  };
+}
+
+export function mapStateToObstacles(mapState: MapStateModel): HexCoord[] {
+  return [
+    { row: mapState.obstacle_1_row, col: mapState.obstacle_1_col },
+    { row: mapState.obstacle_2_row, col: mapState.obstacle_2_col },
+    { row: mapState.obstacle_3_row, col: mapState.obstacle_3_col },
+    { row: mapState.obstacle_4_row, col: mapState.obstacle_4_col },
+    { row: mapState.obstacle_5_row, col: mapState.obstacle_5_col },
+    { row: mapState.obstacle_6_row, col: mapState.obstacle_6_col },
+  ];
+}
+
+export function useMapState(gameId: number | null) {
+  const [mapState, setMapState] = useState<MapStateModel | null>(null);
+
+  const fetchMapState = useCallback(async () => {
+    if (gameId === null) return;
+    try {
+      const result: any = await graphQLClient.request(GET_MAP_STATE, { gameId });
+      const key = `${NS}MapStateModels`;
+      const edges = result?.[key]?.edges;
+      if (edges && edges.length > 0) {
+        setMapState(parseMapStateNode(edges[0].node));
+      }
+    } catch (e) {
+      console.error("Failed to fetch map state:", e);
+    }
+  }, [gameId]);
+
+  useEffect(() => {
+    if (gameId === null) {
+      setMapState(null);
+      return;
+    }
+    fetchMapState();
+  }, [gameId, fetchMapState]);
+
+  return { mapState, refetch: fetchMapState };
 }

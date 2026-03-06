@@ -120,6 +120,22 @@ export interface PlayerStateModel {
   potion_used: boolean;
 }
 
+export interface MapStateModel {
+  game_id: number;
+  obstacle_1_row: number;
+  obstacle_1_col: number;
+  obstacle_2_row: number;
+  obstacle_2_col: number;
+  obstacle_3_row: number;
+  obstacle_3_col: number;
+  obstacle_4_row: number;
+  obstacle_4_col: number;
+  obstacle_5_row: number;
+  obstacle_5_col: number;
+  obstacle_6_row: number;
+  obstacle_6_col: number;
+}
+
 export interface PlayerProfileModel {
   player: string;
   games_played: number;

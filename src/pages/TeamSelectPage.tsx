@@ -14,10 +14,12 @@ import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useDojo } from "../dojo/DojoContext";
 import { useGameActions } from "../hooks/useGameActions";
-import { useGameQuery, usePlayerProfile } from "../hooks/useGameQuery";
+import { useGameQuery, usePlayerProfile, useMapState, mapStateToObstacles } from "../hooks/useGameQuery";
 import { useGameStore } from "../stores/gameStore";
 import { loadBeastCatalog } from "../data/beasts";
 import { BeastCard } from "../components/BeastCard";
+import { HexGrid } from "../components/HexGrid";
+import { OBSTACLES } from "../domain/hexGrid";
 import { GameStatus, BeastType, ZERO_ADDR } from "../domain/types";
 
 type Phase = "creating" | "joining" | "lobby" | "select" | "confirming" | "waiting" | "error";
@@ -123,6 +125,13 @@ export function TeamSelectPage() {
 
   // Poll game state to detect when opponent joins (lobby) or when game starts (after set_team)
   const { game: polledGame } = useGameQuery(gameId);
+
+  // Fetch map state (generated on join)
+  const { mapState } = useMapState(gameId);
+  const obstacles = useMemo(() => {
+    if (!mapState) return OBSTACLES;
+    return mapStateToObstacles(mapState);
+  }, [mapState]);
 
   // Determine opponent address from polled game
   const myAddress = account?.address || "";
@@ -245,9 +254,9 @@ export function TeamSelectPage() {
     );
   }
 
-  // --- Team selection ---
+  // --- Team selection (2-panel layout) ---
   return (
-    <Flex direction="column" minH="100vh" p={4} maxW="1100px" mx="auto">
+    <Flex direction="column" minH="100vh" p={4} maxW="1400px" mx="auto">
       {/* Header */}
       <Flex justify="space-between" align="center" mb={4}>
         <Flex align="center" gap={3}>
@@ -270,78 +279,118 @@ export function TeamSelectPage() {
         </Flex>
       </Box>
 
-      {/* Opponent profile */}
-      {opponentProfile && (
-        <Box bg="surface.panel" border="1px solid" borderColor="danger.700" borderRadius="3px" p={3} mb={4}>
-          <Flex justify="space-between" align="center" mb={2}>
-            <Text fontSize="9px" color="danger.300" textTransform="uppercase" letterSpacing="0.1em">
-              Opponent
-            </Text>
-            <Text fontSize="9px" color="text.muted" fontFamily="mono">
-              {opponentAddress ? opponentAddress.slice(0, 6) + "..." + opponentAddress.slice(-4) : ""}
-            </Text>
-          </Flex>
-          <HStack gap={4} fontSize="xs" fontFamily="mono" color="text.secondary">
-            <Text>Games: <Text as="span" color="text.gold">{opponentProfile.games_played}</Text></Text>
-            <Text>W: <Text as="span" color="green.300">{opponentProfile.wins}</Text></Text>
-            <Text>L: <Text as="span" color="danger.300">{opponentProfile.losses}</Text></Text>
-            <Text>Abandons: <Text as="span" color="text.muted">{opponentProfile.abandons}</Text></Text>
-            <Text>K/D: <Text as="span" color="text.primary">
-              {opponentProfile.total_deaths === 0
-                ? opponentProfile.total_kills > 0 ? `${opponentProfile.total_kills}/0` : "--"
-                : `${opponentProfile.total_kills}/${opponentProfile.total_deaths}`}
-            </Text></Text>
-          </HStack>
-        </Box>
-      )}
-
-      {/* Filters */}
-      <Flex gap={2} mb={3} flexWrap="wrap">
-        <Input
-          placeholder="Search beast..."
-          size="sm"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          maxW="200px"
-        />
-        {(["all", "Magical", "Hunter", "Brute"] as const).map((f) => (
-          <Button
-            key={f}
-            size="sm"
-            variant={filter === f ? "primary" : "secondary"}
-            onClick={() => setFilter(f)}
-            fontSize="xs"
-          >
-            {f === "all" ? "All" : f}
-          </Button>
-        ))}
-        {[1, 2, 3, 4, 5].map((t) => (
-          <Button
-            key={t}
-            size="sm"
-            variant={tierFilter === t ? "gold" : "secondary"}
-            onClick={() => setTierFilter(tierFilter === t ? null : t)}
-            fontSize="xs"
-          >
-            T{t}
-          </Button>
-        ))}
-      </Flex>
-
-      {/* Beast catalog */}
-      <Box flex={1} overflowY="auto" mb={4}>
-        <SimpleGrid columns={{ base: 2, md: 3, lg: 4 }} gap={3}>
-          {filteredBeasts.map((beast) => (
-            <BeastCard
-              key={beast.tokenId}
-              beast={beast}
-              isSelected={selectedBeasts.includes(beast.tokenId)}
-              onToggle={toggleBeast}
-              disabled={selectedBeasts.length >= 3 && !selectedBeasts.includes(beast.tokenId)}
+      {/* Two-panel layout */}
+      <Flex direction={{ base: "column", lg: "row" }} gap={4} flex={1} minH={0}>
+        {/* Left panel: Filters + Beast catalog */}
+        <Box flex={3}>
+          {/* Filters */}
+          <Flex gap={2} mb={3} flexWrap="wrap">
+            <Input
+              placeholder="Search beast..."
+              size="sm"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              maxW="200px"
             />
-          ))}
-        </SimpleGrid>
-      </Box>
+            {(["all", "Magical", "Hunter", "Brute"] as const).map((f) => (
+              <Button
+                key={f}
+                size="sm"
+                variant={filter === f ? "primary" : "secondary"}
+                onClick={() => setFilter(f)}
+                fontSize="xs"
+              >
+                {f === "all" ? "All" : f}
+              </Button>
+            ))}
+            {[1, 2, 3, 4, 5].map((t) => (
+              <Button
+                key={t}
+                size="sm"
+                variant={tierFilter === t ? "gold" : "secondary"}
+                onClick={() => setTierFilter(tierFilter === t ? null : t)}
+                fontSize="xs"
+              >
+                T{t}
+              </Button>
+            ))}
+          </Flex>
+
+          {/* Beast catalog */}
+          <Box flex={1} overflowY="auto" mb={4}>
+            <SimpleGrid columns={{ base: 2, md: 3, lg: 3 }} gap={3}>
+              {filteredBeasts.map((beast) => (
+                <BeastCard
+                  key={beast.tokenId}
+                  beast={beast}
+                  isSelected={selectedBeasts.includes(beast.tokenId)}
+                  onToggle={toggleBeast}
+                  disabled={selectedBeasts.length >= 3 && !selectedBeasts.includes(beast.tokenId)}
+                />
+              ))}
+            </SimpleGrid>
+          </Box>
+        </Box>
+
+        {/* Right panel: Opponent profile + Map preview */}
+        <Box flex={2}>
+          {/* Opponent profile */}
+          {opponentProfile && (
+            <Box bg="surface.panel" border="1px solid" borderColor="danger.700" borderRadius="3px" p={3} mb={4}>
+              <Flex justify="space-between" align="center" mb={2}>
+                <Text fontSize="9px" color="danger.300" textTransform="uppercase" letterSpacing="0.1em">
+                  Opponent
+                </Text>
+                <Text fontSize="9px" color="text.muted" fontFamily="mono">
+                  {opponentAddress ? opponentAddress.slice(0, 6) + "..." + opponentAddress.slice(-4) : ""}
+                </Text>
+              </Flex>
+              <HStack gap={4} fontSize="xs" fontFamily="mono" color="text.secondary" flexWrap="wrap">
+                <Text>Games: <Text as="span" color="text.gold">{opponentProfile.games_played}</Text></Text>
+                <Text>W: <Text as="span" color="green.300">{opponentProfile.wins}</Text></Text>
+                <Text>L: <Text as="span" color="danger.300">{opponentProfile.losses}</Text></Text>
+                <Text>Abandons: <Text as="span" color="text.muted">{opponentProfile.abandons}</Text></Text>
+                <Text>K/D: <Text as="span" color="text.primary">
+                  {opponentProfile.total_deaths === 0
+                    ? opponentProfile.total_kills > 0 ? `${opponentProfile.total_kills}/0` : "--"
+                    : `${opponentProfile.total_kills}/${opponentProfile.total_deaths}`}
+                </Text></Text>
+              </HStack>
+            </Box>
+          )}
+
+          {/* Map preview */}
+          <Box bg="surface.panel" border="1px solid" borderColor="surface.border" borderRadius="3px" p={3}>
+            <Text fontSize="9px" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em" mb={2}>
+              Arena Map
+            </Text>
+            <HexGrid
+              hexSize={22}
+              myBeasts={[]}
+              enemyBeasts={[]}
+              selectedBeastIndex={null}
+              onCellClick={() => {}}
+              onBeastClick={() => {}}
+              myPlayerIndex={1}
+              obstacles={obstacles}
+            />
+            <HStack gap={4} mt={2} fontSize="9px" color="text.muted" justify="center">
+              <HStack gap={1}>
+                <Box w="8px" h="8px" bg="rgba(85,102,85,0.5)" />
+                <Text>Obstacle</Text>
+              </HStack>
+              <HStack gap={1}>
+                <Box w="8px" h="8px" bg="rgba(0,255,68,0.15)" border="1px solid" borderColor="green.700" />
+                <Text>P1 Spawn</Text>
+              </HStack>
+              <HStack gap={1}>
+                <Box w="8px" h="8px" bg="rgba(255,51,51,0.15)" border="1px solid" borderColor="red.700" />
+                <Text>P2 Spawn</Text>
+              </HStack>
+            </HStack>
+          </Box>
+        </Box>
+      </Flex>
 
       {/* Confirm button */}
       <Box position="sticky" bottom={0} bg="surface.bg" pt={3} pb={2} borderTop="1px solid" borderColor="surface.border">

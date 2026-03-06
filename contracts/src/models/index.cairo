@@ -98,3 +98,22 @@ pub struct PlayerProfile {
     pub total_deaths: u32,
     pub abandons: u32,
 }
+
+#[derive(Copy, Drop, Serde)]
+#[dojo::model]
+pub struct MapState {
+    #[key]
+    pub game_id: u32,
+    pub obstacle_1_row: u8,
+    pub obstacle_1_col: u8,
+    pub obstacle_2_row: u8,
+    pub obstacle_2_col: u8,
+    pub obstacle_3_row: u8,
+    pub obstacle_3_col: u8,
+    pub obstacle_4_row: u8,
+    pub obstacle_4_col: u8,
+    pub obstacle_5_row: u8,
+    pub obstacle_5_col: u8,
+    pub obstacle_6_row: u8,
+    pub obstacle_6_col: u8,
+}

@@ -93,6 +93,30 @@ export const GET_ALL_BEAST_STATES = gql`
   }
 `;
 
+export const GET_MAP_STATE = gql`
+  query GetMapState($gameId: u32!) {
+    ${NS}MapStateModels(where: { game_id: $gameId }) {
+      edges {
+        node {
+          game_id
+          obstacle_1_row
+          obstacle_1_col
+          obstacle_2_row
+          obstacle_2_col
+          obstacle_3_row
+          obstacle_3_col
+          obstacle_4_row
+          obstacle_4_col
+          obstacle_5_row
+          obstacle_5_col
+          obstacle_6_row
+          obstacle_6_col
+        }
+      }
+    }
+  }
+`;
+
 export const GET_PLAYER_PROFILE = gql`
   query GetPlayerProfile($player: ContractAddress!) {
     ${NS}PlayerProfileModels(where: { player: $player }) {

@@ -25,7 +25,7 @@ import { useGameStore } from "../stores/gameStore";
 import { HexGrid } from "../components/HexGrid";
 import { BeastHUD } from "../components/BeastHUD";
 import { BattleLog } from "../components/BattleLog";
-import { ActionPanel } from "../components/ActionPanel";
+import { PlannedActions } from "../components/PlannedActions";
 import {
   GameStatus,
   BeastStateModel,
@@ -96,16 +96,9 @@ export function BattlePage() {
 
   // Action planning state
   const [actions, setActions] = useState<Map<number, GameAction>>(new Map());
-  const [selectedBeastIndex, setSelectedBeastIndex] = useState<number | null>(
-    null
-  );
-  const [waitingForMove, setWaitingForMove] = useState(false);
-  const [waitingForAttack, setWaitingForAttack] = useState(false);
-  const [isPotionAttack, setIsPotionAttack] = useState(false);
-
-  // Highlighted cells for move/attack range
-  const [highlightedCells, setHighlightedCells] = useState<HexCoord[]>([]);
-  const [highlightType, setHighlightType] = useState<"move" | "attack">("move");
+  const [selectedBeastIndex, setSelectedBeastIndex] = useState<number | null>(null);
+  const [potionToggle, setPotionToggle] = useState(false);
+  const [actionHistory, setActionHistory] = useState<number[]>([]);
 
   // Navigate to result on game finish
   useEffect(() => {
@@ -118,9 +111,8 @@ export function BattlePage() {
   useEffect(() => {
     setActions(new Map());
     setSelectedBeastIndex(null);
-    setWaitingForMove(false);
-    setWaitingForAttack(false);
-    setHighlightedCells([]);
+    setPotionToggle(false);
+    setActionHistory([]);
   }, [game?.current_attacker, game?.round]);
 
   // Get selected beast model
@@ -139,186 +131,183 @@ export function BattlePage() {
       }));
   }, [beasts]);
 
-  // --- Action handlers ---
-
-  const handleChooseMove = useCallback(() => {
-    if (!selectedBeast) return;
-    setWaitingForMove(true);
-    setWaitingForAttack(false);
-    setIsPotionAttack(false);
-    setHighlightType("move");
-
+  // Computed move/attack cells for the selected beast
+  const moveCells = useMemo((): HexCoord[] => {
+    if (!selectedBeast || !selectedBeast.alive) return [];
     const dummyBeast = {
-      beastIndex: 0,
-      beastId: 0,
-      name: "",
-      type: 0,
-      typeName: "",
-      tier: Number(selectedBeast.tier),
-      level: Number(selectedBeast.level),
-      hp: 0,
-      hpMax: 0,
-      extraLives: 0,
-      position: {
-        row: Number(selectedBeast.position_row),
-        col: Number(selectedBeast.position_col),
-      },
-      alive: true,
-      powerBase: 0,
+      beastIndex: 0, beastId: 0, name: "", type: 0, typeName: "",
+      tier: Number(selectedBeast.tier), level: Number(selectedBeast.level),
+      hp: 0, hpMax: 0, extraLives: 0,
+      position: { row: Number(selectedBeast.position_row), col: Number(selectedBeast.position_col) },
+      alive: true, powerBase: 0,
     };
     const moveRange = getMoveRange(dummyBeast);
-    const validMoves = getValidMoveTargets(
-      {
-        row: Number(selectedBeast.position_row),
-        col: Number(selectedBeast.position_col),
-      },
+    return getValidMoveTargets(
+      { row: Number(selectedBeast.position_row), col: Number(selectedBeast.position_col) },
       moveRange,
       occupiedCells,
       obstacles
     );
-    setHighlightedCells(validMoves);
   }, [selectedBeast, occupiedCells, obstacles]);
 
-  const handleChooseAttack = useCallback(() => {
-    if (!selectedBeast) return;
-    setWaitingForAttack(true);
-    setWaitingForMove(false);
-    setIsPotionAttack(false);
-    setHighlightType("attack");
-
-    // Highlight cells with enemy beasts in range
-    const pos = {
-      row: Number(selectedBeast.position_row),
-      col: Number(selectedBeast.position_col),
-    };
+  const attackCells = useMemo((): HexCoord[] => {
+    if (!selectedBeast || !selectedBeast.alive) return [];
+    const pos = { row: Number(selectedBeast.position_row), col: Number(selectedBeast.position_col) };
     const dummyBeast = {
-      beastIndex: 0,
-      beastId: 0,
-      name: "",
-      type: 0,
-      typeName: "",
-      tier: Number(selectedBeast.tier),
-      level: Number(selectedBeast.level),
-      hp: 0,
-      hpMax: 0,
-      extraLives: 0,
-      position: pos,
-      alive: true,
-      powerBase: 0,
+      beastIndex: 0, beastId: 0, name: "", type: 0, typeName: "",
+      tier: Number(selectedBeast.tier), level: Number(selectedBeast.level),
+      hp: 0, hpMax: 0, extraLives: 0, position: pos, alive: true, powerBase: 0,
     };
     const atkRange = getAttackRange(dummyBeast);
-    const enemyPositions = enemyBeasts
+    return enemyBeasts
       .filter((b) => b.alive)
-      .map((b) => ({
-        row: Number(b.position_row),
-        col: Number(b.position_col),
-      }))
+      .map((b) => ({ row: Number(b.position_row), col: Number(b.position_col) }))
       .filter((ep) => hexDistance(pos, ep) <= atkRange);
-    setHighlightedCells(enemyPositions);
   }, [selectedBeast, enemyBeasts]);
 
-  const handleChoosePotion = useCallback(() => {
-    if (!selectedBeast) return;
-    setIsPotionAttack(true);
-    handleChooseAttack();
-  }, [selectedBeast, handleChooseAttack]);
+  // Auto-advance: select next beast without an action
+  const autoAdvance = useCallback(() => {
+    const aliveBeasts = myBeasts.filter((b) => b.alive);
+    const next = aliveBeasts.find((b) => !actions.has(Number(b.beast_index)));
+    setSelectedBeastIndex(next ? Number(next.beast_index) : null);
+  }, [myBeasts, actions]);
 
-  const handleChooseWait = useCallback(() => {
-    if (selectedBeastIndex === null) return;
-    const action: GameAction = {
-      beastIndex: selectedBeastIndex,
-      actionType: ActionType.WAIT,
-      targetIndex: 0,
-      targetRow: 0,
-      targetCol: 0,
-    };
-    setActions((prev) => new Map(prev).set(selectedBeastIndex, action));
-    setWaitingForMove(false);
-    setWaitingForAttack(false);
-    setHighlightedCells([]);
-  }, [selectedBeastIndex]);
+  // --- Action handlers ---
 
   const handleCellClick = useCallback(
     (row: number, col: number) => {
-      if (!waitingForMove || selectedBeastIndex === null) return;
+      if (selectedBeastIndex === null) return;
 
-      // Check if this cell is in highlighted (valid) moves
-      const isValid = highlightedCells.some(
-        (c) => c.row === row && c.col === col
-      );
-      if (!isValid) return;
+      // Check if cell is in moveCells
+      const isMove = moveCells.some((c) => c.row === row && c.col === col);
+      if (isMove) {
+        const action: GameAction = {
+          beastIndex: selectedBeastIndex,
+          actionType: ActionType.MOVE,
+          targetIndex: 0,
+          targetRow: row,
+          targetCol: col,
+        };
+        setActions((prev) => new Map(prev).set(selectedBeastIndex, action));
+        setActionHistory((prev) => [...prev.filter((i) => i !== selectedBeastIndex), selectedBeastIndex]);
+        // Use setTimeout to let state settle before auto-advancing
+        setTimeout(() => autoAdvance(), 0);
+        return;
+      }
 
-      const action: GameAction = {
-        beastIndex: selectedBeastIndex,
-        actionType: ActionType.MOVE,
-        targetIndex: 0,
-        targetRow: row,
-        targetCol: col,
-      };
-      setActions((prev) => new Map(prev).set(selectedBeastIndex, action));
-      setWaitingForMove(false);
-      setHighlightedCells([]);
+      // Check if cell is in attackCells (enemy on that cell)
+      const isAttack = attackCells.some((c) => c.row === row && c.col === col);
+      if (isAttack) {
+        const enemyBeast = enemyBeasts.find(
+          (b) => b.alive && Number(b.position_row) === row && Number(b.position_col) === col
+        );
+        if (enemyBeast) {
+          const action: GameAction = {
+            beastIndex: selectedBeastIndex,
+            actionType: potionToggle ? ActionType.CONSUMABLE_ATTACK_POTION : ActionType.ATTACK,
+            targetIndex: Number(enemyBeast.beast_index),
+            targetRow: 0,
+            targetCol: 0,
+          };
+          setActions((prev) => new Map(prev).set(selectedBeastIndex, action));
+          setActionHistory((prev) => [...prev.filter((i) => i !== selectedBeastIndex), selectedBeastIndex]);
+          if (potionToggle) setPotionToggle(false);
+          setTimeout(() => autoAdvance(), 0);
+          return;
+        }
+      }
+
+      // Click outside range → deselect
+      setSelectedBeastIndex(null);
     },
-    [waitingForMove, selectedBeastIndex, highlightedCells]
+    [selectedBeastIndex, moveCells, attackCells, enemyBeasts, potionToggle, autoAdvance]
   );
 
   const handleBeastClick = useCallback(
     (playerIndex: number, beastIndex: number) => {
-      // If waiting for attack target and clicked enemy
-      if (waitingForAttack && playerIndex !== myPlayerIndex) {
-        if (selectedBeastIndex === null) return;
-
-        // Check range
-        const enemyBeast = enemyBeasts.find(
-          (b) => Number(b.beast_index) === beastIndex
-        );
+      // Enemy click while beast selected → attack if in range
+      if (playerIndex !== myPlayerIndex && selectedBeastIndex !== null) {
+        const enemyBeast = enemyBeasts.find((b) => Number(b.beast_index) === beastIndex);
         if (!enemyBeast) return;
-
-        const isInRange = highlightedCells.some(
-          (c) =>
-            c.row === Number(enemyBeast.position_row) &&
-            c.col === Number(enemyBeast.position_col)
+        const isInRange = attackCells.some(
+          (c) => c.row === Number(enemyBeast.position_row) && c.col === Number(enemyBeast.position_col)
         );
-        if (!isInRange) return;
-
-        const action: GameAction = {
-          beastIndex: selectedBeastIndex,
-          actionType: isPotionAttack
-            ? ActionType.CONSUMABLE_ATTACK_POTION
-            : ActionType.ATTACK,
-          targetIndex: beastIndex,
-          targetRow: 0,
-          targetCol: 0,
-        };
-        setActions((prev) => new Map(prev).set(selectedBeastIndex, action));
-        setWaitingForAttack(false);
-        setIsPotionAttack(false);
-        setHighlightedCells([]);
-        return;
+        if (isInRange) {
+          const action: GameAction = {
+            beastIndex: selectedBeastIndex,
+            actionType: potionToggle ? ActionType.CONSUMABLE_ATTACK_POTION : ActionType.ATTACK,
+            targetIndex: beastIndex,
+            targetRow: 0,
+            targetCol: 0,
+          };
+          setActions((prev) => new Map(prev).set(selectedBeastIndex, action));
+          setActionHistory((prev) => [...prev.filter((i) => i !== selectedBeastIndex), selectedBeastIndex]);
+          if (potionToggle) setPotionToggle(false);
+          setTimeout(() => autoAdvance(), 0);
+          return;
+        }
       }
 
-      // If clicked own beast, select it
+      // Own beast click
       if (playerIndex === myPlayerIndex) {
-        setSelectedBeastIndex(beastIndex);
-        setWaitingForMove(false);
-        setWaitingForAttack(false);
-        setHighlightedCells([]);
+        if (selectedBeastIndex === beastIndex) {
+          // Click same beast → deselect
+          setSelectedBeastIndex(null);
+        } else {
+          setSelectedBeastIndex(beastIndex);
+        }
       }
     },
-    [
-      waitingForAttack,
-      myPlayerIndex,
-      selectedBeastIndex,
-      enemyBeasts,
-      highlightedCells,
-      isPotionAttack,
-    ]
+    [myPlayerIndex, selectedBeastIndex, enemyBeasts, attackCells, potionToggle, autoAdvance]
   );
+
+  const handleWait = useCallback(
+    (beastIndex: number) => {
+      const action: GameAction = {
+        beastIndex,
+        actionType: ActionType.WAIT,
+        targetIndex: 0,
+        targetRow: 0,
+        targetCol: 0,
+      };
+      setActions((prev) => new Map(prev).set(beastIndex, action));
+      setActionHistory((prev) => [...prev.filter((i) => i !== beastIndex), beastIndex]);
+      setTimeout(() => autoAdvance(), 0);
+    },
+    [autoAdvance]
+  );
+
+  const handleUndoLast = useCallback(() => {
+    if (actionHistory.length === 0) return;
+    const lastIdx = actionHistory[actionHistory.length - 1];
+    setActions((prev) => {
+      const next = new Map(prev);
+      next.delete(lastIdx);
+      return next;
+    });
+    setActionHistory((prev) => prev.slice(0, -1));
+    // Check if the undone action was a potion attack → re-enable toggle
+    const undoneAction = actions.get(lastIdx);
+    if (undoneAction?.actionType === ActionType.CONSUMABLE_ATTACK_POTION) {
+      setPotionToggle(true);
+    }
+    setSelectedBeastIndex(lastIdx);
+  }, [actionHistory, actions]);
+
+  const handleClearAll = useCallback(() => {
+    // Check if any cleared action was a potion attack
+    const hadPotion = Array.from(actions.values()).some(
+      (a) => a.actionType === ActionType.CONSUMABLE_ATTACK_POTION
+    );
+    setActions(new Map());
+    setActionHistory([]);
+    setSelectedBeastIndex(null);
+    if (hadPotion) setPotionToggle(false);
+  }, [actions]);
 
   const handleConfirmActions = useCallback(async () => {
     if (!gameId) return;
 
-    // Build ordered actions array
     const aliveBeasts = myBeasts.filter((b) => b.alive);
     const orderedActions: GameAction[] = aliveBeasts.map((b) => {
       const idx = Number(b.beast_index);
@@ -353,28 +342,14 @@ export function BattlePage() {
     refetchBeasts,
   ]);
 
-  const handleResetActions = useCallback(() => {
-    setActions(new Map());
-    setSelectedBeastIndex(null);
-    setWaitingForMove(false);
-    setWaitingForAttack(false);
-    setHighlightedCells([]);
-  }, []);
-
   // Contextual guidance message
   const guidanceMessage = useMemo(() => {
     if (!isMyTurn) return "Waiting for opponent to play...";
     if (selectedBeastIndex === null) return "Select one of your beasts to plan an action";
-    if (waitingForMove) return "Click a highlighted cell to move";
-    if (waitingForAttack) return "Click an enemy beast in range to attack";
-    const hasAction = actions.has(selectedBeastIndex);
-    if (hasAction) {
-      const aliveCount = myBeasts.filter((b) => b.alive).length;
-      if (actions.size >= aliveCount) return "All actions set — confirm to execute your turn";
-      return "Select the next beast to plan its action";
-    }
-    return "Choose an action: Move, Attack, or Wait";
-  }, [isMyTurn, selectedBeastIndex, waitingForMove, waitingForAttack, actions, myBeasts]);
+    const aliveCount = myBeasts.filter((b) => b.alive).length;
+    if (actions.size >= aliveCount) return "All actions set -- confirm to execute your turn";
+    return "Click green cell to move, red enemy to attack";
+  }, [isMyTurn, selectedBeastIndex, actions, myBeasts]);
 
   // --- Loading state ---
   if (!game || beasts.length === 0) {
@@ -445,7 +420,7 @@ export function BattlePage() {
 
       {/* Main 3-column layout */}
       <Flex gap={3} flex={1} minH={0}>
-        {/* Left: My beasts (compact) */}
+        {/* Left: My beasts + PlannedActions */}
         <VStack
           w="190px"
           gap={2}
@@ -474,15 +449,35 @@ export function BattlePage() {
               plannedAction={actions.get(Number(beast.beast_index))}
               onClick={
                 isMyTurn
-                  ? () =>
-                      setSelectedBeastIndex(Number(beast.beast_index))
+                  ? () => setSelectedBeastIndex(Number(beast.beast_index))
+                  : undefined
+              }
+              onWait={
+                isMyTurn && beast.alive
+                  ? () => handleWait(Number(beast.beast_index))
                   : undefined
               }
             />
           ))}
+
+          {/* PlannedActions section */}
+          {isMyTurn && (
+            <PlannedActions
+              myBeasts={myBeasts}
+              enemyBeasts={enemyBeasts}
+              actions={actions}
+              potionToggle={potionToggle}
+              potionUsed={potionUsed}
+              onTogglePotion={() => setPotionToggle((v) => !v)}
+              onUndoLast={handleUndoLast}
+              onClearAll={handleClearAll}
+              onConfirm={handleConfirmActions}
+              isLoading={isLoading}
+            />
+          )}
         </VStack>
 
-        {/* Center: Grid + Action bar */}
+        {/* Center: HexGrid only */}
         <VStack flex={1} minW={0} gap={2} align="stretch">
           <Box flex={1} minH={0} overflow="auto">
             <HexGrid
@@ -492,37 +487,13 @@ export function BattlePage() {
               selectedBeastIndex={isMyTurn ? selectedBeastIndex : null}
               onCellClick={handleCellClick}
               onBeastClick={handleBeastClick}
-              highlightedCells={highlightedCells}
-              highlightType={highlightType}
+              moveCells={moveCells}
+              attackCells={attackCells}
               myPlayerIndex={myPlayerIndex}
               actions={actions}
               obstacles={obstacles}
             />
           </Box>
-
-          {/* Inline action bar below grid */}
-          {isMyTurn && (
-            <ActionPanel
-              myBeasts={myBeasts}
-              enemyBeasts={enemyBeasts}
-              actions={actions}
-              onSetAction={(idx, action) =>
-                setActions((prev) => new Map(prev).set(idx, action))
-              }
-              onConfirm={handleConfirmActions}
-              onCancel={handleResetActions}
-              selectedBeastIndex={selectedBeastIndex}
-              onSelectBeast={setSelectedBeastIndex}
-              potionUsed={potionUsed}
-              isLoading={isLoading}
-              waitingForMove={waitingForMove}
-              waitingForAttack={waitingForAttack}
-              onChooseMove={handleChooseMove}
-              onChooseAttack={handleChooseAttack}
-              onChoosePotion={handleChoosePotion}
-              onChooseWait={handleChooseWait}
-            />
-          )}
 
           {!isMyTurn && (
             <Box

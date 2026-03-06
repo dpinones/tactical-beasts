@@ -10,6 +10,7 @@ interface BeastHUDProps {
   isSelected?: boolean;
   plannedAction?: GameAction;
   onClick?: () => void;
+  onWait?: () => void;
 }
 
 function actionShortLabel(type: ActionType): string {
@@ -28,6 +29,7 @@ export function BeastHUD({
   isSelected,
   plannedAction,
   onClick,
+  onWait,
 }: BeastHUDProps) {
   const hp = Number(beast.hp);
   const hpMax = Number(beast.hp_max);
@@ -63,7 +65,34 @@ export function BeastHUD({
       }
       boxShadow={isSelected ? "glow" : "none"}
       minW="140px"
+      position="relative"
     >
+      {onWait && alive && (
+        <Box
+          as="button"
+          position="absolute"
+          top="4px"
+          right="4px"
+          bg="rgba(255,215,0,0.15)"
+          border="1px solid rgba(255,215,0,0.3)"
+          borderRadius="3px"
+          px={1.5}
+          py={0.5}
+          fontSize="8px"
+          fontWeight="700"
+          fontFamily="mono"
+          color="gold.400"
+          cursor="pointer"
+          zIndex={1}
+          _hover={{ bg: "rgba(255,215,0,0.3)" }}
+          onClick={(e: React.MouseEvent) => {
+            e.stopPropagation();
+            onWait();
+          }}
+        >
+          ZZ
+        </Box>
+      )}
       <Flex gap={2} mb={1}>
         {/* Beast portrait */}
         <Image

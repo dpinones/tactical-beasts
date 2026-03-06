@@ -17,8 +17,8 @@ interface HexGridProps {
   selectedBeastIndex: number | null;
   onCellClick: (row: number, col: number) => void;
   onBeastClick: (playerIndex: number, beastIndex: number) => void;
-  highlightedCells?: HexCoord[];
-  highlightType?: "move" | "attack";
+  moveCells?: HexCoord[];
+  attackCells?: HexCoord[];
   myPlayerIndex: number;
   actions?: Map<number, GameAction>;
   obstacles?: HexCoord[];
@@ -36,8 +36,8 @@ export function HexGrid({
   selectedBeastIndex,
   onCellClick,
   onBeastClick,
-  highlightedCells = [],
-  highlightType = "move",
+  moveCells = [],
+  attackCells = [],
   myPlayerIndex,
   actions = new Map(),
   obstacles = OBSTACLES,
@@ -60,17 +60,18 @@ export function HexGrid({
     );
   }
 
-  function isHighlighted(row: number, col: number): boolean {
-    return highlightedCells.some((c) => c.row === row && c.col === col);
+  function isInAttackCells(row: number, col: number): boolean {
+    return attackCells.some((c) => c.row === row && c.col === col);
+  }
+
+  function isInMoveCells(row: number, col: number): boolean {
+    return moveCells.some((c) => c.row === row && c.col === col);
   }
 
   function getCellClass(row: number, col: number): string {
     if (isObstacle(row, col, obstacles)) return "hex-cell--obstacle";
-    if (isHighlighted(row, col)) {
-      return highlightType === "attack"
-        ? "hex-cell--attack-range"
-        : "hex-cell--move-range";
-    }
+    if (isInAttackCells(row, col)) return "hex-cell--attack-range";
+    if (isInMoveCells(row, col)) return "hex-cell--move-range";
     return `hex-cell ${terrainClass(row, col)}`;
   }
 
@@ -267,7 +268,7 @@ export function HexGrid({
             const { x, y } = hexToPixel(row, col, hexSize);
             const beast = getBeastAt(row, col);
             const cellClass = getCellClass(row, col);
-            const highlighted = isHighlighted(row, col);
+            const clickable = isInMoveCells(row, col) || isInAttackCells(row, col);
 
             return (
               <g key={`cell-${row}-${col}`}>
@@ -275,7 +276,7 @@ export function HexGrid({
                   points={hexPoints(x, y, hexSize * 0.92)}
                   className={cellClass}
                   onClick={() => onCellClick(row, col)}
-                  style={{ cursor: highlighted ? "pointer" : "default" }}
+                  style={{ cursor: clickable ? "pointer" : "default" }}
                 />
 
                 {/* Obstacle marker — stone circles */}

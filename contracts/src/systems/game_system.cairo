@@ -11,6 +11,7 @@ pub trait IGameSystem<T> {
     fn execute_turn(ref self: T, game_id: u32, actions: Array<crate::types::Action>);
     fn find_match(ref self: T) -> u32;
     fn cancel_matchmaking(ref self: T);
+    fn abandon_game(ref self: T, game_id: u32);
 }
 
 #[starknet::interface]
@@ -37,7 +38,7 @@ pub mod game_system {
     use crate::elements::achievements::{ACHIEVEMENT_COUNT, Achievement, AchievementTrait};
     use crate::events::index::{GameCreated, GameFinished, PlayerJoined};
     use crate::logic::{beast, board, combat};
-    use crate::models::index::{BeastState, Game, GameConfig, GameToken, GameTokens, MatchmakingQueue, PlayerState};
+    use crate::models::index::{BeastState, Game, GameConfig, GameToken, GameTokens, MatchmakingQueue, PlayerProfile, PlayerState};
     use crate::systems::collection::{ICollectionDispatcher, ICollectionDispatcherTrait, NAME as COLLECTION_NAME};
     use crate::types::Action;
     use super::{IGameSystem, IMinigameTokenData};
@@ -142,6 +143,63 @@ pub mod game_system {
             assert!(queue.waiting_player == caller, "Not in queue");
 
             world.write_model(@MatchmakingQueue { id: 0, waiting_player: zero_address(), waiting_game_id: 0 });
+        }
+
+        fn abandon_game(ref self: ContractState, game_id: u32) {
+            let mut world = self.world(@NAMESPACE());
+            let caller = starknet::get_caller_address();
+
+            let mut game: Game = world.read_model(game_id);
+            assert!(
+                game.status == GAME_STATUS_WAITING || game.status == GAME_STATUS_PLAYING,
+                "Game is already finished",
+            );
+            assert!(caller == game.player1 || caller == game.player2, "Not a player in this game");
+
+            let winner = if caller == game.player1 {
+                game.player2
+            } else {
+                game.player1
+            };
+
+            game.status = GAME_STATUS_FINISHED;
+            game.winner = winner;
+            world.write_model(@game);
+
+            let time = starknet::get_block_timestamp();
+            world.emit_event(@GameFinished { game_id, winner, rounds: game.round, time });
+
+            // Track abandon (always)
+            let mut abandoner_profile: PlayerProfile = world.read_model(caller);
+            abandoner_profile.abandons += 1;
+            abandoner_profile.losses += 1;
+            world.write_model(@abandoner_profile);
+
+            // Update winner profile only if opponent exists
+            if winner != zero_address() {
+                let winner_index: u8 = if winner == game.player1 {
+                    1
+                } else {
+                    2
+                };
+                let winner_kills = count_dead_beasts(ref world, game_id, if winner_index == 1 { 2 } else { 1 });
+                let winner_deaths = count_dead_beasts(ref world, game_id, winner_index);
+
+                let mut winner_profile: PlayerProfile = world.read_model(winner);
+                winner_profile.wins += 1;
+                winner_profile.total_kills += winner_kills;
+                winner_profile.total_deaths += winner_deaths;
+                world.write_model(@winner_profile);
+
+                // Also count kills/deaths for abandoner
+                let abandoner_index: u8 = if winner_index == 1 { 2 } else { 1 };
+                let abandoner_kills = count_dead_beasts(ref world, game_id, winner_index);
+                let abandoner_deaths = count_dead_beasts(ref world, game_id, abandoner_index);
+                let mut ap: PlayerProfile = world.read_model(caller);
+                ap.total_kills += abandoner_kills;
+                ap.total_deaths += abandoner_deaths;
+                world.write_model(@ap);
+            }
         }
 
         fn set_team(ref self: ContractState, game_id: u32, beast_1: u32, beast_2: u32, beast_3: u32) {
@@ -263,6 +321,14 @@ pub mod game_system {
                 if all_beasts_alive(ref world, game_id, winner_index) {
                     self.achievable.progress(world, player_id, TASK_FLAWLESS, 1, true);
                 }
+
+                // Update player profiles
+                let loser = if winner == game.player1 {
+                    game.player2
+                } else {
+                    game.player1
+                };
+                update_profiles(ref world, game_id, winner, loser, winner_index);
             } else {
                 // Switch turn
                 if game.current_attacker == 1 {
@@ -580,8 +646,64 @@ pub mod game_system {
             // Assign spawn positions
             assign_spawn_positions(ref world, game_id);
 
+            // Increment games_played for both players
+            let mut p1_profile: PlayerProfile = world.read_model(game.player1);
+            p1_profile.games_played += 1;
+            world.write_model(@p1_profile);
+
+            let mut p2_profile: PlayerProfile = world.read_model(game.player2);
+            p2_profile.games_played += 1;
+            world.write_model(@p2_profile);
+
             world.write_model(@game);
         }
+    }
+
+    fn count_dead_beasts(ref world: WorldStorage, game_id: u32, player_index: u8) -> u32 {
+        let mut dead: u32 = 0;
+        let b0: BeastState = world.read_model((game_id, player_index, 0_u8));
+        let b1: BeastState = world.read_model((game_id, player_index, 1_u8));
+        let b2: BeastState = world.read_model((game_id, player_index, 2_u8));
+        if !b0.alive {
+            dead += 1;
+        }
+        if !b1.alive {
+            dead += 1;
+        }
+        if !b2.alive {
+            dead += 1;
+        }
+        dead
+    }
+
+    fn update_profiles(
+        ref world: WorldStorage, game_id: u32, winner: ContractAddress, loser: ContractAddress, winner_index: u8,
+    ) {
+        let loser_index: u8 = if winner_index == 1 {
+            2
+        } else {
+            1
+        };
+
+        // Kills = enemy beasts dead, Deaths = own beasts dead
+        let winner_kills = count_dead_beasts(ref world, game_id, loser_index);
+        let winner_deaths = count_dead_beasts(ref world, game_id, winner_index);
+        let loser_kills = count_dead_beasts(ref world, game_id, winner_index);
+        let loser_deaths = count_dead_beasts(ref world, game_id, loser_index);
+
+        // Winner profile
+        let mut wp: PlayerProfile = world.read_model(winner);
+        wp.wins += 1;
+        wp.total_kills += winner_kills;
+        wp.total_deaths += winner_deaths;
+        world.write_model(@wp);
+
+        // Loser profile
+        let mut lp: PlayerProfile = world.read_model(loser);
+        lp.losses += 1;
+        lp.total_kills += loser_kills;
+        lp.total_deaths += loser_deaths;
+        world.write_model(@lp);
     }
 
     fn assign_spawn_positions(ref world: WorldStorage, game_id: u32) {

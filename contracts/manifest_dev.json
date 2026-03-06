@@ -57,8 +57,8 @@
       ]
     },
     {
-      "address": "0x337bf14ae440a4d5cf8847a3f97242b4504ad00793a400bd42597bc1afba1a6",
-      "class_hash": "0x233645812f38c07197169d494943779947185c92745e162fb6ebeb6880c9d2f",
+      "address": "0x517aa9218e4ccb63e1565a02748ae2af66b3823678d411a6a03dc64cbb3d3a0",
+      "class_hash": "0x2086bc1f701599a9d330bfebc98111dbd4b342c3bc1624467cff39047f60ebb",
       "init_calldata": [],
       "tag": "TB-game_system",
       "selector": "0x69e31139e40dc9c3cbdcbe65c1c8ee089a640efb42486fb78465d0fd6a75711",
@@ -70,6 +70,7 @@
         "execute_turn",
         "find_match",
         "cancel_matchmaking",
+        "abandon_game",
         "upgrade"
       ]
     }
@@ -395,6 +396,48 @@
       "class_hash": "0x288e429249d243490bfb4cf56a10d88f8d7ccb737b2e66145e096db9dc177d",
       "tag": "TB-MatchmakingQueue",
       "selector": "0x492120a0f16c6b15e513091029ee64d40ac5e2443455f018fda4e2a8a20938d"
+    },
+    {
+      "members": [
+        {
+          "name": "player",
+          "type": "core::starknet::contract_address::ContractAddress",
+          "key": true
+        },
+        {
+          "name": "games_played",
+          "type": "core::integer::u32",
+          "key": false
+        },
+        {
+          "name": "wins",
+          "type": "core::integer::u32",
+          "key": false
+        },
+        {
+          "name": "losses",
+          "type": "core::integer::u32",
+          "key": false
+        },
+        {
+          "name": "total_kills",
+          "type": "core::integer::u32",
+          "key": false
+        },
+        {
+          "name": "total_deaths",
+          "type": "core::integer::u32",
+          "key": false
+        },
+        {
+          "name": "abandons",
+          "type": "core::integer::u32",
+          "key": false
+        }
+      ],
+      "class_hash": "0x73093e8f6b1d7d9c3d8ce0370f266cab0462e520db16913f565f1bcf43bb8b5",
+      "tag": "TB-PlayerProfile",
+      "selector": "0xed8431c435f02a9245d31cae4984ee63ca8beb6f952dd6df49ebf1400b1364"
     },
     {
       "members": [
@@ -4128,6 +4171,70 @@
     },
     {
       "type": "struct",
+      "name": "tactical_beats::models::index::PlayerProfile",
+      "members": [
+        {
+          "name": "player",
+          "type": "core::starknet::contract_address::ContractAddress"
+        },
+        {
+          "name": "games_played",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "wins",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "losses",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "total_kills",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "total_deaths",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "abandons",
+          "type": "core::integer::u32"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "tactical_beats::models::index::PlayerProfileValue",
+      "members": [
+        {
+          "name": "games_played",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "wins",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "losses",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "total_kills",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "total_deaths",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "abandons",
+          "type": "core::integer::u32"
+        }
+      ]
+    },
+    {
+      "type": "struct",
       "name": "tactical_beats::models::index::PlayerState",
       "members": [
         {
@@ -4219,6 +4326,12 @@
     {
       "type": "event",
       "name": "tactical_beats::models::index::m_MatchmakingQueue::Event",
+      "kind": "enum",
+      "variants": []
+    },
+    {
+      "type": "event",
+      "name": "tactical_beats::models::index::m_PlayerProfile::Event",
       "kind": "enum",
       "variants": []
     },
@@ -4423,6 +4536,18 @@
           "type": "function",
           "name": "cancel_matchmaking",
           "inputs": [],
+          "outputs": [],
+          "state_mutability": "external"
+        },
+        {
+          "type": "function",
+          "name": "abandon_game",
+          "inputs": [
+            {
+              "name": "game_id",
+              "type": "core::integer::u32"
+            }
+          ],
           "outputs": [],
           "state_mutability": "external"
         }

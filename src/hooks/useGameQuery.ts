@@ -5,11 +5,13 @@ import {
   GET_OPEN_GAMES,
   GET_ALL_BEAST_STATES,
   GET_PLAYER_STATE,
+  GET_PLAYER_PROFILE,
 } from "../queries/gameQueries";
 import type {
   GameModel,
   BeastStateModel,
   PlayerStateModel,
+  PlayerProfileModel,
 } from "../domain/types";
 
 const NS = (import.meta.env.VITE_DOJO_NAMESPACE || "TB").toLowerCase();
@@ -43,6 +45,18 @@ function parseBeastNode(node: any): BeastStateModel {
     position_row: Number(node.position_row),
     position_col: Number(node.position_col),
     alive: Boolean(node.alive),
+  };
+}
+
+function parseProfileNode(node: any): PlayerProfileModel {
+  return {
+    player: node.player,
+    games_played: Number(node.games_played),
+    wins: Number(node.wins),
+    losses: Number(node.losses),
+    total_kills: Number(node.total_kills),
+    total_deaths: Number(node.total_deaths),
+    abandons: Number(node.abandons),
   };
 }
 
@@ -182,4 +196,34 @@ export function usePlayerState(
   }, [gameId, player, fetchState, pollInterval]);
 
   return { playerState, refetch: fetchState };
+}
+
+export function usePlayerProfile(player: string | null) {
+  const [profile, setProfile] = useState<PlayerProfileModel | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchProfile = useCallback(async () => {
+    if (!player) return;
+    try {
+      const result: any = await graphQLClient.request(GET_PLAYER_PROFILE, { player });
+      const key = `${NS}PlayerProfileModels`;
+      const edges = result?.[key]?.edges;
+      if (edges && edges.length > 0) {
+        setProfile(parseProfileNode(edges[0].node));
+      }
+    } catch (e) {
+      console.error("Failed to fetch player profile:", e);
+    }
+  }, [player]);
+
+  useEffect(() => {
+    if (!player) {
+      setProfile(null);
+      return;
+    }
+    setLoading(true);
+    fetchProfile().finally(() => setLoading(false));
+  }, [player, fetchProfile]);
+
+  return { profile, loading, refetch: fetchProfile };
 }

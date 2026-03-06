@@ -207,7 +207,8 @@ export function HomePage() {
           p={8}
         >
           <VStack gap={4} w="100%" maxW="360px">
-            <Button
+            {/* TODO: Re-enable Create Game and Join Game when private matches are supported */}
+            {/* <Button
               variant="primary"
               size="lg"
               w="100%"
@@ -236,9 +237,7 @@ export function HomePage() {
               >
                 Join
               </Button>
-            </HStack>
-
-            <Box h="1px" bg="surface.border" w="100%" my={2} />
+            </HStack> */}
 
             <Button
               variant="secondary"

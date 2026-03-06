@@ -157,6 +157,27 @@ export function useGameActions() {
     return response;
   }, [client, account, execute]);
 
+  const abandonGame = useCallback(
+    async (gameId: number) => {
+      const response = await execute(client.game_system.abandonGame, [
+        account,
+        gameId,
+      ]);
+      if (response) {
+        const txHash = (response as any)?.transaction_hash;
+        if (txHash) {
+          try {
+            await account.waitForTransaction(txHash, { retryInterval: 100 });
+          } catch (e) {
+            console.error("Failed to confirm abandonGame:", e);
+          }
+        }
+      }
+      return response;
+    },
+    [client, account, execute]
+  );
+
   return {
     createGame,
     joinGame,
@@ -164,6 +185,7 @@ export function useGameActions() {
     executeTurn,
     findMatch,
     cancelMatchmaking,
+    abandonGame,
     isLoading,
     error,
   };

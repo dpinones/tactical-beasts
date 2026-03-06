@@ -464,6 +464,27 @@ export function setupWorld(provider: DojoProvider) {
 		}
 	};
 
+	const build_game_system_abandonGame_calldata = (gameId: BigNumberish): DojoCall => {
+		return {
+			contractName: "game_system",
+			entrypoint: "abandon_game",
+			calldata: [gameId],
+		};
+	};
+
+	const game_system_abandonGame = async (snAccount: Account | AccountInterface, gameId: BigNumberish) => {
+		try {
+			return await provider.execute(
+				snAccount,
+				build_game_system_abandonGame_calldata(gameId),
+				"TB",
+			);
+		} catch (error) {
+			console.error(error);
+			throw error;
+		}
+	};
+
 	const build_game_system_cancelMatchmaking_calldata = (): DojoCall => {
 		return {
 			contractName: "game_system",
@@ -678,6 +699,8 @@ export function setupWorld(provider: DojoProvider) {
 			buildUpdateCalldata: build_Collection_update_calldata,
 		},
 		game_system: {
+			abandonGame: game_system_abandonGame,
+			buildAbandonGameCalldata: build_game_system_abandonGame_calldata,
 			cancelMatchmaking: game_system_cancelMatchmaking,
 			buildCancelMatchmakingCalldata: build_game_system_cancelMatchmaking_calldata,
 			createGame: game_system_createGame,

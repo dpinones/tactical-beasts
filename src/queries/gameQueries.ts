@@ -93,6 +93,24 @@ export const GET_ALL_BEAST_STATES = gql`
   }
 `;
 
+export const GET_PLAYER_PROFILE = gql`
+  query GetPlayerProfile($player: ContractAddress!) {
+    ${NS}PlayerProfileModels(where: { player: $player }) {
+      edges {
+        node {
+          player
+          games_played
+          wins
+          losses
+          total_kills
+          total_deaths
+          abandons
+        }
+      }
+    }
+  }
+`;
+
 export const GET_PLAYER_STATE = gql`
   query GetPlayerState($gameId: u32!, $player: ContractAddress!) {
     ${NS}PlayerStateModels(

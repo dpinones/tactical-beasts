@@ -60,7 +60,7 @@ export function BattlePage() {
   const {
     account: { account },
   } = useDojo();
-  const { executeTurn, isLoading } = useGameActions();
+  const { executeTurn, abandonGame, isLoading } = useGameActions();
   const { game, refetch: refetchGame } = useGameQuery(gameId);
   const { beasts, refetch: refetchBeasts } = useBeastStates(gameId);
   const { battleLog, addBattleEvent, clearBattleLog } = useGameStore();
@@ -583,7 +583,9 @@ export function BattlePage() {
               <Button
                 size="sm"
                 colorScheme="red"
-                onClick={() => {
+                isLoading={isLoading}
+                onClick={async () => {
+                  if (gameId) await abandonGame(gameId);
                   abandonModal.onClose();
                   navigate("/");
                 }}

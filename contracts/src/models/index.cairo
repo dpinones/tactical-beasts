@@ -85,3 +85,16 @@ pub struct MatchmakingQueue {
     pub waiting_player: ContractAddress,
     pub waiting_game_id: u32,
 }
+
+#[derive(Copy, Drop, Serde)]
+#[dojo::model]
+pub struct PlayerProfile {
+    #[key]
+    pub player: ContractAddress,
+    pub games_played: u32,
+    pub wins: u32,
+    pub losses: u32,
+    pub total_kills: u32,
+    pub total_deaths: u32,
+    pub abandons: u32,
+}

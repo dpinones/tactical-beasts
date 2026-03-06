@@ -1,7 +1,7 @@
 use dojo::model::{ModelStorage, ModelStorageTest};
 use starknet::testing::{set_account_contract_address, set_block_timestamp, set_contract_address};
 use crate::constants::{GAME_STATUS_FINISHED, GAME_STATUS_PLAYING, GAME_STATUS_WAITING, MAX_ROUNDS, WIN_BONUS};
-use crate::models::index::{BeastState, Game, GameToken, GameTokens, MatchmakingQueue};
+use crate::models::index::{BeastState, Game, GameToken, GameTokens, MatchmakingQueue, PlayerProfile};
 use crate::systems::game_system::{
     IGameSystemDispatcherTrait, IMinigameTokenDataDispatcher, IMinigameTokenDataDispatcherTrait,
 };
@@ -499,4 +499,257 @@ fn test_cancel_matchmaking_not_in_queue() {
 
     set_player(PLAYER1());
     systems.game.cancel_matchmaking(); // Should panic: "Not in queue"
+}
+
+// --- Abandon Game ---
+
+#[test]
+fn test_abandon_during_play() {
+    let (world, systems) = spawn_game();
+    set_block_timestamp(0);
+    let game_id = setup_full_game(systems);
+
+    // Player 1 abandons
+    set_player(PLAYER1());
+    systems.game.abandon_game(game_id);
+
+    let game: Game = world.read_model(game_id);
+    assert!(game.status == GAME_STATUS_FINISHED, "Game should be finished");
+    assert!(game.winner == PLAYER2(), "Winner should be player 2");
+
+    // Profiles updated
+    let p1_profile: PlayerProfile = world.read_model(PLAYER1());
+    assert!(p1_profile.games_played == 1);
+    assert!(p1_profile.losses == 1);
+    assert!(p1_profile.wins == 0);
+    assert!(p1_profile.abandons == 1, "Abandoner should have 1 abandon");
+
+    let p2_profile: PlayerProfile = world.read_model(PLAYER2());
+    assert!(p2_profile.games_played == 1);
+    assert!(p2_profile.wins == 1);
+    assert!(p2_profile.losses == 0);
+    assert!(p2_profile.abandons == 0, "Winner should have 0 abandons");
+}
+
+#[test]
+fn test_abandon_during_waiting() {
+    let (world, systems) = spawn_game();
+
+    set_player(PLAYER1());
+    let game_id = systems.game.create_game();
+
+    set_player(PLAYER2());
+    systems.game.join_game(game_id);
+
+    // Player 2 abandons before teams are set
+    systems.game.abandon_game(game_id);
+
+    let game: Game = world.read_model(game_id);
+    assert!(game.status == GAME_STATUS_FINISHED);
+    assert!(game.winner == PLAYER1());
+
+    let p2_profile: PlayerProfile = world.read_model(PLAYER2());
+    assert!(p2_profile.games_played == 0, "Game never started, should not count");
+    assert!(p2_profile.losses == 1);
+    assert!(p2_profile.abandons == 1);
+}
+
+#[test]
+fn test_abandon_solo_game() {
+    let (world, systems) = spawn_game();
+
+    set_player(PLAYER1());
+    let game_id = systems.game.create_game();
+
+    // Abandon without opponent — game never started so games_played stays 0
+    systems.game.abandon_game(game_id);
+
+    let game: Game = world.read_model(game_id);
+    assert!(game.status == GAME_STATUS_FINISHED);
+
+    let profile: PlayerProfile = world.read_model(PLAYER1());
+    assert!(profile.games_played == 0, "Game never started, should not count");
+    assert!(profile.losses == 1, "Should count as loss");
+    assert!(profile.abandons == 1, "Should count as abandon");
+    assert!(profile.wins == 0);
+}
+
+#[test]
+#[should_panic]
+fn test_cannot_abandon_finished_game() {
+    let (mut world, systems) = spawn_game();
+    set_block_timestamp(0);
+    let game_id = setup_full_game(systems);
+
+    // Finish the game first
+    let game: Game = world.read_model(game_id);
+    let defender: u8 = if game.current_attacker == 1 { 2 } else { 1 };
+    let attacker_addr = if game.current_attacker == 1 { PLAYER1() } else { PLAYER2() };
+    let mut i: u8 = 0;
+    while i < 3 {
+        let mut b: BeastState = world.read_model((game_id, defender, i));
+        b.alive = false;
+        b.hp = 0;
+        b.extra_lives = 0;
+        world.write_model_test(@b);
+        i += 1;
+    }
+    set_player(attacker_addr);
+    systems.game.execute_turn(
+        game_id,
+        array![
+            Action { beast_index: 0, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
+            Action { beast_index: 1, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
+            Action { beast_index: 2, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
+        ],
+    );
+
+    // Try to abandon finished game — should panic
+    set_player(PLAYER1());
+    systems.game.abandon_game(game_id);
+}
+
+#[test]
+#[should_panic]
+fn test_non_player_cannot_abandon() {
+    let (_world, systems) = spawn_game();
+
+    set_player(PLAYER1());
+    let game_id = systems.game.create_game();
+
+    set_player(PLAYER2());
+    // PLAYER2 hasn't joined yet, so not a player
+    systems.game.abandon_game(game_id);
+}
+
+// --- Player Profile ---
+
+#[test]
+fn test_profile_updated_on_finish() {
+    let (mut world, systems) = spawn_game();
+    set_block_timestamp(0);
+    let game_id = setup_full_game(systems);
+
+    let game: Game = world.read_model(game_id);
+    let attacker = game.current_attacker;
+    let defender: u8 = if attacker == 1 { 2 } else { 1 };
+    let attacker_addr = if attacker == 1 { PLAYER1() } else { PLAYER2() };
+    let defender_addr = if attacker == 1 { PLAYER2() } else { PLAYER1() };
+
+    // Kill all defender beasts
+    let mut i: u8 = 0;
+    while i < 3 {
+        let mut b: BeastState = world.read_model((game_id, defender, i));
+        b.alive = false;
+        b.hp = 0;
+        b.extra_lives = 0;
+        world.write_model_test(@b);
+        i += 1;
+    }
+
+    // Trigger victory
+    set_player(attacker_addr);
+    systems
+        .game
+        .execute_turn(
+            game_id,
+            array![
+                Action { beast_index: 0, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
+                Action { beast_index: 1, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
+                Action { beast_index: 2, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
+            ],
+        );
+
+    // Check winner profile
+    let winner_profile: PlayerProfile = world.read_model(attacker_addr);
+    assert!(winner_profile.games_played == 1, "Winner should have 1 game played");
+    assert!(winner_profile.wins == 1, "Winner should have 1 win");
+    assert!(winner_profile.losses == 0, "Winner should have 0 losses");
+    assert!(winner_profile.total_kills == 3, "Winner should have 3 kills");
+    assert!(winner_profile.total_deaths == 0, "Winner should have 0 deaths");
+
+    // Check loser profile
+    let loser_profile: PlayerProfile = world.read_model(defender_addr);
+    assert!(loser_profile.games_played == 1, "Loser should have 1 game played");
+    assert!(loser_profile.wins == 0, "Loser should have 0 wins");
+    assert!(loser_profile.losses == 1, "Loser should have 1 loss");
+    assert!(loser_profile.total_kills == 0, "Loser should have 0 kills");
+    assert!(loser_profile.total_deaths == 3, "Loser should have 3 deaths");
+}
+
+#[test]
+fn test_profile_accumulates_across_games() {
+    let (mut world, systems) = spawn_game();
+    set_block_timestamp(0);
+
+    // Game 1: attacker wins
+    let game_id = setup_full_game(systems);
+    let game: Game = world.read_model(game_id);
+    let attacker = game.current_attacker;
+    let defender: u8 = if attacker == 1 { 2 } else { 1 };
+    let attacker_addr = if attacker == 1 { PLAYER1() } else { PLAYER2() };
+
+    let mut i: u8 = 0;
+    while i < 3 {
+        let mut b: BeastState = world.read_model((game_id, defender, i));
+        b.alive = false;
+        b.hp = 0;
+        b.extra_lives = 0;
+        world.write_model_test(@b);
+        i += 1;
+    }
+
+    set_player(attacker_addr);
+    systems
+        .game
+        .execute_turn(
+            game_id,
+            array![
+                Action { beast_index: 0, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
+                Action { beast_index: 1, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
+                Action { beast_index: 2, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
+            ],
+        );
+
+    // Game 2: same players, attacker wins again
+    set_player(PLAYER1());
+    let game_id2 = systems.game.create_game();
+    set_player(PLAYER2());
+    systems.game.join_game(game_id2);
+    set_player(PLAYER1());
+    systems.game.set_team(game_id2, 1, 26, 51);
+    set_player(PLAYER2());
+    systems.game.set_team(game_id2, 10, 40, 60);
+
+    let game2: Game = world.read_model(game_id2);
+    let attacker2 = game2.current_attacker;
+    let defender2: u8 = if attacker2 == 1 { 2 } else { 1 };
+    let attacker_addr2 = if attacker2 == 1 { PLAYER1() } else { PLAYER2() };
+
+    let mut j: u8 = 0;
+    while j < 3 {
+        let mut b: BeastState = world.read_model((game_id2, defender2, j));
+        b.alive = false;
+        b.hp = 0;
+        b.extra_lives = 0;
+        world.write_model_test(@b);
+        j += 1;
+    }
+
+    set_player(attacker_addr2);
+    systems
+        .game
+        .execute_turn(
+            game_id2,
+            array![
+                Action { beast_index: 0, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
+                Action { beast_index: 1, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
+                Action { beast_index: 2, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
+            ],
+        );
+
+    // attacker_addr should have 2 wins (both games, attacker is always player1 with current_attacker=1)
+    let profile: PlayerProfile = world.read_model(attacker_addr);
+    assert!(profile.games_played == 2, "Should have 2 games played");
+    assert!(profile.wins == 2, "Should have 2 wins");
 }

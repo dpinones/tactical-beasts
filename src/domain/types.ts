@@ -120,5 +120,15 @@ export interface PlayerStateModel {
   potion_used: boolean;
 }
 
+export interface PlayerProfileModel {
+  player: string;
+  games_played: number;
+  wins: number;
+  losses: number;
+  total_kills: number;
+  total_deaths: number;
+  abandons: number;
+}
+
 export const ZERO_ADDR =
   "0x0000000000000000000000000000000000000000000000000000000000000000";

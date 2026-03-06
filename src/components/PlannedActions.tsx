@@ -16,6 +16,24 @@ interface PlannedActionsProps {
   isLoading: boolean;
 }
 
+function actionSymbol(type: ActionType): string {
+  switch (type) {
+    case ActionType.MOVE: return "->";
+    case ActionType.ATTACK: return "x";
+    case ActionType.WAIT: return "||";
+    case ActionType.CONSUMABLE_ATTACK_POTION: return "+x";
+  }
+}
+
+function actionBorderColor(type: ActionType): string {
+  switch (type) {
+    case ActionType.MOVE: return "#33FF66";
+    case ActionType.ATTACK: return "#E84040";
+    case ActionType.WAIT: return "#FFD700";
+    case ActionType.CONSUMABLE_ATTACK_POTION: return "#FFE033";
+  }
+}
+
 function describeAction(action: GameAction, enemyBeasts: BeastStateModel[]): string {
   switch (action.actionType) {
     case ActionType.MOVE:
@@ -59,12 +77,13 @@ export function PlannedActions({
         justify="space-between"
         bg="surface.panel"
         border="1px solid"
-        borderColor="surface.border"
+        borderColor={potionToggle ? "gold.400" : "surface.border"}
         borderRadius="3px"
-        px={2}
-        py={1.5}
+        px={3}
+        py={2}
+        boxShadow={potionToggle ? "glowGold" : "none"}
       >
-        <Text fontSize="8px" color={potionUsed ? "text.muted" : "gold.400"} fontFamily="mono" fontWeight="600" textTransform="uppercase">
+        <Text fontSize="xs" color={potionUsed ? "text.muted" : "gold.400"} fontFamily="mono" fontWeight="600" textTransform="uppercase">
           Use Potion
         </Text>
         <Switch
@@ -85,7 +104,7 @@ export function PlannedActions({
         p={2}
       >
         <Text
-          fontSize="9px"
+          fontSize="sm"
           color="gold.400"
           fontFamily="heading"
           textTransform="uppercase"
@@ -110,18 +129,23 @@ export function PlannedActions({
                 key={idx}
                 align="center"
                 gap={1.5}
-                px={1.5}
-                py={1}
+                px={2}
+                py={1.5}
                 bg="rgba(255,215,0,0.05)"
                 borderRadius="2px"
+                borderLeft="3px solid"
+                borderLeftColor={actionBorderColor(action.actionType)}
               >
-                <Text fontSize="8px" color="text.muted" fontFamily="mono" fontWeight="700" w="12px">
+                <Text fontSize="xs" color="text.muted" fontFamily="mono" fontWeight="700" w="14px">
                   {i + 1}.
                 </Text>
-                <Text fontSize="8px" color={color} fontFamily="mono" fontWeight="600" minW="40px">
+                <Text fontSize="xs" color={color} fontFamily="mono" fontWeight="600" minW="40px">
                   {typeName}
                 </Text>
-                <Text fontSize="8px" color="gold.400" fontFamily="mono" flex={1} noOfLines={1}>
+                <Text fontSize="xs" color="text.muted" fontFamily="mono" fontWeight="700" minW="16px">
+                  {actionSymbol(action.actionType)}
+                </Text>
+                <Text fontSize="xs" color="gold.400" fontFamily="mono" flex={1} noOfLines={1}>
                   {describeAction(action, enemyBeasts)}
                 </Text>
               </Flex>
@@ -140,19 +164,17 @@ export function PlannedActions({
                   key={Number(beast.beast_index)}
                   align="center"
                   gap={1.5}
-                  px={1.5}
-                  py={1}
+                  px={2}
+                  py={1.5}
                   borderRadius="2px"
                 >
-                  <Text fontSize="8px" color="text.muted" fontFamily="mono" fontWeight="700" w="12px">
+                  <Text fontSize="xs" color="text.muted" fontFamily="mono" fontWeight="700" w="14px">
                     -
                   </Text>
-                  <Text fontSize="8px" color={color} fontFamily="mono" fontWeight="600" minW="40px">
+                  <Text fontSize="xs" color={color} fontFamily="mono" fontWeight="600" minW="40px">
                     {typeName}
                   </Text>
-                  <Text fontSize="8px" color="text.muted" fontFamily="mono" flex={1} noOfLines={1}>
-                    (awaiting...)
-                  </Text>
+                  <Box as="span" w="6px" h="6px" borderRadius="50%" bg="gold.400" className="pending-dot" />
                 </Flex>
               );
             })}
@@ -163,21 +185,21 @@ export function PlannedActions({
       <HStack gap={1.5}>
         <Button
           size="xs"
-          variant="ghost"
+          variant="secondary"
           onClick={onUndoLast}
           isDisabled={actions.size === 0}
           flex={1}
-          fontSize="9px"
+          fontSize="xs"
         >
           Undo Last
         </Button>
         <Button
           size="xs"
-          variant="ghost"
+          variant="secondary"
           onClick={onClearAll}
           isDisabled={actions.size === 0}
           flex={1}
-          fontSize="9px"
+          fontSize="xs"
         >
           Clear All
         </Button>
@@ -185,10 +207,12 @@ export function PlannedActions({
       <Button
         variant="primary"
         size="sm"
+        fontSize="sm"
         onClick={onConfirm}
         isDisabled={!allActionsSet}
         isLoading={isLoading}
         w="100%"
+        className={allActionsSet ? "confirm-ready-glow" : undefined}
       >
         Confirm ({actions.size}/{aliveBeasts.length})
       </Button>

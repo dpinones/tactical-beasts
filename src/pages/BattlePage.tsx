@@ -15,6 +15,7 @@ import {
   ModalBody,
   ModalCloseButton,
   useDisclosure,
+  Divider,
 } from "@chakra-ui/react";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
@@ -392,46 +393,70 @@ export function BattlePage() {
   const potionUsed = false; // TODO: read from PlayerState
 
   return (
-    <Flex direction="column" h="100vh" p={3} maxW="1400px" mx="auto" overflow="hidden">
+    <Flex direction="column" h="100vh" p={3} maxW="1500px" mx="auto" overflow="hidden">
       {/* Top bar */}
-      <Flex justify="space-between" align="center" mb={2} flexShrink={0}>
+      <Flex
+        justify="space-between"
+        align="center"
+        mb={2}
+        flexShrink={0}
+        bg="surface.panel"
+        border="1px solid"
+        borderColor="surface.border"
+        borderRadius="3px"
+        px={4}
+        py={2.5}
+      >
         <Flex align="center" gap={3}>
           <Heading
             size="sm"
+            fontSize="md"
             fontFamily="heading"
             color="green.300"
             textTransform="uppercase"
           >
             Game #{gameId}
           </Heading>
-          <Badge variant="magical">Round {game.round}</Badge>
+          <Divider orientation="vertical" h="20px" borderColor="surface.border" />
+          <Badge variant="magical" px={4} py={1.5}>Round {game.round}</Badge>
         </Flex>
 
-        <HStack gap={3}>
-          <Badge
-            variant={isMyTurn ? "magical" : "brute"}
-            fontSize="xs"
-            px={3}
-            py={1}
+        <Box
+          border="2px solid"
+          borderColor={isMyTurn ? "green.400" : "danger.300"}
+          borderRadius="3px"
+          px={6}
+          py={2}
+          className={isMyTurn ? "turn-indicator-pulse" : ""}
+        >
+          <Text
+            fontSize="sm"
+            fontFamily="heading"
+            fontWeight="700"
+            color={isMyTurn ? "green.300" : "danger.300"}
+            textTransform="uppercase"
+            letterSpacing="0.1em"
           >
             {isMyTurn ? "YOUR TURN" : "OPPONENT'S TURN"}
-          </Badge>
-          <Button
-            size="xs"
-            variant="outline"
-            colorScheme="red"
-            onClick={abandonModal.onOpen}
-          >
-            Abandon
-          </Button>
-        </HStack>
+          </Text>
+        </Box>
+
+        <Button
+          size="xs"
+          variant="danger"
+          onClick={abandonModal.onOpen}
+        >
+          Abandon
+        </Button>
       </Flex>
 
       {/* Guidance bar */}
       <Box
-        bg={isMyTurn ? "rgba(0,255,68,0.06)" : "rgba(255,51,51,0.06)"}
+        bg={isMyTurn ? "rgba(0,255,68,0.1)" : "rgba(255,51,51,0.1)"}
         border="1px solid"
         borderColor={isMyTurn ? "rgba(0,255,68,0.2)" : "rgba(255,51,51,0.2)"}
+        borderLeft="3px solid"
+        borderLeftColor={isMyTurn ? "green.400" : "danger.300"}
         borderRadius="3px"
         px={3}
         py={2}
@@ -439,7 +464,7 @@ export function BattlePage() {
         flexShrink={0}
         textAlign="center"
       >
-        <Text fontSize="xs" color={isMyTurn ? "green.300" : "danger.300"} fontFamily="mono">
+        <Text fontSize="sm" color={isMyTurn ? "green.300" : "danger.300"} fontFamily="mono">
           {guidanceMessage}
         </Text>
       </Box>
@@ -448,14 +473,14 @@ export function BattlePage() {
       <Flex gap={3} flex={1} minH={0}>
         {/* Left: My beasts + PlannedActions */}
         <VStack
-          w="190px"
+          w="240px"
           gap={2}
           align="stretch"
           flexShrink={0}
           display={{ base: "none", lg: "flex" }}
         >
           <Text
-            fontSize="9px"
+            fontSize="sm"
             color="green.300"
             fontFamily="heading"
             textTransform="uppercase"
@@ -504,9 +529,9 @@ export function BattlePage() {
           )}
         </VStack>
 
-        {/* Center: HexGrid only */}
+        {/* Center: HexGrid with waiting overlay */}
         <VStack flex={1} minW={0} gap={2} align="stretch">
-          <Box flex={1} minH={0} overflow="auto">
+          <Box flex={1} minH={0} overflow="auto" position="relative">
             <HexGrid
               hexSize={46}
               myBeasts={myBeasts}
@@ -520,37 +545,41 @@ export function BattlePage() {
               actions={actions}
               obstacles={obstacles}
             />
-          </Box>
 
-          {!isMyTurn && (
-            <Box
-              bg="surface.panel"
-              border="1px solid"
-              borderColor="surface.border"
-              borderRadius="3px"
-              p={3}
-              textAlign="center"
-            >
-              <HStack justify="center" gap={2}>
-                <Spinner size="sm" color="green.400" />
-                <Text fontSize="xs" color="text.secondary">
-                  Waiting for opponent...
-                </Text>
-              </HStack>
-            </Box>
-          )}
+            {!isMyTurn && (
+              <Flex
+                position="absolute"
+                top={0}
+                left={0}
+                right={0}
+                bottom={0}
+                bg="rgba(11,26,11,0.6)"
+                backdropFilter="blur(1px)"
+                align="center"
+                justify="center"
+                borderRadius="3px"
+              >
+                <VStack gap={3}>
+                  <Spinner size="lg" color="green.400" thickness="3px" />
+                  <Text fontSize="sm" color="text.secondary" fontFamily="mono">
+                    Waiting for opponent...
+                  </Text>
+                </VStack>
+              </Flex>
+            )}
+          </Box>
         </VStack>
 
         {/* Right: Enemy beasts + Battle log */}
         <VStack
-          w="190px"
+          w="240px"
           gap={2}
           align="stretch"
           flexShrink={0}
           display={{ base: "none", lg: "flex" }}
         >
           <Text
-            fontSize="9px"
+            fontSize="sm"
             color="danger.300"
             fontFamily="heading"
             textTransform="uppercase"
@@ -583,12 +612,12 @@ export function BattlePage() {
               Are you sure you want to abandon this game? This will count as a loss.
             </Text>
             <HStack justify="flex-end" gap={3}>
-              <Button size="sm" variant="outline" onClick={abandonModal.onClose}>
+              <Button size="sm" variant="secondary" onClick={abandonModal.onClose}>
                 Cancel
               </Button>
               <Button
                 size="sm"
-                colorScheme="red"
+                variant="danger"
                 isLoading={isLoading}
                 onClick={async () => {
                   if (gameId) await abandonGame(gameId);

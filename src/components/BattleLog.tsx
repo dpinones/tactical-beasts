@@ -28,6 +28,39 @@ function eventColor(type: BattleEvent["type"]): string {
   }
 }
 
+function eventSymbol(type: BattleEvent["type"]): string {
+  switch (type) {
+    case "attack":
+    case "counterattack":
+      return "[ATK]";
+    case "ko":
+      return "[KO]";
+    case "move":
+      return "[MOV]";
+    case "crit":
+      return "[CRT]";
+    case "extra_life":
+      return "[+HP]";
+    case "potion":
+      return "[POT]";
+    case "wait":
+      return "[---]";
+    default:
+      return "";
+  }
+}
+
+function eventBg(type: BattleEvent["type"]): string | undefined {
+  switch (type) {
+    case "ko":
+      return "rgba(232,64,64,0.08)";
+    case "crit":
+      return "rgba(255,215,0,0.08)";
+    default:
+      return undefined;
+  }
+}
+
 export function BattleLog({ events }: BattleLogProps) {
   const endRef = useRef<HTMLDivElement>(null);
 
@@ -42,7 +75,6 @@ export function BattleLog({ events }: BattleLogProps) {
       borderColor="surface.border"
       borderRadius="3px"
       h="100%"
-      maxH="300px"
       overflow="hidden"
       display="flex"
       flexDirection="column"
@@ -55,7 +87,7 @@ export function BattleLog({ events }: BattleLogProps) {
       >
         <Text
           fontFamily="heading"
-          fontSize="xs"
+          fontSize="sm"
           fontWeight="600"
           color="green.300"
           textTransform="uppercase"
@@ -67,21 +99,34 @@ export function BattleLog({ events }: BattleLogProps) {
       <Box flex={1} overflowY="auto" px={3} py={2}>
         <VStack align="stretch" gap={1}>
           {events.length === 0 ? (
-            <Text fontSize="xs" color="text.muted">
+            <Text fontSize="sm" color="text.muted">
               Waiting for actions...
             </Text>
           ) : (
             events.map((event, i) => (
-              <Flex key={i} gap={2} align="flex-start">
+              <Flex
+                key={i}
+                gap={2}
+                align="flex-start"
+                borderLeft="2px solid"
+                borderLeftColor={eventColor(event.type)}
+                px={3}
+                py={1.5}
+                borderRadius="2px"
+                bg={eventBg(event.type)}
+                className="battle-log-entry-appear"
+              >
                 <Text
                   fontSize="xs"
-                  color="text.muted"
+                  color={eventColor(event.type)}
                   fontFamily="mono"
-                  minW="20px"
+                  fontWeight="700"
+                  minW="32px"
+                  flexShrink={0}
                 >
-                  {i + 1}.
+                  {eventSymbol(event.type)}
                 </Text>
-                <Text fontSize="xs" color={eventColor(event.type)}>
+                <Text fontSize="sm" color={eventColor(event.type)}>
                   {event.message}
                 </Text>
               </Flex>

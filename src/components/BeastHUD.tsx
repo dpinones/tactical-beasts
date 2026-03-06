@@ -15,11 +15,27 @@ interface BeastHUDProps {
 
 function actionShortLabel(type: ActionType): string {
   switch (type) {
-    case ActionType.WAIT: return "Wait";
-    case ActionType.MOVE: return "Move";
-    case ActionType.ATTACK: return "Attack";
-    case ActionType.CONSUMABLE_ATTACK_POTION: return "Potion+Atk";
+    case ActionType.WAIT: return "|| Wait";
+    case ActionType.MOVE: return "-> Move";
+    case ActionType.ATTACK: return "x Attack";
+    case ActionType.CONSUMABLE_ATTACK_POTION: return "+x Potion+Atk";
   }
+}
+
+function actionColor(type: ActionType): string {
+  switch (type) {
+    case ActionType.MOVE: return "#33FF66";
+    case ActionType.ATTACK: return "#E84040";
+    case ActionType.WAIT: return "#FFD700";
+    case ActionType.CONSUMABLE_ATTACK_POTION: return "#FFE033";
+  }
+}
+
+function hpVariant(hpPct: number, isMine: boolean): string {
+  if (!isMine) return "hpEnemy";
+  if (hpPct > 60) return "hp";
+  if (hpPct > 30) return "hpWarning";
+  return "hpEnemy";
 }
 
 export function BeastHUD({
@@ -50,11 +66,11 @@ export function BeastHUD({
   return (
     <Box
       bg={isSelected ? "rgba(0,255,68,0.1)" : "surface.panel"}
-      border="1px solid"
+      border={isSelected ? "2px solid" : "1px solid"}
       borderColor={isSelected ? "green.400" : alive ? "surface.border" : "danger.700"}
       borderRadius="3px"
       p={2}
-      opacity={alive ? 1 : 0.4}
+      opacity={alive ? 1 : 0.35}
       cursor={onClick ? "pointer" : "default"}
       onClick={onClick}
       transition="all 0.15s"
@@ -66,19 +82,20 @@ export function BeastHUD({
       boxShadow={isSelected ? "glow" : "none"}
       minW="140px"
       position="relative"
+      className={isSelected ? "beast-selected-glow" : !alive ? "beast-ko" : undefined}
     >
       {onWait && alive && (
         <Box
           as="button"
           position="absolute"
-          top="4px"
-          right="4px"
+          top="6px"
+          right="6px"
           bg="rgba(255,215,0,0.15)"
           border="1px solid rgba(255,215,0,0.3)"
           borderRadius="3px"
-          px={1.5}
-          py={0.5}
-          fontSize="8px"
+          px={2}
+          py={1}
+          fontSize="9px"
           fontWeight="700"
           fontFamily="mono"
           color="gold.400"
@@ -90,7 +107,7 @@ export function BeastHUD({
             onWait();
           }}
         >
-          ZZ
+          WAIT
         </Box>
       )}
       <Flex gap={2} mb={1}>
@@ -98,24 +115,26 @@ export function BeastHUD({
         <Image
           src={getBeastImagePath(Number(beast.beast_id))}
           alt={beastName || typeName}
-          w="40px"
-          h="40px"
+          w="52px"
+          h="52px"
           objectFit="contain"
           borderRadius="4px"
+          borderTop="2px solid"
+          borderTopColor={typeColor}
           border="1px solid"
           borderColor={isMine ? "rgba(0,255,68,0.2)" : "rgba(232,64,64,0.2)"}
           bg="surface.card"
           flexShrink={0}
           fallback={
-            <Flex w="40px" h="40px" align="center" justify="center" bg="surface.card" borderRadius="4px" border="1px solid" borderColor="surface.border" flexShrink={0}>
-              <Text fontSize="sm" color={typeColor} fontWeight="bold">{typeName[0]}</Text>
+            <Flex w="52px" h="52px" align="center" justify="center" bg="surface.card" borderRadius="4px" border="1px solid" borderColor="surface.border" borderTop="2px solid" borderTopColor={typeColor} flexShrink={0}>
+              <Text fontSize="md" color={typeColor} fontWeight="bold">{typeName[0]}</Text>
             </Flex>
           }
         />
         <Box flex={1} minW={0}>
           <Flex justify="space-between" align="center" mb={1}>
             <Text
-              fontSize="xs"
+              fontSize="sm"
               fontWeight="600"
               color={alive ? typeColor : "text.muted"}
               fontFamily="heading"
@@ -125,7 +144,7 @@ export function BeastHUD({
               {Number(beast.beast_index) + 1}.{" "}
               {beastName || typeName}
             </Text>
-            <Badge variant={badgeVariant} fontSize="7px">
+            <Badge variant={badgeVariant} fontSize="xs">
               {typeName}
             </Badge>
           </Flex>
@@ -133,17 +152,17 @@ export function BeastHUD({
           {/* HP Bar */}
           <Box mb={1}>
             <Flex justify="space-between" mb="2px">
-              <Text fontSize="7px" color="text.secondary" textTransform="uppercase">
+              <Text fontSize="xs" color="text.secondary" textTransform="uppercase">
                 HP
               </Text>
-              <Text fontSize="7px" color="text.gold" fontFamily="mono" fontWeight="700">
+              <Text fontSize="xs" color="text.gold" fontFamily="mono" fontWeight="700">
                 {hp}/{hpMax}
               </Text>
             </Flex>
             <Progress
               value={hpPct}
               size="xs"
-              variant={isMine ? "hp" : "hpEnemy"}
+              variant={hpVariant(hpPct, isMine)}
               borderRadius="2px"
             />
           </Box>
@@ -151,7 +170,7 @@ export function BeastHUD({
           {/* Stats row */}
           <Flex justify="space-between" gap={2}>
             <Flex direction="column" align="center">
-              <Text fontSize="6px" color="text.secondary" textTransform="uppercase">
+              <Text fontSize="8px" color="text.secondary" textTransform="uppercase">
                 LVL
               </Text>
               <Text fontSize="xs" color="text.gold" fontFamily="mono" fontWeight="700">
@@ -159,7 +178,7 @@ export function BeastHUD({
               </Text>
             </Flex>
             <Flex direction="column" align="center">
-              <Text fontSize="6px" color="text.secondary" textTransform="uppercase">
+              <Text fontSize="8px" color="text.secondary" textTransform="uppercase">
                 TIER
               </Text>
               <Text fontSize="xs" color="text.gold" fontFamily="mono" fontWeight="700">
@@ -167,7 +186,7 @@ export function BeastHUD({
               </Text>
             </Flex>
             <Flex direction="column" align="center">
-              <Text fontSize="6px" color="text.secondary" textTransform="uppercase">
+              <Text fontSize="8px" color="text.secondary" textTransform="uppercase">
                 LIVES
               </Text>
               <Text
@@ -200,13 +219,15 @@ export function BeastHUD({
         <Box
           mt={1}
           bg="rgba(255,215,0,0.1)"
-          border="1px solid rgba(255,215,0,0.25)"
+          border="1px solid"
+          borderColor={actionColor(plannedAction.actionType)}
           borderRadius="2px"
           px={2}
           py={0.5}
           textAlign="center"
+          boxShadow={plannedAction.actionType === ActionType.CONSUMABLE_ATTACK_POTION ? "glowGold" : "none"}
         >
-          <Text fontSize="7px" color="gold.400" fontWeight="700" fontFamily="mono" textTransform="uppercase">
+          <Text fontSize="xs" color={actionColor(plannedAction.actionType)} fontWeight="700" fontFamily="mono" textTransform="uppercase">
             {actionShortLabel(plannedAction.actionType)}
           </Text>
         </Box>

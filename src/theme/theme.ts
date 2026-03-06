@@ -319,6 +319,11 @@ const theme = {
             bg: "linear-gradient(90deg, #AA1111, #FF3333)",
           },
         },
+        hpWarning: {
+          filledTrack: {
+            bg: "linear-gradient(90deg, #B39700, #FFD700)",
+          },
+        },
         xp: {
           filledTrack: {
             bg: "linear-gradient(90deg, #B39700, #FFD700)",

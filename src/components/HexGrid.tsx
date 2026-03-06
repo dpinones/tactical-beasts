@@ -42,10 +42,13 @@ export function HexGrid({
   actions = new Map(),
   obstacles = OBSTACLES,
 }: HexGridProps) {
+  // Flip board so the current player's beasts are always at the bottom
+  const flipBoard = myPlayerIndex === 1;
   const maxCols = Math.max(...ARENA_ROWS);
   const w = Math.sqrt(3) * hexSize;
   const svgWidth = maxCols * w + w;
   const svgHeight = ARENA_ROWS.length * (hexSize * 1.5) + hexSize;
+  const lastRow = ARENA_ROWS.length - 1;
 
   const allBeasts = [...myBeasts, ...enemyBeasts];
 
@@ -263,24 +266,27 @@ export function HexGrid({
         </defs>
 
         {/* Render cells */}
-        {ARENA_ROWS.map((cols, row) =>
-          Array.from({ length: cols }, (_, col) => {
-            const { x, y } = hexToPixel(row, col, hexSize);
-            const beast = getBeastAt(row, col);
-            const cellClass = getCellClass(row, col);
-            const clickable = isInMoveCells(row, col) || isInAttackCells(row, col);
+        {ARENA_ROWS.map((cols, logicalRow) => {
+          const visualRow = flipBoard ? lastRow - logicalRow : logicalRow;
+          const visualCols = ARENA_ROWS[visualRow];
+          return Array.from({ length: cols }, (_, col) => {
+            // Use visualRow for pixel position, logicalRow for data
+            const { x, y } = hexToPixel(visualRow, col, hexSize);
+            const beast = getBeastAt(logicalRow, col);
+            const cellClass = getCellClass(logicalRow, col);
+            const clickable = isInMoveCells(logicalRow, col) || isInAttackCells(logicalRow, col);
 
             return (
-              <g key={`cell-${row}-${col}`}>
+              <g key={`cell-${logicalRow}-${col}`}>
                 <polygon
                   points={hexPoints(x, y, hexSize * 0.92)}
                   className={cellClass}
-                  onClick={() => onCellClick(row, col)}
+                  onClick={() => onCellClick(logicalRow, col)}
                   style={{ cursor: clickable ? "pointer" : "default" }}
                 />
 
                 {/* Obstacle marker — stone circles */}
-                {isObstacle(row, col, obstacles) && (
+                {isObstacle(logicalRow, col, obstacles) && (
                   <g style={{ pointerEvents: "none" }}>
                     <circle cx={x} cy={y} r={hexSize * 0.18} fill="rgba(90,70,40,0.5)" stroke="rgba(70,55,30,0.6)" strokeWidth={0.8} />
                     <circle cx={x - hexSize * 0.15} cy={y + hexSize * 0.1} r={hexSize * 0.1} fill="rgba(80,60,35,0.4)" />
@@ -292,8 +298,8 @@ export function HexGrid({
                 {beast && renderBeast(beast, x, y)}
               </g>
             );
-          })
-        )}
+          });
+        })}
       </svg>
     </Box>
   );

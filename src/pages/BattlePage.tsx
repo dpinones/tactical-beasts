@@ -165,12 +165,15 @@ export function BattlePage() {
       .filter((ep) => hexDistance(pos, ep) <= atkRange);
   }, [selectedBeast, enemyBeasts]);
 
-  // Auto-advance: select next beast without an action
-  const autoAdvance = useCallback(() => {
-    const aliveBeasts = myBeasts.filter((b) => b.alive);
-    const next = aliveBeasts.find((b) => !actions.has(Number(b.beast_index)));
-    setSelectedBeastIndex(next ? Number(next.beast_index) : null);
-  }, [myBeasts, actions]);
+  // Auto-advance: select next beast without an action (receives updated map)
+  const autoAdvance = useCallback(
+    (updatedActions: Map<number, GameAction>) => {
+      const aliveBeasts = myBeasts.filter((b) => b.alive);
+      const next = aliveBeasts.find((b) => !updatedActions.has(Number(b.beast_index)));
+      setSelectedBeastIndex(next ? Number(next.beast_index) : null);
+    },
+    [myBeasts]
+  );
 
   // --- Action handlers ---
 
@@ -188,10 +191,10 @@ export function BattlePage() {
           targetRow: row,
           targetCol: col,
         };
-        setActions((prev) => new Map(prev).set(selectedBeastIndex, action));
+        const updated = new Map(actions).set(selectedBeastIndex, action);
+        setActions(updated);
         setActionHistory((prev) => [...prev.filter((i) => i !== selectedBeastIndex), selectedBeastIndex]);
-        // Use setTimeout to let state settle before auto-advancing
-        setTimeout(() => autoAdvance(), 0);
+        autoAdvance(updated);
         return;
       }
 
@@ -209,10 +212,11 @@ export function BattlePage() {
             targetRow: 0,
             targetCol: 0,
           };
-          setActions((prev) => new Map(prev).set(selectedBeastIndex, action));
+          const updated = new Map(actions).set(selectedBeastIndex, action);
+          setActions(updated);
           setActionHistory((prev) => [...prev.filter((i) => i !== selectedBeastIndex), selectedBeastIndex]);
           if (potionToggle) setPotionToggle(false);
-          setTimeout(() => autoAdvance(), 0);
+          autoAdvance(updated);
           return;
         }
       }
@@ -220,7 +224,7 @@ export function BattlePage() {
       // Click outside range → deselect
       setSelectedBeastIndex(null);
     },
-    [selectedBeastIndex, moveCells, attackCells, enemyBeasts, potionToggle, autoAdvance]
+    [selectedBeastIndex, moveCells, attackCells, enemyBeasts, potionToggle, autoAdvance, actions]
   );
 
   const handleBeastClick = useCallback(
@@ -240,10 +244,11 @@ export function BattlePage() {
             targetRow: 0,
             targetCol: 0,
           };
-          setActions((prev) => new Map(prev).set(selectedBeastIndex, action));
+          const updated = new Map(actions).set(selectedBeastIndex, action);
+          setActions(updated);
           setActionHistory((prev) => [...prev.filter((i) => i !== selectedBeastIndex), selectedBeastIndex]);
           if (potionToggle) setPotionToggle(false);
-          setTimeout(() => autoAdvance(), 0);
+          autoAdvance(updated);
           return;
         }
       }
@@ -258,7 +263,7 @@ export function BattlePage() {
         }
       }
     },
-    [myPlayerIndex, selectedBeastIndex, enemyBeasts, attackCells, potionToggle, autoAdvance]
+    [myPlayerIndex, selectedBeastIndex, enemyBeasts, attackCells, potionToggle, autoAdvance, actions]
   );
 
   const handleWait = useCallback(
@@ -270,11 +275,12 @@ export function BattlePage() {
         targetRow: 0,
         targetCol: 0,
       };
-      setActions((prev) => new Map(prev).set(beastIndex, action));
+      const updated = new Map(actions).set(beastIndex, action);
+      setActions(updated);
       setActionHistory((prev) => [...prev.filter((i) => i !== beastIndex), beastIndex]);
-      setTimeout(() => autoAdvance(), 0);
+      autoAdvance(updated);
     },
-    [autoAdvance]
+    [autoAdvance, actions]
   );
 
   const handleUndoLast = useCallback(() => {

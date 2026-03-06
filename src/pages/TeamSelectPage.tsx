@@ -27,6 +27,7 @@ export function TeamSelectPage() {
   const location = useLocation();
 
   const isCreateMode = location.pathname === "/team-select/create";
+  const isMatchMode = location.pathname.startsWith("/team-select/match");
   const joinGameId = gameIdParam ? parseInt(gameIdParam) : null;
 
   const { createGame, joinGame, setTeam, isLoading } = useGameActions();
@@ -36,7 +37,9 @@ export function TeamSelectPage() {
   const [tierFilter, setTierFilter] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const [statusMsg, setStatusMsg] = useState("");
-  const [phase, setPhase] = useState<Phase>(isCreateMode ? "creating" : "joining");
+  const [phase, setPhase] = useState<Phase>(
+    isMatchMode ? "select" : isCreateMode ? "creating" : "joining"
+  );
   const [gameId, setGameId] = useState<number | null>(joinGameId);
 
   const catalog = useMemo(() => loadBeastCatalog(), []);
@@ -66,6 +69,13 @@ export function TeamSelectPage() {
     }
     return result.slice(0, 50);
   }, [catalog, filter, tierFilter, search]);
+
+  // Match mode: skip create/join, go directly to team select
+  useEffect(() => {
+    if (isMatchMode && joinGameId) {
+      setActiveGameId(joinGameId);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Step 1: Create game onchain (no beasts)
   useEffect(() => {

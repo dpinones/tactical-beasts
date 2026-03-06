@@ -1,18 +1,115 @@
 import { Box, Flex, Heading, Text, Spinner, Button } from "@chakra-ui/react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useGameActions } from "../hooks/useGameActions";
+import { useGameQuery } from "../hooks/useGameQuery";
+
+type Phase = "searching" | "waiting" | "matched" | "cancelling" | "error";
 
 export function MatchmakingPage() {
   const navigate = useNavigate();
+  const { findMatch, cancelMatchmaking } = useGameActions();
 
+  const [phase, setPhase] = useState<Phase>("searching");
+  const [gameId, setGameId] = useState<number | null>(null);
+  const [errorMsg, setErrorMsg] = useState("");
+  const calledRef = useRef(false);
+
+  // Step 1: Call find_match on mount
+  useEffect(() => {
+    if (calledRef.current) return;
+    calledRef.current = true;
+
+    (async () => {
+      const id = await findMatch();
+      if (!id) {
+        setPhase("error");
+        setErrorMsg("Failed to find match");
+        return;
+      }
+      setGameId(id);
+      // Will transition to "waiting" or "matched" based on poll below
+      setPhase("waiting");
+    })();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Step 2: Poll game state to detect when opponent joins
+  const { game: polledGame } = useGameQuery(gameId);
+
+  useEffect(() => {
+    if (phase !== "waiting" || !polledGame || !gameId) return;
+
+    // If player2 is set, match found
+    if (polledGame.player2 && polledGame.player2 !== "0x0") {
+      setPhase("matched");
+      navigate(`/team-select/match/${gameId}`);
+    }
+  }, [phase, polledGame, gameId, navigate]);
+
+  // Handle cancel
+  const handleCancel = async () => {
+    setPhase("cancelling");
+    try {
+      await cancelMatchmaking();
+    } catch (e) {
+      console.error("Cancel matchmaking failed:", e);
+    }
+    navigate("/");
+  };
+
+  if (phase === "searching") {
+    return (
+      <Flex direction="column" align="center" justify="center" minH="100vh" gap={6} p={4}>
+        <Heading
+          size="lg"
+          fontFamily="heading"
+          color="green.300"
+          textTransform="uppercase"
+          letterSpacing="0.08em"
+        >
+          Matchmaking
+        </Heading>
+        <Box
+          bg="surface.panel"
+          border="1px solid"
+          borderColor="surface.border"
+          borderRadius="3px"
+          p={8}
+          textAlign="center"
+        >
+          <Spinner size="lg" color="green.400" mb={4} />
+          <Text fontSize="sm" color="text.secondary">
+            Buscando partida...
+          </Text>
+        </Box>
+        <Button variant="secondary" onClick={handleCancel}>
+          Cancel
+        </Button>
+      </Flex>
+    );
+  }
+
+  if (phase === "error") {
+    return (
+      <Flex direction="column" align="center" justify="center" minH="100vh" gap={4}>
+        <Text fontSize="sm" color="danger.300">{errorMsg}</Text>
+        <Button variant="secondary" onClick={() => navigate("/")}>Back to Home</Button>
+      </Flex>
+    );
+  }
+
+  if (phase === "cancelling") {
+    return (
+      <Flex direction="column" align="center" justify="center" minH="100vh" gap={4}>
+        <Spinner size="lg" color="green.400" />
+        <Text fontSize="sm" color="text.secondary">Cancelling...</Text>
+      </Flex>
+    );
+  }
+
+  // Phase: waiting
   return (
-    <Flex
-      direction="column"
-      align="center"
-      justify="center"
-      minH="100vh"
-      gap={6}
-      p={4}
-    >
+    <Flex direction="column" align="center" justify="center" minH="100vh" gap={6} p={4}>
       <Heading
         size="lg"
         fontFamily="heading"
@@ -22,7 +119,6 @@ export function MatchmakingPage() {
       >
         Matchmaking
       </Heading>
-
       <Box
         bg="surface.panel"
         border="1px solid"
@@ -33,11 +129,15 @@ export function MatchmakingPage() {
       >
         <Spinner size="lg" color="green.400" mb={4} />
         <Text fontSize="sm" color="text.secondary">
-          Buscando partida...
+          Esperando oponente...
         </Text>
+        {gameId && (
+          <Text fontSize="xs" color="text.muted" mt={2}>
+            Game #{gameId}
+          </Text>
+        )}
       </Box>
-
-      <Button variant="secondary" onClick={() => navigate("/")}>
+      <Button variant="secondary" onClick={handleCancel}>
         Cancel
       </Button>
     </Flex>

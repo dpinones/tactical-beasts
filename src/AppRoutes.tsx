@@ -16,6 +16,7 @@ export function AppRoutes() {
       <Route path="/profile" element={<ProfilePage />} />
       <Route path="/team-select/create" element={<TeamSelectPage />} />
       <Route path="/team-select/join/:gameId" element={<TeamSelectPage />} />
+      <Route path="/team-select/match/:gameId" element={<TeamSelectPage />} />
       <Route path="/battle/:gameId" element={<BattlePage />} />
       <Route path="/result/:gameId" element={<ResultPage />} />
     </Routes>

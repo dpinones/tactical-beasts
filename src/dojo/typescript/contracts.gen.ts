@@ -464,6 +464,27 @@ export function setupWorld(provider: DojoProvider) {
 		}
 	};
 
+	const build_game_system_cancelMatchmaking_calldata = (): DojoCall => {
+		return {
+			contractName: "game_system",
+			entrypoint: "cancel_matchmaking",
+			calldata: [],
+		};
+	};
+
+	const game_system_cancelMatchmaking = async (snAccount: Account | AccountInterface) => {
+		try {
+			return await provider.execute(
+				snAccount,
+				build_game_system_cancelMatchmaking_calldata(),
+				"TB",
+			);
+		} catch (error) {
+			console.error(error);
+			throw error;
+		}
+	};
+
 	const build_game_system_createGame_calldata = (): DojoCall => {
 		return {
 			contractName: "game_system",
@@ -498,6 +519,27 @@ export function setupWorld(provider: DojoProvider) {
 			return await provider.execute(
 				snAccount,
 				build_game_system_executeTurn_calldata(gameId, actions),
+				"TB",
+			);
+		} catch (error) {
+			console.error(error);
+			throw error;
+		}
+	};
+
+	const build_game_system_findMatch_calldata = (): DojoCall => {
+		return {
+			contractName: "game_system",
+			entrypoint: "find_match",
+			calldata: [],
+		};
+	};
+
+	const game_system_findMatch = async (snAccount: Account | AccountInterface) => {
+		try {
+			return await provider.execute(
+				snAccount,
+				build_game_system_findMatch_calldata(),
 				"TB",
 			);
 		} catch (error) {
@@ -636,10 +678,14 @@ export function setupWorld(provider: DojoProvider) {
 			buildUpdateCalldata: build_Collection_update_calldata,
 		},
 		game_system: {
+			cancelMatchmaking: game_system_cancelMatchmaking,
+			buildCancelMatchmakingCalldata: build_game_system_cancelMatchmaking_calldata,
 			createGame: game_system_createGame,
 			buildCreateGameCalldata: build_game_system_createGame_calldata,
 			executeTurn: game_system_executeTurn,
 			buildExecuteTurnCalldata: build_game_system_executeTurn_calldata,
+			findMatch: game_system_findMatch,
+			buildFindMatchCalldata: build_game_system_findMatch_calldata,
 			gameOver: game_system_gameOver,
 			buildGameOverCalldata: build_game_system_gameOver_calldata,
 			joinGame: game_system_joinGame,

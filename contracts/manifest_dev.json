@@ -57,8 +57,8 @@
       ]
     },
     {
-      "address": "0x6465df2564874c4793dd6b51ec7f7ba8badf216e5655a31757964285545d314",
-      "class_hash": "0x20505aecfe2f6b1b392b14647d79857a7aab3af5c6ad7f1523ca2dc22fc3a71",
+      "address": "0x337bf14ae440a4d5cf8847a3f97242b4504ad00793a400bd42597bc1afba1a6",
+      "class_hash": "0x233645812f38c07197169d494943779947185c92745e162fb6ebeb6880c9d2f",
       "init_calldata": [],
       "tag": "TB-game_system",
       "selector": "0x69e31139e40dc9c3cbdcbe65c1c8ee089a640efb42486fb78465d0fd6a75711",
@@ -68,6 +68,8 @@
         "join_game",
         "set_team",
         "execute_turn",
+        "find_match",
+        "cancel_matchmaking",
         "upgrade"
       ]
     }
@@ -371,6 +373,28 @@
       "class_hash": "0x783b7b7ee70ddb574eb52f7e27b123089be059f8f09d6a0f1cee4cbbdb2b550",
       "tag": "TB-GameTokens",
       "selector": "0x428c8f5ea68fd85df59eadb1c476415b3cbaa1514c53cb76fbc73f9a87996cd"
+    },
+    {
+      "members": [
+        {
+          "name": "id",
+          "type": "core::felt252",
+          "key": true
+        },
+        {
+          "name": "waiting_player",
+          "type": "core::starknet::contract_address::ContractAddress",
+          "key": false
+        },
+        {
+          "name": "waiting_game_id",
+          "type": "core::integer::u32",
+          "key": false
+        }
+      ],
+      "class_hash": "0x288e429249d243490bfb4cf56a10d88f8d7ccb737b2e66145e096db9dc177d",
+      "tag": "TB-MatchmakingQueue",
+      "selector": "0x492120a0f16c6b15e513091029ee64d40ac5e2443455f018fda4e2a8a20938d"
     },
     {
       "members": [
@@ -4072,6 +4096,38 @@
     },
     {
       "type": "struct",
+      "name": "tactical_beats::models::index::MatchmakingQueue",
+      "members": [
+        {
+          "name": "id",
+          "type": "core::felt252"
+        },
+        {
+          "name": "waiting_player",
+          "type": "core::starknet::contract_address::ContractAddress"
+        },
+        {
+          "name": "waiting_game_id",
+          "type": "core::integer::u32"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "tactical_beats::models::index::MatchmakingQueueValue",
+      "members": [
+        {
+          "name": "waiting_player",
+          "type": "core::starknet::contract_address::ContractAddress"
+        },
+        {
+          "name": "waiting_game_id",
+          "type": "core::integer::u32"
+        }
+      ]
+    },
+    {
+      "type": "struct",
       "name": "tactical_beats::models::index::PlayerState",
       "members": [
         {
@@ -4157,6 +4213,12 @@
     {
       "type": "event",
       "name": "tactical_beats::models::index::m_GameTokens::Event",
+      "kind": "enum",
+      "variants": []
+    },
+    {
+      "type": "event",
+      "name": "tactical_beats::models::index::m_MatchmakingQueue::Event",
       "kind": "enum",
       "variants": []
     },
@@ -4343,6 +4405,24 @@
               "type": "core::array::Array::<tactical_beats::types::Action>"
             }
           ],
+          "outputs": [],
+          "state_mutability": "external"
+        },
+        {
+          "type": "function",
+          "name": "find_match",
+          "inputs": [],
+          "outputs": [
+            {
+              "type": "core::integer::u32"
+            }
+          ],
+          "state_mutability": "external"
+        },
+        {
+          "type": "function",
+          "name": "cancel_matchmaking",
+          "inputs": [],
           "outputs": [],
           "state_mutability": "external"
         }

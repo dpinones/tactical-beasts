@@ -76,3 +76,12 @@ pub struct GameTokens {
     pub p1_token_id: u64,
     pub p2_token_id: u64,
 }
+
+#[derive(Copy, Drop, Serde)]
+#[dojo::model]
+pub struct MatchmakingQueue {
+    #[key]
+    pub id: felt252,
+    pub waiting_player: ContractAddress,
+    pub waiting_game_id: u32,
+}

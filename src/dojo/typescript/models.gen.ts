@@ -92,6 +92,13 @@ export interface GameTokens {
 	p2_token_id: BigNumberish;
 }
 
+// Type definition for `tactical_beats::models::index::MatchmakingQueue` struct
+export interface MatchmakingQueue {
+	id: BigNumberish;
+	waiting_player: string;
+	waiting_game_id: BigNumberish;
+}
+
 // Type definition for `tactical_beats::models::index::PlayerState` struct
 export interface PlayerState {
 	game_id: BigNumberish;
@@ -266,6 +273,7 @@ export interface SchemaType extends ISchemaType {
 		GameConfig: GameConfig,
 		GameToken: GameToken,
 		GameTokens: GameTokens,
+		MatchmakingQueue: MatchmakingQueue,
 		PlayerState: PlayerState,
 		AchievementClaimed: AchievementClaimed,
 		AchievementCompleted: AchievementCompleted,
@@ -360,6 +368,11 @@ export const schema: SchemaType = {
 			match_id: 0,
 			p1_token_id: 0,
 			p2_token_id: 0,
+		},
+		MatchmakingQueue: {
+			id: 0,
+			waiting_player: "",
+			waiting_game_id: 0,
 		},
 		PlayerState: {
 			game_id: 0,
@@ -494,6 +507,7 @@ export enum ModelsMapping {
 	GameConfig = 'tactical_beats-GameConfig',
 	GameToken = 'tactical_beats-GameToken',
 	GameTokens = 'tactical_beats-GameTokens',
+	MatchmakingQueue = 'tactical_beats-MatchmakingQueue',
 	PlayerState = 'tactical_beats-PlayerState',
 	AchievementClaimed = 'achievement-AchievementClaimed',
 	AchievementCompleted = 'achievement-AchievementCompleted',

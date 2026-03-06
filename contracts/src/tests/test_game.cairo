@@ -1,7 +1,7 @@
 use dojo::model::{ModelStorage, ModelStorageTest};
 use starknet::testing::{set_account_contract_address, set_block_timestamp, set_contract_address};
 use crate::constants::{GAME_STATUS_FINISHED, GAME_STATUS_PLAYING, GAME_STATUS_WAITING, MAX_ROUNDS, WIN_BONUS};
-use crate::models::index::{BeastState, Game, GameToken, GameTokens};
+use crate::models::index::{BeastState, Game, GameToken, GameTokens, MatchmakingQueue};
 use crate::systems::game_system::{
     IGameSystemDispatcherTrait, IMinigameTokenDataDispatcher, IMinigameTokenDataDispatcherTrait,
 };
@@ -418,4 +418,85 @@ fn test_multiple_games() {
     let tokens2: GameTokens = world.read_model(g2);
     assert!(tokens1.p1_token_id == 1);
     assert!(tokens2.p1_token_id == 2);
+}
+
+// --- Matchmaking ---
+
+#[test]
+fn test_find_match_creates_game() {
+    let (world, systems) = spawn_game();
+
+    set_player(PLAYER1());
+    let game_id = systems.game.find_match();
+
+    assert!(game_id == 1, "First find_match should create game 1");
+
+    let game: Game = world.read_model(game_id);
+    assert!(game.player1 == PLAYER1());
+    assert!(game.status == GAME_STATUS_WAITING);
+
+    let queue: MatchmakingQueue = world.read_model(0);
+    assert!(queue.waiting_player == PLAYER1());
+    assert!(queue.waiting_game_id == game_id);
+}
+
+#[test]
+fn test_find_match_joins_existing() {
+    let (world, systems) = spawn_game();
+
+    set_player(PLAYER1());
+    let game_id = systems.game.find_match();
+
+    set_player(PLAYER2());
+    let matched_id = systems.game.find_match();
+
+    assert!(matched_id == game_id, "Second player should join same game");
+
+    let game: Game = world.read_model(game_id);
+    assert!(game.player1 == PLAYER1());
+    assert!(game.player2 == PLAYER2());
+
+    // Queue should be cleared
+    let queue: MatchmakingQueue = world.read_model(0);
+    assert!(queue.waiting_player == 0.try_into().unwrap());
+    assert!(queue.waiting_game_id == 0);
+}
+
+#[test]
+#[should_panic]
+fn test_find_match_cannot_match_self() {
+    let (_world, systems) = spawn_game();
+
+    set_player(PLAYER1());
+    systems.game.find_match();
+    systems.game.find_match(); // Should panic: "Already in queue"
+}
+
+#[test]
+fn test_cancel_matchmaking() {
+    let (world, systems) = spawn_game();
+
+    set_player(PLAYER1());
+    systems.game.find_match();
+
+    // Verify queue has player
+    let queue: MatchmakingQueue = world.read_model(0);
+    assert!(queue.waiting_player == PLAYER1());
+
+    // Cancel
+    systems.game.cancel_matchmaking();
+
+    // Queue should be cleared
+    let queue_after: MatchmakingQueue = world.read_model(0);
+    assert!(queue_after.waiting_player == 0.try_into().unwrap());
+    assert!(queue_after.waiting_game_id == 0);
+}
+
+#[test]
+#[should_panic]
+fn test_cancel_matchmaking_not_in_queue() {
+    let (_world, systems) = spawn_game();
+
+    set_player(PLAYER1());
+    systems.game.cancel_matchmaking(); // Should panic: "Not in queue"
 }

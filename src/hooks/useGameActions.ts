@@ -114,11 +114,56 @@ export function useGameActions() {
     [client, account, execute]
   );
 
+  const findMatch = useCallback(async (): Promise<number | null> => {
+    const response = await execute(client.game_system.findMatch, [account]);
+    if (!response) return null;
+
+    const txHash = (response as any)?.transaction_hash;
+    if (txHash) {
+      try {
+        const receipt: any = await account.waitForTransaction(txHash, {
+          retryInterval: 100,
+        });
+        const events = receipt?.events || [];
+        for (const event of events) {
+          if (event.keys?.[0] === EVENT_EMITTED && event.data && event.data.length >= 2) {
+            const gameId = parseInt(event.data[1], 16);
+            console.log("[TB] findMatch parsed gameId:", gameId);
+            if (gameId > 0 && gameId < 100000) {
+              return gameId;
+            }
+          }
+        }
+        console.warn("[TB] findMatch: no gameId found in events");
+      } catch (e) {
+        console.error("Failed to get findMatch receipt:", e);
+      }
+    }
+    return null;
+  }, [client, account, execute]);
+
+  const cancelMatchmaking = useCallback(async () => {
+    const response = await execute(client.game_system.cancelMatchmaking, [account]);
+    if (response) {
+      const txHash = (response as any)?.transaction_hash;
+      if (txHash) {
+        try {
+          await account.waitForTransaction(txHash, { retryInterval: 100 });
+        } catch (e) {
+          console.error("Failed to confirm cancelMatchmaking:", e);
+        }
+      }
+    }
+    return response;
+  }, [client, account, execute]);
+
   return {
     createGame,
     joinGame,
     setTeam,
     executeTurn,
+    findMatch,
+    cancelMatchmaking,
     isLoading,
     error,
   };

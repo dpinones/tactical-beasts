@@ -9,6 +9,8 @@ pub trait IGameSystem<T> {
     fn join_game(ref self: T, game_id: u32);
     fn set_team(ref self: T, game_id: u32, beast_1: u32, beast_2: u32, beast_3: u32);
     fn execute_turn(ref self: T, game_id: u32, actions: Array<crate::types::Action>);
+    fn find_match(ref self: T) -> u32;
+    fn cancel_matchmaking(ref self: T);
 }
 
 #[starknet::interface]
@@ -35,7 +37,7 @@ pub mod game_system {
     use crate::elements::achievements::{ACHIEVEMENT_COUNT, Achievement, AchievementTrait};
     use crate::events::index::{GameCreated, GameFinished, PlayerJoined};
     use crate::logic::{beast, board, combat};
-    use crate::models::index::{BeastState, Game, GameConfig, GameToken, GameTokens, PlayerState};
+    use crate::models::index::{BeastState, Game, GameConfig, GameToken, GameTokens, MatchmakingQueue, PlayerState};
     use crate::systems::collection::{ICollectionDispatcher, ICollectionDispatcherTrait, NAME as COLLECTION_NAME};
     use crate::types::Action;
     use super::{IGameSystem, IMinigameTokenData};
@@ -101,66 +103,45 @@ pub mod game_system {
         fn create_game(ref self: ContractState) -> u32 {
             let mut world = self.world(@NAMESPACE());
             let caller = starknet::get_caller_address();
-
-            let mut config: GameConfig = world.read_model(0);
-            config.game_count += 1;
-            let game_id = config.game_count;
-
-            // Mint NFT for player1
-            let collection = get_collection(world);
-            let token_id = collection.mint(caller, false);
-            config.token_count = token_id;
-            world.write_model(@config);
-
-            // Map token to match/player
-            world.write_model(@GameToken { token_id, match_id: game_id, player: caller });
-            world.write_model(@GameTokens { match_id: game_id, p1_token_id: token_id, p2_token_id: 0 });
-
-            let game = Game {
-                game_id,
-                player1: caller,
-                player2: zero_address(),
-                status: GAME_STATUS_WAITING,
-                current_attacker: 0,
-                round: 0,
-                winner: zero_address(),
-                p1_team_set: false,
-                p2_team_set: false,
-            };
-            world.write_model(@game);
-
-            world.emit_event(@GameCreated { game_id, player1: caller, time: starknet::get_block_timestamp() });
-
-            game_id
+            _create_game(ref world, caller)
         }
 
         fn join_game(ref self: ContractState, game_id: u32) {
             let mut world = self.world(@NAMESPACE());
             let caller = starknet::get_caller_address();
+            _join_game(ref world, caller, game_id);
+        }
 
-            let mut game: Game = world.read_model(game_id);
-            assert!(game.status == GAME_STATUS_WAITING, "Game is not waiting");
-            assert!(game.player1 != caller, "Cannot join your own game");
-            assert!(game.player2 == zero_address(), "Game already has two players");
+        fn find_match(ref self: ContractState) -> u32 {
+            let mut world = self.world(@NAMESPACE());
+            let caller = starknet::get_caller_address();
 
-            // Mint NFT for player2
-            let collection = get_collection(world);
-            let token_id = collection.mint(caller, false);
+            let queue: MatchmakingQueue = world.read_model(0);
 
-            let mut config: GameConfig = world.read_model(0);
-            config.token_count = token_id;
-            world.write_model(@config);
+            if queue.waiting_player == zero_address() {
+                // No one waiting — create game and enter queue
+                let game_id = _create_game(ref world, caller);
+                world.write_model(@MatchmakingQueue { id: 0, waiting_player: caller, waiting_game_id: game_id });
+                game_id
+            } else {
+                assert!(queue.waiting_player != caller, "Already in queue");
+                // Match with waiting player
+                let game_id = queue.waiting_game_id;
+                _join_game(ref world, caller, game_id);
+                // Clear queue
+                world.write_model(@MatchmakingQueue { id: 0, waiting_player: zero_address(), waiting_game_id: 0 });
+                game_id
+            }
+        }
 
-            // Map token to match/player
-            world.write_model(@GameToken { token_id, match_id: game_id, player: caller });
-            let mut game_tokens: GameTokens = world.read_model(game_id);
-            game_tokens.p2_token_id = token_id;
-            world.write_model(@game_tokens);
+        fn cancel_matchmaking(ref self: ContractState) {
+            let mut world = self.world(@NAMESPACE());
+            let caller = starknet::get_caller_address();
 
-            game.player2 = caller;
-            world.write_model(@game);
+            let queue: MatchmakingQueue = world.read_model(0);
+            assert!(queue.waiting_player == caller, "Not in queue");
 
-            world.emit_event(@PlayerJoined { game_id, player2: caller, time: starknet::get_block_timestamp() });
+            world.write_model(@MatchmakingQueue { id: 0, waiting_player: zero_address(), waiting_game_id: 0 });
         }
 
         fn set_team(ref self: ContractState, game_id: u32, beast_1: u32, beast_2: u32, beast_3: u32) {
@@ -317,6 +298,65 @@ pub mod game_system {
     }
 
     // --- Internal helpers ---
+
+    fn _create_game(ref world: WorldStorage, caller: ContractAddress) -> u32 {
+        let mut config: GameConfig = world.read_model(0);
+        config.game_count += 1;
+        let game_id = config.game_count;
+
+        // Mint NFT for player1
+        let collection = get_collection(world);
+        let token_id = collection.mint(caller, false);
+        config.token_count = token_id;
+        world.write_model(@config);
+
+        // Map token to match/player
+        world.write_model(@GameToken { token_id, match_id: game_id, player: caller });
+        world.write_model(@GameTokens { match_id: game_id, p1_token_id: token_id, p2_token_id: 0 });
+
+        let game = Game {
+            game_id,
+            player1: caller,
+            player2: zero_address(),
+            status: GAME_STATUS_WAITING,
+            current_attacker: 0,
+            round: 0,
+            winner: zero_address(),
+            p1_team_set: false,
+            p2_team_set: false,
+        };
+        world.write_model(@game);
+
+        world.emit_event(@GameCreated { game_id, player1: caller, time: starknet::get_block_timestamp() });
+
+        game_id
+    }
+
+    fn _join_game(ref world: WorldStorage, caller: ContractAddress, game_id: u32) {
+        let mut game: Game = world.read_model(game_id);
+        assert!(game.status == GAME_STATUS_WAITING, "Game is not waiting");
+        assert!(game.player1 != caller, "Cannot join your own game");
+        assert!(game.player2 == zero_address(), "Game already has two players");
+
+        // Mint NFT for player2
+        let collection = get_collection(world);
+        let token_id = collection.mint(caller, false);
+
+        let mut config: GameConfig = world.read_model(0);
+        config.token_count = token_id;
+        world.write_model(@config);
+
+        // Map token to match/player
+        world.write_model(@GameToken { token_id, match_id: game_id, player: caller });
+        let mut game_tokens: GameTokens = world.read_model(game_id);
+        game_tokens.p2_token_id = token_id;
+        world.write_model(@game_tokens);
+
+        game.player2 = caller;
+        world.write_model(@game);
+
+        world.emit_event(@PlayerJoined { game_id, player2: caller, time: starknet::get_block_timestamp() });
+    }
 
     fn create_beast(ref world: WorldStorage, game_id: u32, player_index: u8, beast_index: u8, beast_id: u32) {
         let hp = beast::get_beast_hp(beast_id);

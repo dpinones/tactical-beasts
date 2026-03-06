@@ -52,15 +52,46 @@ export function HexGrid({
 
   const allBeasts = [...myBeasts, ...enemyBeasts];
 
+  // Build a map of effective positions: if a beast has a planned MOVE, use the target position
+  function getEffectivePosition(beast: BeastStateModel): HexCoord {
+    const isMine = Number(beast.player_index) === myPlayerIndex;
+    if (isMine) {
+      const action = actions.get(Number(beast.beast_index));
+      if (action && action.actionType === ActionType.MOVE) {
+        return { row: action.targetRow, col: action.targetCol };
+      }
+    }
+    return { row: Number(beast.position_row), col: Number(beast.position_col) };
+  }
+
   function getBeastAt(row: number, col: number): BeastStateModel | null {
     return (
-      allBeasts.find(
-        (b) =>
-          b.alive &&
-          Number(b.position_row) === row &&
-          Number(b.position_col) === col
-      ) || null
+      allBeasts.find((b) => {
+        if (!b.alive) return false;
+        const pos = getEffectivePosition(b);
+        return pos.row === row && pos.col === col;
+      }) || null
     );
+  }
+
+  // Collect cells that should flash (attack/potion targets)
+  function getAttackTargetCells(): HexCoord[] {
+    const cells: HexCoord[] = [];
+    for (const [, action] of actions) {
+      if (action.actionType === ActionType.ATTACK || action.actionType === ActionType.CONSUMABLE_ATTACK_POTION) {
+        const target = enemyBeasts.find((b) => Number(b.beast_index) === action.targetIndex);
+        if (target && target.alive) {
+          cells.push({ row: Number(target.position_row), col: Number(target.position_col) });
+        }
+      }
+    }
+    return cells;
+  }
+
+  const attackTargetCells = getAttackTargetCells();
+
+  function isAttackTarget(row: number, col: number): boolean {
+    return attackTargetCells.some((c) => c.row === row && c.col === col);
   }
 
   function isInAttackCells(row: number, col: number): boolean {
@@ -244,6 +275,22 @@ export function HexGrid({
     );
   }
 
+  // Render a flashing overlay on cells that are attack targets
+  function renderAttackFlash(cx: number, cy: number, key: string) {
+    return (
+      <polygon
+        key={key}
+        points={hexPoints(cx, cy, hexSize * 0.92)}
+        fill="rgba(255,51,51,0.25)"
+        stroke="#FF3333"
+        strokeWidth={1.5}
+        style={{ pointerEvents: "none" }}
+      >
+        <animate attributeName="opacity" values="0.8;0.2;0.8" dur="1s" repeatCount="indefinite" />
+      </polygon>
+    );
+  }
+
   return (
     <Box overflow="auto" display="flex" justifyContent="center">
       <svg
@@ -268,7 +315,6 @@ export function HexGrid({
         {/* Render cells */}
         {ARENA_ROWS.map((cols, logicalRow) => {
           const visualRow = flipBoard ? lastRow - logicalRow : logicalRow;
-          const visualCols = ARENA_ROWS[visualRow];
           return Array.from({ length: cols }, (_, col) => {
             // Use visualRow for pixel position, logicalRow for data
             const { x, y } = hexToPixel(visualRow, col, hexSize);
@@ -293,6 +339,9 @@ export function HexGrid({
                     <circle cx={x + hexSize * 0.12} cy={y - hexSize * 0.08} r={hexSize * 0.08} fill="rgba(85,65,38,0.35)" />
                   </g>
                 )}
+
+                {/* Attack target flash */}
+                {isAttackTarget(logicalRow, col) && renderAttackFlash(x, y, `atk-flash-${logicalRow}-${col}`)}
 
                 {/* Beast */}
                 {beast && renderBeast(beast, x, y)}

@@ -121,15 +121,21 @@ export function BattlePage() {
     return myBeasts.find((b) => Number(b.beast_index) === selectedBeastIndex);
   }, [selectedBeastIndex, myBeasts]);
 
-  // Get occupied cells for move validation
+  // Get occupied cells for move validation (uses effective positions with planned moves)
   const occupiedCells = useMemo((): HexCoord[] => {
     return beasts
       .filter((b) => b.alive)
-      .map((b) => ({
-        row: Number(b.position_row),
-        col: Number(b.position_col),
-      }));
-  }, [beasts]);
+      .map((b) => {
+        const isMine = Number(b.player_index) === myPlayerIndex;
+        if (isMine) {
+          const action = actions.get(Number(b.beast_index));
+          if (action && action.actionType === ActionType.MOVE) {
+            return { row: action.targetRow, col: action.targetCol };
+          }
+        }
+        return { row: Number(b.position_row), col: Number(b.position_col) };
+      });
+  }, [beasts, actions, myPlayerIndex]);
 
   // Computed move/attack cells for the selected beast
   const moveCells = useMemo((): HexCoord[] => {

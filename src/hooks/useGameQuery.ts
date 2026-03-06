@@ -17,7 +17,7 @@ import type {
   HexCoord,
 } from "../domain/types";
 
-import { DOJO_NAMESPACE as NS } from "../config/namespace";
+import { DOJO_NAMESPACE_LOWER as NS } from "../config/namespace";
 
 function parseGameNode(node: any): GameModel {
   return {

@@ -33,11 +33,11 @@
   },
   "contracts": [
     {
-      "address": "0x3b046438e6677b48c2405f58af92a43bc3dd7750abf54c901425ccc21b35e0d",
-      "class_hash": "0x3fc6274848f15ea2bba3685c1892a7ff82d32b4c8012d72ca1d601d08617917",
+      "address": "0xfd0344ef9f1716c0fb4f8331c063d34e242d88513fd0ca47c0b56a0835d7ba",
+      "class_hash": "0x1aa49ec58aa108b25b10ab0f4664f7a018a26767afb9b7a6396859ca9d281a2",
       "init_calldata": [],
-      "tag": "TB-Collection",
-      "selector": "0x6ab5875b0c333712703995a0ccc9e3f8bcd6ece78f325070d85dda4fe7a7fe5",
+      "tag": "TB1-Collection",
+      "selector": "0x29a59bc944164b21de99d9808fcf318588bb463bfb60516a70b0e2644c309b0",
       "systems": [
         "dojo_init",
         "safe_transfer_from",
@@ -57,11 +57,11 @@
       ]
     },
     {
-      "address": "0x7753edabd37fc0b84c47d867dd37a87b8b1cf24d06219a95ac1c3b356021ad5",
-      "class_hash": "0xafc4c787099c666fea13d316f6fb6605b78cc9a6c80f01aee4d92c80819c07",
+      "address": "0x72c78a1d8175b6e9d950bd13c6dd85ee8b9b86ff899f3aa6cf22aa22f89f570",
+      "class_hash": "0x57ce006d877315ebb1b4b4577b7aeb263a36d65ca993d84da1a2f9f49313581",
       "init_calldata": [],
-      "tag": "TB-game_system",
-      "selector": "0x69e31139e40dc9c3cbdcbe65c1c8ee089a640efb42486fb78465d0fd6a75711",
+      "tag": "TB1-game_system",
+      "selector": "0x3687e683c1056316f61e197bb9013734f28aee2e3450dbc720d5b2fbe6ea0e0",
       "systems": [
         "dojo_init",
         "create_game",
@@ -107,8 +107,8 @@
         }
       ],
       "class_hash": "0x1b93d2931ce14c6c25c1b4f3d78ff88f1d9d9a867ff8e4b76f697a370425cb3",
-      "tag": "TB-AchievementAdvancement",
-      "selector": "0x6d15e964cd2556fdc0901cb1f4d4bef65f5afbb41380088e59a7c534d80d69f"
+      "tag": "TB1-AchievementAdvancement",
+      "selector": "0x346e83fd485c388c3a1ec05594a46dd6f9fc54f784d617bba8a4cf92a505668"
     },
     {
       "members": [
@@ -124,8 +124,8 @@
         }
       ],
       "class_hash": "0x6969588e5989757eb797b61bf2d430d4e6c935bb7023000769576fa49d8d1b1",
-      "tag": "TB-AchievementAssociation",
-      "selector": "0x142b4f051207212a0fc3a627bef56b02ff63ea699b7c77454746602b93770c4"
+      "tag": "TB1-AchievementAssociation",
+      "selector": "0x7729f3beeae83057b4c4be3220bb62785349cf2d318d87efd4962dbf18ece5c"
     },
     {
       "members": [
@@ -151,8 +151,8 @@
         }
       ],
       "class_hash": "0x7b5b83ccc288a92f3ee2bd812c8fb84536a9e26d1742a8648036d19966030a5",
-      "tag": "TB-AchievementCompletion",
-      "selector": "0xa8279d93c1d4558bcbf731ad4c03116b04041dc0c4a70b3ed500e4c89a66aa"
+      "tag": "TB1-AchievementCompletion",
+      "selector": "0xe1effcbad76e54bc90d37b24221503388cc921c9ec5891a4539d2a16b5bf87"
     },
     {
       "members": [
@@ -183,8 +183,8 @@
         }
       ],
       "class_hash": "0x6c6a9c45913331fa4e602135926cf9a622b60d2abb04381c37e0ba79861f11d",
-      "tag": "TB-AchievementDefinition",
-      "selector": "0xa4f56d0aa10165213f104a7fbdd9cbeb3ce95240629f71bf9810ea2eeb332d"
+      "tag": "TB1-AchievementDefinition",
+      "selector": "0x35ebbae0c0d161b3e3c311986810b9894b0cd83cfd0b0dfe57b2002b487e8bc"
     },
     {
       "members": [
@@ -255,8 +255,8 @@
         }
       ],
       "class_hash": "0x6f1b0723528d49ab56bbac8911b6021fe294210a584b82a4e3daf4d094a1e2f",
-      "tag": "TB-BeastState",
-      "selector": "0x45f0f9ef36717f780fb18b4ed6dbf8ef4d019fefd59fcb2cdb9d159b9a9a4ec"
+      "tag": "TB1-BeastState",
+      "selector": "0x3c76b0f094c4046a595bef5d57800a9212e62c958233c558213537521d4d6e6"
     },
     {
       "members": [
@@ -312,8 +312,8 @@
         }
       ],
       "class_hash": "0x5a9ad6b1603f7829dc11740632e428b90cc306d40a0826e7f77f455cfc0828e",
-      "tag": "TB-Game",
-      "selector": "0x4c7a666aaf8806ed71006a50ed918c52b3b59846e960313307e8ba0a91ce746"
+      "tag": "TB1-Game",
+      "selector": "0x2dfb90525a37a0c77574f86cef34f1abb9debbf49a5952ea2ef94f53d06746"
     },
     {
       "members": [
@@ -334,8 +334,8 @@
         }
       ],
       "class_hash": "0x173af985b1d050827789bc5c374eef0b3c87e52c36b34ec6b80ddc937fb0753",
-      "tag": "TB-GameConfig",
-      "selector": "0x687837c733561c755d16cf3f56256af8ea49205228d7ed7125058c74166d0a5"
+      "tag": "TB1-GameConfig",
+      "selector": "0x4a339fd8e06d4a8ee1a9855cdaf30caac08b9f82cd8432be5e3b09abd848126"
     },
     {
       "members": [
@@ -356,8 +356,8 @@
         }
       ],
       "class_hash": "0x200699d72d5aa2a1bb5b4ae758adae604f53b8c435f755c73b1e81c80fd521e",
-      "tag": "TB-GameToken",
-      "selector": "0x5dc5356612015914a50e77ab109933317e7d54c620f3edb0b003f031a0361f5"
+      "tag": "TB1-GameToken",
+      "selector": "0x1d09a4b346cf1d90df194bba605094dea6d53a67fbd05d87cbd94be4742672c"
     },
     {
       "members": [
@@ -378,8 +378,8 @@
         }
       ],
       "class_hash": "0x783b7b7ee70ddb574eb52f7e27b123089be059f8f09d6a0f1cee4cbbdb2b550",
-      "tag": "TB-GameTokens",
-      "selector": "0x428c8f5ea68fd85df59eadb1c476415b3cbaa1514c53cb76fbc73f9a87996cd"
+      "tag": "TB1-GameTokens",
+      "selector": "0x14e0edefffaaaaad39b90429f25082396177e137645ff950813b0f7054f3fef"
     },
     {
       "members": [
@@ -450,8 +450,8 @@
         }
       ],
       "class_hash": "0x7133bbffad6c1cd949d8a7717fd45c0c0b0e46297a80d4d70202a6c09d12408",
-      "tag": "TB-MapState",
-      "selector": "0x6db0d9c5afa5d6a306487206f859002009a97d8ce3454c7c8eded600a8ccdb2"
+      "tag": "TB1-MapState",
+      "selector": "0x4ddace83f6c870cb5b47869eae32b055e30e0b4a99b635d03fab56b4fe056f9"
     },
     {
       "members": [
@@ -472,8 +472,8 @@
         }
       ],
       "class_hash": "0x288e429249d243490bfb4cf56a10d88f8d7ccb737b2e66145e096db9dc177d",
-      "tag": "TB-MatchmakingQueue",
-      "selector": "0x492120a0f16c6b15e513091029ee64d40ac5e2443455f018fda4e2a8a20938d"
+      "tag": "TB1-MatchmakingQueue",
+      "selector": "0x3d149a8837a8e31d0e25b30ec3cd32dba1ce1919faa39dac256a3226126b18e"
     },
     {
       "members": [
@@ -514,8 +514,8 @@
         }
       ],
       "class_hash": "0x73093e8f6b1d7d9c3d8ce0370f266cab0462e520db16913f565f1bcf43bb8b5",
-      "tag": "TB-PlayerProfile",
-      "selector": "0xed8431c435f02a9245d31cae4984ee63ca8beb6f952dd6df49ebf1400b1364"
+      "tag": "TB1-PlayerProfile",
+      "selector": "0x43537a4983a700fca1cd6a06fd5d9263809af295450df7bda85e88040472004"
     },
     {
       "members": [
@@ -556,8 +556,8 @@
         }
       ],
       "class_hash": "0x77a6c08c70382af22abda1eaeab5d9c4991bc955d51c33cb21fd53c1b5ffe44",
-      "tag": "TB-PlayerState",
-      "selector": "0x4b9b2cb8d07254af2fea7b0b3a147202a1ae7b376f9a84af26254747256d1cd"
+      "tag": "TB1-PlayerState",
+      "selector": "0x38e7e2448f1a18c9a44c0a8b95624a947bc343358609f34870763da22c5a63a"
     }
   ],
   "events": [
@@ -580,8 +580,8 @@
         }
       ],
       "class_hash": "0x3ca9aa05af8ef4c94e5213e7ba413e05fd28a7641b7060f896f06c4c6993e00",
-      "tag": "TB-AchievementClaimed",
-      "selector": "0x288a947b6b130a729ff133c291e69629795d6343bef02fc18cdf098ca76600a"
+      "tag": "TB1-AchievementClaimed",
+      "selector": "0x14a0f9a8f69dd3b1152389b01d575895c4df936e8e90a1d3396e82db5a89216"
     },
     {
       "members": [
@@ -602,8 +602,8 @@
         }
       ],
       "class_hash": "0x7862bab5e54ec6aa89c4a0ef6f39ca01a6440434b08d4fdd8098ee6e920e9a6",
-      "tag": "TB-AchievementCompleted",
-      "selector": "0xfbf1ef63e8070ddfa6811c007b58efc9297e33fa2e00615bf3ece6776669e4"
+      "tag": "TB1-AchievementCompleted",
+      "selector": "0x36c20c6b4088a6f03fc7915aad5c5e1e1be659e7bb064ece4df3fa88a25576d"
     },
     {
       "members": [
@@ -624,8 +624,8 @@
         }
       ],
       "class_hash": "0x6b5af9fa605a7648848ee05512ef05bd6c58c36e52201bb4eb69c3b482e0978",
-      "tag": "TB-GameCreated",
-      "selector": "0x7699f2904cd351a4b6a48917c1199635631c92df12fb325870215252f975c99"
+      "tag": "TB1-GameCreated",
+      "selector": "0x79232c708a17b08e21e7e6938ef36b3c1f8c49c59648e6c526ec7f10efc9de4"
     },
     {
       "members": [
@@ -651,8 +651,8 @@
         }
       ],
       "class_hash": "0x26da02edd40294205b99f8a2a7eb54a726b89494dba6475761635195cbb8806",
-      "tag": "TB-GameFinished",
-      "selector": "0x4d0477e72a4f2bddc3261efc7883a28e199c013cbcd29f78640cb15f09d24c2"
+      "tag": "TB1-GameFinished",
+      "selector": "0x14bb600e57719daebc5ba4c5d10e7355c3b871ee496402a46b3b32348d7fc3d"
     },
     {
       "members": [
@@ -683,8 +683,8 @@
         }
       ],
       "class_hash": "0x2c067e1c1069a68aca73f8cf4f0000fb9c584455bb60fadde7ee05fbeb62372",
-      "tag": "TB-LeaderboardScore",
-      "selector": "0x426e5b9e563f7bf7b0dbb0d2bf4111488f1a9e1a366a8b37f02c50e4cbb7d79"
+      "tag": "TB1-LeaderboardScore",
+      "selector": "0xa03d838b62460951ca0550029f6c36cf0da1e4b0cc50c46ad71a10ca5134ae"
     },
     {
       "members": [
@@ -705,8 +705,8 @@
         }
       ],
       "class_hash": "0xe6fabce39d9706e5c65350610ed04018ffa17871e7d0ce5d6375326ebdbebe",
-      "tag": "TB-PlayerJoined",
-      "selector": "0x7ec9d1c204bf570d051597633bc616812748a8d41e613231c7c97f0a38d4434"
+      "tag": "TB1-PlayerJoined",
+      "selector": "0x5aaed1cc1f41c360bcc738c45ce9a8372e98ad5556214c612dfcbf6415d8a4d"
     },
     {
       "members": [
@@ -772,8 +772,8 @@
         }
       ],
       "class_hash": "0x706834e9ed630a715e2727c7ed3706c2f92d46f93568c4082f7030023947cf0",
-      "tag": "TB-TrophyCreation",
-      "selector": "0x2e9ef6d4d33929fb103cd16d7403380846b7f88bbdcc70c5df7d9a1b08e7053"
+      "tag": "TB1-TrophyCreation",
+      "selector": "0x4d335e8f7d80985c22797f13723f29cb7355dd3a000b85b9e71368be8b120c4"
     },
     {
       "members": [
@@ -799,8 +799,8 @@
         }
       ],
       "class_hash": "0x313c566ceee5bdcaed4accfedc707b6b5a02feb96f9448a18bfa97bf43811e4",
-      "tag": "TB-TrophyProgression",
-      "selector": "0x5b9704ef63dcc17c43ef507ed659a485bd6fef6df3192bd778a31b36abc3c19"
+      "tag": "TB1-TrophyProgression",
+      "selector": "0x6c1ac8508f1c75f418b2c865c2551e8ef0ae106b87232c44d351feb7fb8648c"
     }
   ],
   "external_contracts": [],

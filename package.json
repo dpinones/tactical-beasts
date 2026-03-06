@@ -10,6 +10,7 @@
     "build:sepolia": "tsc && vite build --mode sepolia",
     "preview": "vite preview",
     "generate": "cd contracts && sozo build --typescript --bindings-output ../src/dojo",
+    "postgenerate": "bash scripts/patch-namespace.sh",
     "test": "vitest"
   },
   "engines": {

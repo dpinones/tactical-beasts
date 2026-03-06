@@ -1,5 +1,5 @@
 import { gql } from "graphql-tag";
-import { DOJO_NAMESPACE as NS } from "../config/namespace";
+import { DOJO_NAMESPACE_LOWER as NS } from "../config/namespace";
 
 export const GET_GAME = gql`
   query GetGame($gameId: u32!) {

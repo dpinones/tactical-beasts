@@ -1,9 +1,9 @@
 [world]
-name = "Rock Paper Scissors"
-seed = "rps-sepolia"
+name = "Tactical Beasts"
+seed = "tb-sepolia"
 
 [namespace]
-default = "RPS"
+default = "TB1"
 
 [env]
 rpc_url = "https://api.cartridge.gg/x/starknet/sepolia"
@@ -11,7 +11,11 @@ account_address = "0x00dba4d5ba495338b74aceac92ddc26afff9319d675e09db0aadba40cc6
 private_key = "0x06c3f4d5e62d4b873a1389cec6671a9ef3414af6321d893bdf3967bc9c77fa47"
 
 [writers]
-"RPS" = ["RPS-game_system"]
+"TB1" = ["TB1-game_system"]
+
+[owners]
+"TB1" = ["TB1-Collection"]
 
 [init_call_args]
-"RPS-game_system" = []
+"TB1-game_system" = []
+"TB1-Collection" = []

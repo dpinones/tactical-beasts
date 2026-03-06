@@ -1,6 +1,7 @@
 import { DojoProvider, DojoCall } from "@dojoengine/core";
 import { Account, AccountInterface, BigNumberish, CairoOption, CairoCustomEnum } from "starknet";
 import * as models from "./models.gen";
+import { DOJO_NAMESPACE } from "../../config/namespace";
 
 export function setupWorld(provider: DojoProvider) {
 
@@ -17,7 +18,7 @@ export function setupWorld(provider: DojoProvider) {
 			return await provider.execute(
 				snAccount,
 				build_Collection_approve_calldata(to, tokenId),
-				"TB",
+				DOJO_NAMESPACE,
 			);
 		} catch (error) {
 			console.error(error);
@@ -38,7 +39,7 @@ export function setupWorld(provider: DojoProvider) {
 			return await provider.execute(
 				snAccount,
 				build_Collection_assertIsOwner_calldata(owner, tokenId),
-				"TB",
+				DOJO_NAMESPACE,
 			);
 		} catch (error) {
 			console.error(error);
@@ -56,7 +57,7 @@ export function setupWorld(provider: DojoProvider) {
 
 	const Collection_balanceOf = async (account: string) => {
 		try {
-			return await provider.call("TB", build_Collection_balanceOf_calldata(account));
+			return await provider.call(DOJO_NAMESPACE, build_Collection_balanceOf_calldata(account));
 		} catch (error) {
 			console.error(error);
 			throw error;
@@ -76,7 +77,7 @@ export function setupWorld(provider: DojoProvider) {
 			return await provider.execute(
 				snAccount,
 				build_Collection_burn_calldata(tokenId),
-				"TB",
+				DOJO_NAMESPACE,
 			);
 		} catch (error) {
 			console.error(error);
@@ -94,7 +95,7 @@ export function setupWorld(provider: DojoProvider) {
 
 	const Collection_contractUri = async () => {
 		try {
-			return await provider.call("TB", build_Collection_contractUri_calldata());
+			return await provider.call(DOJO_NAMESPACE, build_Collection_contractUri_calldata());
 		} catch (error) {
 			console.error(error);
 			throw error;
@@ -111,7 +112,7 @@ export function setupWorld(provider: DojoProvider) {
 
 	const Collection_getApproved = async (tokenId: BigNumberish) => {
 		try {
-			return await provider.call("TB", build_Collection_getApproved_calldata(tokenId));
+			return await provider.call(DOJO_NAMESPACE, build_Collection_getApproved_calldata(tokenId));
 		} catch (error) {
 			console.error(error);
 			throw error;
@@ -128,7 +129,7 @@ export function setupWorld(provider: DojoProvider) {
 
 	const Collection_getRoleAdmin = async (role: BigNumberish) => {
 		try {
-			return await provider.call("TB", build_Collection_getRoleAdmin_calldata(role));
+			return await provider.call(DOJO_NAMESPACE, build_Collection_getRoleAdmin_calldata(role));
 		} catch (error) {
 			console.error(error);
 			throw error;
@@ -148,7 +149,7 @@ export function setupWorld(provider: DojoProvider) {
 			return await provider.execute(
 				snAccount,
 				build_Collection_grantRole_calldata(role, account),
-				"TB",
+				DOJO_NAMESPACE,
 			);
 		} catch (error) {
 			console.error(error);
@@ -166,7 +167,7 @@ export function setupWorld(provider: DojoProvider) {
 
 	const Collection_hasRole = async (role: BigNumberish, account: string) => {
 		try {
-			return await provider.call("TB", build_Collection_hasRole_calldata(role, account));
+			return await provider.call(DOJO_NAMESPACE, build_Collection_hasRole_calldata(role, account));
 		} catch (error) {
 			console.error(error);
 			throw error;
@@ -183,7 +184,7 @@ export function setupWorld(provider: DojoProvider) {
 
 	const Collection_isApprovedForAll = async (owner: string, operator: string) => {
 		try {
-			return await provider.call("TB", build_Collection_isApprovedForAll_calldata(owner, operator));
+			return await provider.call(DOJO_NAMESPACE, build_Collection_isApprovedForAll_calldata(owner, operator));
 		} catch (error) {
 			console.error(error);
 			throw error;
@@ -203,7 +204,7 @@ export function setupWorld(provider: DojoProvider) {
 			return await provider.execute(
 				snAccount,
 				build_Collection_mint_calldata(to, soulbound),
-				"TB",
+				DOJO_NAMESPACE,
 			);
 		} catch (error) {
 			console.error(error);
@@ -221,7 +222,7 @@ export function setupWorld(provider: DojoProvider) {
 
 	const Collection_name = async () => {
 		try {
-			return await provider.call("TB", build_Collection_name_calldata());
+			return await provider.call(DOJO_NAMESPACE, build_Collection_name_calldata());
 		} catch (error) {
 			console.error(error);
 			throw error;
@@ -238,7 +239,7 @@ export function setupWorld(provider: DojoProvider) {
 
 	const Collection_owner = async () => {
 		try {
-			return await provider.call("TB", build_Collection_owner_calldata());
+			return await provider.call(DOJO_NAMESPACE, build_Collection_owner_calldata());
 		} catch (error) {
 			console.error(error);
 			throw error;
@@ -255,7 +256,7 @@ export function setupWorld(provider: DojoProvider) {
 
 	const Collection_ownerOf = async (tokenId: BigNumberish) => {
 		try {
-			return await provider.call("TB", build_Collection_ownerOf_calldata(tokenId));
+			return await provider.call(DOJO_NAMESPACE, build_Collection_ownerOf_calldata(tokenId));
 		} catch (error) {
 			console.error(error);
 			throw error;
@@ -275,7 +276,7 @@ export function setupWorld(provider: DojoProvider) {
 			return await provider.execute(
 				snAccount,
 				build_Collection_renounceOwnership_calldata(),
-				"TB",
+				DOJO_NAMESPACE,
 			);
 		} catch (error) {
 			console.error(error);
@@ -296,7 +297,7 @@ export function setupWorld(provider: DojoProvider) {
 			return await provider.execute(
 				snAccount,
 				build_Collection_renounceRole_calldata(role, account),
-				"TB",
+				DOJO_NAMESPACE,
 			);
 		} catch (error) {
 			console.error(error);
@@ -317,7 +318,7 @@ export function setupWorld(provider: DojoProvider) {
 			return await provider.execute(
 				snAccount,
 				build_Collection_revokeRole_calldata(role, account),
-				"TB",
+				DOJO_NAMESPACE,
 			);
 		} catch (error) {
 			console.error(error);
@@ -338,7 +339,7 @@ export function setupWorld(provider: DojoProvider) {
 			return await provider.execute(
 				snAccount,
 				build_Collection_safeTransferFrom_calldata(from, to, tokenId, data),
-				"TB",
+				DOJO_NAMESPACE,
 			);
 		} catch (error) {
 			console.error(error);
@@ -359,7 +360,7 @@ export function setupWorld(provider: DojoProvider) {
 			return await provider.execute(
 				snAccount,
 				build_Collection_setApprovalForAll_calldata(operator, approved),
-				"TB",
+				DOJO_NAMESPACE,
 			);
 		} catch (error) {
 			console.error(error);
@@ -377,7 +378,7 @@ export function setupWorld(provider: DojoProvider) {
 
 	const Collection_symbol = async () => {
 		try {
-			return await provider.call("TB", build_Collection_symbol_calldata());
+			return await provider.call(DOJO_NAMESPACE, build_Collection_symbol_calldata());
 		} catch (error) {
 			console.error(error);
 			throw error;
@@ -394,7 +395,7 @@ export function setupWorld(provider: DojoProvider) {
 
 	const Collection_tokenUri = async (tokenId: BigNumberish) => {
 		try {
-			return await provider.call("TB", build_Collection_tokenUri_calldata(tokenId));
+			return await provider.call(DOJO_NAMESPACE, build_Collection_tokenUri_calldata(tokenId));
 		} catch (error) {
 			console.error(error);
 			throw error;
@@ -414,7 +415,7 @@ export function setupWorld(provider: DojoProvider) {
 			return await provider.execute(
 				snAccount,
 				build_Collection_transferFrom_calldata(from, to, tokenId),
-				"TB",
+				DOJO_NAMESPACE,
 			);
 		} catch (error) {
 			console.error(error);
@@ -435,7 +436,7 @@ export function setupWorld(provider: DojoProvider) {
 			return await provider.execute(
 				snAccount,
 				build_Collection_transferOwnership_calldata(newOwner),
-				"TB",
+				DOJO_NAMESPACE,
 			);
 		} catch (error) {
 			console.error(error);
@@ -456,7 +457,7 @@ export function setupWorld(provider: DojoProvider) {
 			return await provider.execute(
 				snAccount,
 				build_Collection_update_calldata(tokenId),
-				"TB",
+				DOJO_NAMESPACE,
 			);
 		} catch (error) {
 			console.error(error);
@@ -477,7 +478,7 @@ export function setupWorld(provider: DojoProvider) {
 			return await provider.execute(
 				snAccount,
 				build_game_system_abandonGame_calldata(gameId),
-				"TB",
+				DOJO_NAMESPACE,
 			);
 		} catch (error) {
 			console.error(error);
@@ -498,7 +499,7 @@ export function setupWorld(provider: DojoProvider) {
 			return await provider.execute(
 				snAccount,
 				build_game_system_cancelMatchmaking_calldata(),
-				"TB",
+				DOJO_NAMESPACE,
 			);
 		} catch (error) {
 			console.error(error);
@@ -519,7 +520,7 @@ export function setupWorld(provider: DojoProvider) {
 			return await provider.execute(
 				snAccount,
 				build_game_system_createFriendlyGame_calldata(),
-				"TB",
+				DOJO_NAMESPACE,
 			);
 		} catch (error) {
 			console.error(error);
@@ -540,7 +541,7 @@ export function setupWorld(provider: DojoProvider) {
 			return await provider.execute(
 				snAccount,
 				build_game_system_createGame_calldata(),
-				"TB",
+				DOJO_NAMESPACE,
 			);
 		} catch (error) {
 			console.error(error);
@@ -561,7 +562,7 @@ export function setupWorld(provider: DojoProvider) {
 			return await provider.execute(
 				snAccount,
 				build_game_system_executeTurn_calldata(gameId, actions),
-				"TB",
+				DOJO_NAMESPACE,
 			);
 		} catch (error) {
 			console.error(error);
@@ -582,7 +583,7 @@ export function setupWorld(provider: DojoProvider) {
 			return await provider.execute(
 				snAccount,
 				build_game_system_findMatch_calldata(),
-				"TB",
+				DOJO_NAMESPACE,
 			);
 		} catch (error) {
 			console.error(error);
@@ -600,7 +601,7 @@ export function setupWorld(provider: DojoProvider) {
 
 	const game_system_gameOver = async (tokenId: BigNumberish) => {
 		try {
-			return await provider.call("TB", build_game_system_gameOver_calldata(tokenId));
+			return await provider.call(DOJO_NAMESPACE, build_game_system_gameOver_calldata(tokenId));
 		} catch (error) {
 			console.error(error);
 			throw error;
@@ -620,7 +621,7 @@ export function setupWorld(provider: DojoProvider) {
 			return await provider.execute(
 				snAccount,
 				build_game_system_joinGame_calldata(gameId),
-				"TB",
+				DOJO_NAMESPACE,
 			);
 		} catch (error) {
 			console.error(error);
@@ -638,7 +639,7 @@ export function setupWorld(provider: DojoProvider) {
 
 	const game_system_score = async (tokenId: BigNumberish) => {
 		try {
-			return await provider.call("TB", build_game_system_score_calldata(tokenId));
+			return await provider.call(DOJO_NAMESPACE, build_game_system_score_calldata(tokenId));
 		} catch (error) {
 			console.error(error);
 			throw error;
@@ -658,7 +659,7 @@ export function setupWorld(provider: DojoProvider) {
 			return await provider.execute(
 				snAccount,
 				build_game_system_setTeam_calldata(gameId, beast1, beast2, beast3),
-				"TB",
+				DOJO_NAMESPACE,
 			);
 		} catch (error) {
 			console.error(error);

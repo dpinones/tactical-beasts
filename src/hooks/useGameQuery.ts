@@ -17,7 +17,7 @@ import type {
   HexCoord,
 } from "../domain/types";
 
-const NS = (import.meta.env.VITE_DOJO_NAMESPACE || "TB").toLowerCase();
+import { DOJO_NAMESPACE as NS } from "../config/namespace";
 
 function parseGameNode(node: any): GameModel {
   return {

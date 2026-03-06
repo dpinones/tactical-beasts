@@ -4,8 +4,7 @@ export type ContractComponents = Awaited<
   ReturnType<typeof defineContractComponents>
 >;
 
-const DOJO_NAMESPACE =
-  import.meta.env.VITE_DOJO_NAMESPACE || "RPS";
+import { DOJO_NAMESPACE } from "../../config/namespace";
 
 export function defineContractComponents(world: World) {
   return {

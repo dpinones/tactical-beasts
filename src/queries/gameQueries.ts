@@ -1,6 +1,5 @@
 import { gql } from "graphql-tag";
-
-const NS = (import.meta.env.VITE_DOJO_NAMESPACE || "TB").toLowerCase();
+import { DOJO_NAMESPACE as NS } from "../config/namespace";
 
 export const GET_GAME = gql`
   query GetGame($gameId: u32!) {

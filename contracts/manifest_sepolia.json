@@ -1,9 +1,9 @@
 {
   "world": {
     "class_hash": "0x613551abceb2b37073b1149bb862ea70cf029981ce1ca47e9dd7c7ab97cb65d",
-    "address": "0xbc160fb7926f6941ff3b1ab723b3e42f179b484e06058f63aefd1ed01c2b6a",
-    "seed": "rps-sepolia",
-    "name": "Rock Paper Scissors",
+    "address": "0xb8d5253b0645a0d2d979781d3855826f22a216cdf15428287877c3c363f183",
+    "seed": "tb-sepolia",
+    "name": "Tactical Beasts",
     "entrypoints": [
       "uuid",
       "set_metadata",
@@ -33,24 +33,231 @@
   },
   "contracts": [
     {
-      "address": "0x209f10887db9348e181e7d877b6ba396c2bf73b9aa6aa6fa31d75605b5f9c41",
-      "class_hash": "0x7db6c214e38ce4dfe33bf0762bf257bae578813c2393e4c1e072d637fe38c4a",
+      "address": "0x755ac75c321fd75aa8b2add7a1aaed524dc8cfe1db6515252b1f971420c88f2",
+      "class_hash": "0x1aa49ec58aa108b25b10ab0f4664f7a018a26767afb9b7a6396859ca9d281a2",
       "init_calldata": [],
-      "tag": "RPS-game_system",
-      "selector": "0x77e9829d1d9b41095bd52d4775d6f7432b2c0e29a4b229e6172ca3d1e945815",
+      "tag": "TB1-Collection",
+      "selector": "0x29a59bc944164b21de99d9808fcf318588bb463bfb60516a70b0e2644c309b0",
+      "systems": [
+        "dojo_init",
+        "safe_transfer_from",
+        "transfer_from",
+        "approve",
+        "set_approval_for_all",
+        "mint",
+        "burn",
+        "update",
+        "assert_is_owner",
+        "upgrade",
+        "grant_role",
+        "revoke_role",
+        "renounce_role",
+        "transfer_ownership",
+        "renounce_ownership"
+      ]
+    },
+    {
+      "address": "0x748eea3933811ac8dd34770ec4e453762e71cf4a5ec54e6e04ee7eb282524",
+      "class_hash": "0x57ce006d877315ebb1b4b4577b7aeb263a36d65ca993d84da1a2f9f49313581",
+      "init_calldata": [],
+      "tag": "TB1-game_system",
+      "selector": "0x3687e683c1056316f61e197bb9013734f28aee2e3450dbc720d5b2fbe6ea0e0",
       "systems": [
         "dojo_init",
         "create_game",
+        "create_friendly_game",
         "join_game",
-        "commit_move",
-        "reveal_move",
-        "claim_timeout",
+        "set_team",
+        "execute_turn",
+        "find_match",
+        "cancel_matchmaking",
+        "abandon_game",
         "upgrade"
       ]
     }
   ],
   "libraries": [],
   "models": [
+    {
+      "members": [
+        {
+          "name": "player_id",
+          "type": "core::felt252",
+          "key": true
+        },
+        {
+          "name": "achievement_id",
+          "type": "core::felt252",
+          "key": true
+        },
+        {
+          "name": "task_id",
+          "type": "core::felt252",
+          "key": true
+        },
+        {
+          "name": "count",
+          "type": "core::integer::u128",
+          "key": false
+        },
+        {
+          "name": "timestamp",
+          "type": "core::integer::u64",
+          "key": false
+        }
+      ],
+      "class_hash": "0x1b93d2931ce14c6c25c1b4f3d78ff88f1d9d9a867ff8e4b76f697a370425cb3",
+      "tag": "TB1-AchievementAdvancement",
+      "selector": "0x346e83fd485c388c3a1ec05594a46dd6f9fc54f784d617bba8a4cf92a505668"
+    },
+    {
+      "members": [
+        {
+          "name": "task_id",
+          "type": "core::felt252",
+          "key": true
+        },
+        {
+          "name": "achievements",
+          "type": "core::array::Array::<core::felt252>",
+          "key": false
+        }
+      ],
+      "class_hash": "0x6969588e5989757eb797b61bf2d430d4e6c935bb7023000769576fa49d8d1b1",
+      "tag": "TB1-AchievementAssociation",
+      "selector": "0x7729f3beeae83057b4c4be3220bb62785349cf2d318d87efd4962dbf18ece5c"
+    },
+    {
+      "members": [
+        {
+          "name": "player_id",
+          "type": "core::felt252",
+          "key": true
+        },
+        {
+          "name": "achievement_id",
+          "type": "core::felt252",
+          "key": true
+        },
+        {
+          "name": "timestamp",
+          "type": "core::integer::u64",
+          "key": false
+        },
+        {
+          "name": "unclaimed",
+          "type": "core::bool",
+          "key": false
+        }
+      ],
+      "class_hash": "0x7b5b83ccc288a92f3ee2bd812c8fb84536a9e26d1742a8648036d19966030a5",
+      "tag": "TB1-AchievementCompletion",
+      "selector": "0xe1effcbad76e54bc90d37b24221503388cc921c9ec5891a4539d2a16b5bf87"
+    },
+    {
+      "members": [
+        {
+          "name": "id",
+          "type": "core::felt252",
+          "key": true
+        },
+        {
+          "name": "rewarder",
+          "type": "core::starknet::contract_address::ContractAddress",
+          "key": false
+        },
+        {
+          "name": "start",
+          "type": "core::integer::u64",
+          "key": false
+        },
+        {
+          "name": "end",
+          "type": "core::integer::u64",
+          "key": false
+        },
+        {
+          "name": "tasks",
+          "type": "core::array::Span::<achievement::types::task::Task>",
+          "key": false
+        }
+      ],
+      "class_hash": "0x6c6a9c45913331fa4e602135926cf9a622b60d2abb04381c37e0ba79861f11d",
+      "tag": "TB1-AchievementDefinition",
+      "selector": "0x35ebbae0c0d161b3e3c311986810b9894b0cd83cfd0b0dfe57b2002b487e8bc"
+    },
+    {
+      "members": [
+        {
+          "name": "game_id",
+          "type": "core::integer::u32",
+          "key": true
+        },
+        {
+          "name": "player_index",
+          "type": "core::integer::u8",
+          "key": true
+        },
+        {
+          "name": "beast_index",
+          "type": "core::integer::u8",
+          "key": true
+        },
+        {
+          "name": "beast_id",
+          "type": "core::integer::u32",
+          "key": false
+        },
+        {
+          "name": "beast_type",
+          "type": "core::integer::u8",
+          "key": false
+        },
+        {
+          "name": "tier",
+          "type": "core::integer::u8",
+          "key": false
+        },
+        {
+          "name": "level",
+          "type": "core::integer::u16",
+          "key": false
+        },
+        {
+          "name": "hp",
+          "type": "core::integer::u16",
+          "key": false
+        },
+        {
+          "name": "hp_max",
+          "type": "core::integer::u16",
+          "key": false
+        },
+        {
+          "name": "extra_lives",
+          "type": "core::integer::u8",
+          "key": false
+        },
+        {
+          "name": "position_row",
+          "type": "core::integer::u8",
+          "key": false
+        },
+        {
+          "name": "position_col",
+          "type": "core::integer::u8",
+          "key": false
+        },
+        {
+          "name": "alive",
+          "type": "core::bool",
+          "key": false
+        }
+      ],
+      "class_hash": "0x6f1b0723528d49ab56bbac8911b6021fe294210a584b82a4e3daf4d094a1e2f",
+      "tag": "TB1-BeastState",
+      "selector": "0x3c76b0f094c4046a595bef5d57800a9212e62c958233c558213537521d4d6e6"
+    },
     {
       "members": [
         {
@@ -74,29 +281,39 @@
           "key": false
         },
         {
+          "name": "current_attacker",
+          "type": "core::integer::u8",
+          "key": false
+        },
+        {
+          "name": "round",
+          "type": "core::integer::u16",
+          "key": false
+        },
+        {
           "name": "winner",
           "type": "core::starknet::contract_address::ContractAddress",
           "key": false
         },
         {
-          "name": "player1_move",
-          "type": "core::integer::u8",
+          "name": "p1_team_set",
+          "type": "core::bool",
           "key": false
         },
         {
-          "name": "player2_move",
-          "type": "core::integer::u8",
+          "name": "p2_team_set",
+          "type": "core::bool",
           "key": false
         },
         {
-          "name": "committed_at",
-          "type": "core::integer::u64",
+          "name": "is_friendly",
+          "type": "core::bool",
           "key": false
         }
       ],
-      "class_hash": "0x5aad66ba0e4f26624210ace444dae8b031817103cc42b14a9017143e49a9ed9",
-      "tag": "RPS-Game",
-      "selector": "0xf1c0b1092abc23c2101bc4546f7651b05b64a2956016f1afd3fe640210f39e"
+      "class_hash": "0x5a9ad6b1603f7829dc11740632e428b90cc306d40a0826e7f77f455cfc0828e",
+      "tag": "TB1-Game",
+      "selector": "0x2dfb90525a37a0c77574f86cef34f1abb9debbf49a5952ea2ef94f53d06746"
     },
     {
       "members": [
@@ -111,14 +328,194 @@
           "key": false
         },
         {
-          "name": "timeout_duration",
+          "name": "token_count",
           "type": "core::integer::u64",
           "key": false
         }
       ],
-      "class_hash": "0x197a38a2f20a83265354ab54b69cee951e96aec1875a7d05686637dba152dcd",
-      "tag": "RPS-GameConfig",
-      "selector": "0x7e18ed7c40f55687f47203264bd7334b061ff8ff0b9649e15af69f1a525723c"
+      "class_hash": "0x173af985b1d050827789bc5c374eef0b3c87e52c36b34ec6b80ddc937fb0753",
+      "tag": "TB1-GameConfig",
+      "selector": "0x4a339fd8e06d4a8ee1a9855cdaf30caac08b9f82cd8432be5e3b09abd848126"
+    },
+    {
+      "members": [
+        {
+          "name": "token_id",
+          "type": "core::integer::u64",
+          "key": true
+        },
+        {
+          "name": "match_id",
+          "type": "core::integer::u32",
+          "key": false
+        },
+        {
+          "name": "player",
+          "type": "core::starknet::contract_address::ContractAddress",
+          "key": false
+        }
+      ],
+      "class_hash": "0x200699d72d5aa2a1bb5b4ae758adae604f53b8c435f755c73b1e81c80fd521e",
+      "tag": "TB1-GameToken",
+      "selector": "0x1d09a4b346cf1d90df194bba605094dea6d53a67fbd05d87cbd94be4742672c"
+    },
+    {
+      "members": [
+        {
+          "name": "match_id",
+          "type": "core::integer::u32",
+          "key": true
+        },
+        {
+          "name": "p1_token_id",
+          "type": "core::integer::u64",
+          "key": false
+        },
+        {
+          "name": "p2_token_id",
+          "type": "core::integer::u64",
+          "key": false
+        }
+      ],
+      "class_hash": "0x783b7b7ee70ddb574eb52f7e27b123089be059f8f09d6a0f1cee4cbbdb2b550",
+      "tag": "TB1-GameTokens",
+      "selector": "0x14e0edefffaaaaad39b90429f25082396177e137645ff950813b0f7054f3fef"
+    },
+    {
+      "members": [
+        {
+          "name": "game_id",
+          "type": "core::integer::u32",
+          "key": true
+        },
+        {
+          "name": "obstacle_1_row",
+          "type": "core::integer::u8",
+          "key": false
+        },
+        {
+          "name": "obstacle_1_col",
+          "type": "core::integer::u8",
+          "key": false
+        },
+        {
+          "name": "obstacle_2_row",
+          "type": "core::integer::u8",
+          "key": false
+        },
+        {
+          "name": "obstacle_2_col",
+          "type": "core::integer::u8",
+          "key": false
+        },
+        {
+          "name": "obstacle_3_row",
+          "type": "core::integer::u8",
+          "key": false
+        },
+        {
+          "name": "obstacle_3_col",
+          "type": "core::integer::u8",
+          "key": false
+        },
+        {
+          "name": "obstacle_4_row",
+          "type": "core::integer::u8",
+          "key": false
+        },
+        {
+          "name": "obstacle_4_col",
+          "type": "core::integer::u8",
+          "key": false
+        },
+        {
+          "name": "obstacle_5_row",
+          "type": "core::integer::u8",
+          "key": false
+        },
+        {
+          "name": "obstacle_5_col",
+          "type": "core::integer::u8",
+          "key": false
+        },
+        {
+          "name": "obstacle_6_row",
+          "type": "core::integer::u8",
+          "key": false
+        },
+        {
+          "name": "obstacle_6_col",
+          "type": "core::integer::u8",
+          "key": false
+        }
+      ],
+      "class_hash": "0x7133bbffad6c1cd949d8a7717fd45c0c0b0e46297a80d4d70202a6c09d12408",
+      "tag": "TB1-MapState",
+      "selector": "0x4ddace83f6c870cb5b47869eae32b055e30e0b4a99b635d03fab56b4fe056f9"
+    },
+    {
+      "members": [
+        {
+          "name": "id",
+          "type": "core::felt252",
+          "key": true
+        },
+        {
+          "name": "waiting_player",
+          "type": "core::starknet::contract_address::ContractAddress",
+          "key": false
+        },
+        {
+          "name": "waiting_game_id",
+          "type": "core::integer::u32",
+          "key": false
+        }
+      ],
+      "class_hash": "0x288e429249d243490bfb4cf56a10d88f8d7ccb737b2e66145e096db9dc177d",
+      "tag": "TB1-MatchmakingQueue",
+      "selector": "0x3d149a8837a8e31d0e25b30ec3cd32dba1ce1919faa39dac256a3226126b18e"
+    },
+    {
+      "members": [
+        {
+          "name": "player",
+          "type": "core::starknet::contract_address::ContractAddress",
+          "key": true
+        },
+        {
+          "name": "games_played",
+          "type": "core::integer::u32",
+          "key": false
+        },
+        {
+          "name": "wins",
+          "type": "core::integer::u32",
+          "key": false
+        },
+        {
+          "name": "losses",
+          "type": "core::integer::u32",
+          "key": false
+        },
+        {
+          "name": "total_kills",
+          "type": "core::integer::u32",
+          "key": false
+        },
+        {
+          "name": "total_deaths",
+          "type": "core::integer::u32",
+          "key": false
+        },
+        {
+          "name": "abandons",
+          "type": "core::integer::u32",
+          "key": false
+        }
+      ],
+      "class_hash": "0x73093e8f6b1d7d9c3d8ce0370f266cab0462e520db16913f565f1bcf43bb8b5",
+      "tag": "TB1-PlayerProfile",
+      "selector": "0x43537a4983a700fca1cd6a06fd5d9263809af295450df7bda85e88040472004"
     },
     {
       "members": [
@@ -133,22 +530,81 @@
           "key": true
         },
         {
-          "name": "commitment",
-          "type": "core::felt252",
+          "name": "player_index",
+          "type": "core::integer::u8",
           "key": false
         },
         {
-          "name": "revealed",
+          "name": "beast_1",
+          "type": "core::integer::u32",
+          "key": false
+        },
+        {
+          "name": "beast_2",
+          "type": "core::integer::u32",
+          "key": false
+        },
+        {
+          "name": "beast_3",
+          "type": "core::integer::u32",
+          "key": false
+        },
+        {
+          "name": "potion_used",
           "type": "core::bool",
           "key": false
         }
       ],
-      "class_hash": "0x59b27eb3cea36f56f9ce59b1533006316d21ee2d2c040ffa89cdc2562f56192",
-      "tag": "RPS-PlayerCommit",
-      "selector": "0x75793f6cb6d3f97f6a00134d8007f4a136e5dada1b08b6d9bc51be8c8f5aa59"
+      "class_hash": "0x77a6c08c70382af22abda1eaeab5d9c4991bc955d51c33cb21fd53c1b5ffe44",
+      "tag": "TB1-PlayerState",
+      "selector": "0x38e7e2448f1a18c9a44c0a8b95624a947bc343358609f34870763da22c5a63a"
     }
   ],
   "events": [
+    {
+      "members": [
+        {
+          "name": "player_id",
+          "type": "core::felt252",
+          "key": true
+        },
+        {
+          "name": "achievement_id",
+          "type": "core::felt252",
+          "key": true
+        },
+        {
+          "name": "time",
+          "type": "core::integer::u64",
+          "key": false
+        }
+      ],
+      "class_hash": "0x3ca9aa05af8ef4c94e5213e7ba413e05fd28a7641b7060f896f06c4c6993e00",
+      "tag": "TB1-AchievementClaimed",
+      "selector": "0x14a0f9a8f69dd3b1152389b01d575895c4df936e8e90a1d3396e82db5a89216"
+    },
+    {
+      "members": [
+        {
+          "name": "player_id",
+          "type": "core::felt252",
+          "key": true
+        },
+        {
+          "name": "achievement_id",
+          "type": "core::felt252",
+          "key": true
+        },
+        {
+          "name": "time",
+          "type": "core::integer::u64",
+          "key": false
+        }
+      ],
+      "class_hash": "0x7862bab5e54ec6aa89c4a0ef6f39ca01a6440434b08d4fdd8098ee6e920e9a6",
+      "tag": "TB1-AchievementCompleted",
+      "selector": "0x36c20c6b4088a6f03fc7915aad5c5e1e1be659e7bb064ece4df3fa88a25576d"
+    },
     {
       "members": [
         {
@@ -167,9 +623,9 @@
           "key": false
         }
       ],
-      "class_hash": "0x6e99202e31a4907fb9b3f42b17599028633f2d91667325de4577a15131a05ed",
-      "tag": "RPS-GameCreated",
-      "selector": "0x56dd41f734d189394522132cf8d1e5b203d9980c1bf6cf9c0fb2f9605cc7d70"
+      "class_hash": "0x6b5af9fa605a7648848ee05512ef05bd6c58c36e52201bb4eb69c3b482e0978",
+      "tag": "TB1-GameCreated",
+      "selector": "0x79232c708a17b08e21e7e6938ef36b3c1f8c49c59648e6c526ec7f10efc9de4"
     },
     {
       "members": [
@@ -184,13 +640,8 @@
           "key": false
         },
         {
-          "name": "player1_move",
-          "type": "core::integer::u8",
-          "key": false
-        },
-        {
-          "name": "player2_move",
-          "type": "core::integer::u8",
+          "name": "rounds",
+          "type": "core::integer::u16",
           "key": false
         },
         {
@@ -199,58 +650,41 @@
           "key": false
         }
       ],
-      "class_hash": "0xe1ed7299df5c35aee48a75e62c5fcfb8561fad412883170971252bd341a0bf",
-      "tag": "RPS-GameFinished",
-      "selector": "0x7984acd5e0e81f9dc7c99d32a6a9b8f8d8d9d594ff67fca041edea7d5b7a179"
+      "class_hash": "0x26da02edd40294205b99f8a2a7eb54a726b89494dba6475761635195cbb8806",
+      "tag": "TB1-GameFinished",
+      "selector": "0x14bb600e57719daebc5ba4c5d10e7355c3b871ee496402a46b3b32348d7fc3d"
     },
     {
       "members": [
         {
+          "name": "leaderboard_id",
+          "type": "core::felt252",
+          "key": true
+        },
+        {
           "name": "game_id",
-          "type": "core::integer::u32",
+          "type": "core::felt252",
           "key": true
         },
         {
           "name": "player",
-          "type": "core::starknet::contract_address::ContractAddress",
+          "type": "core::felt252",
           "key": false
         },
         {
-          "name": "time",
+          "name": "score",
+          "type": "core::integer::u64",
+          "key": false
+        },
+        {
+          "name": "timestamp",
           "type": "core::integer::u64",
           "key": false
         }
       ],
-      "class_hash": "0x5b50bdebfc8b5a2b18f697f50321822ef09bfd2935aa9e1741c6967cab66b8f",
-      "tag": "RPS-MoveCommitted",
-      "selector": "0x379cd07d601b85e749ddf1fc6e17119796727fc3db35c3f68c023b7a702f86c"
-    },
-    {
-      "members": [
-        {
-          "name": "game_id",
-          "type": "core::integer::u32",
-          "key": true
-        },
-        {
-          "name": "player",
-          "type": "core::starknet::contract_address::ContractAddress",
-          "key": false
-        },
-        {
-          "name": "move_value",
-          "type": "core::integer::u8",
-          "key": false
-        },
-        {
-          "name": "time",
-          "type": "core::integer::u64",
-          "key": false
-        }
-      ],
-      "class_hash": "0x6b195b0d250e9f3945e90b257d4d002119fe28deaba215911063b0a25e2d4a6",
-      "tag": "RPS-MoveRevealed",
-      "selector": "0x633df209f56e9f49c78889fced4678396bda196d6ba1e05aa8fd29e639deaeb"
+      "class_hash": "0x2c067e1c1069a68aca73f8cf4f0000fb9c584455bb60fadde7ee05fbeb62372",
+      "tag": "TB1-LeaderboardScore",
+      "selector": "0xa03d838b62460951ca0550029f6c36cf0da1e4b0cc50c46ad71a10ca5134ae"
     },
     {
       "members": [
@@ -270,13 +704,604 @@
           "key": false
         }
       ],
-      "class_hash": "0x59dca081cbf8b29da4f5afc8ac958918243523ba770eea43ab7d64e3e7f596a",
-      "tag": "RPS-PlayerJoined",
-      "selector": "0x371120050ff80535edaeae5624e553d6402a048f3727bdddfafe99d7127d21b"
+      "class_hash": "0xe6fabce39d9706e5c65350610ed04018ffa17871e7d0ce5d6375326ebdbebe",
+      "tag": "TB1-PlayerJoined",
+      "selector": "0x5aaed1cc1f41c360bcc738c45ce9a8372e98ad5556214c612dfcbf6415d8a4d"
+    },
+    {
+      "members": [
+        {
+          "name": "id",
+          "type": "core::felt252",
+          "key": true
+        },
+        {
+          "name": "hidden",
+          "type": "core::bool",
+          "key": false
+        },
+        {
+          "name": "index",
+          "type": "core::integer::u8",
+          "key": false
+        },
+        {
+          "name": "points",
+          "type": "core::integer::u16",
+          "key": false
+        },
+        {
+          "name": "start",
+          "type": "core::integer::u64",
+          "key": false
+        },
+        {
+          "name": "end",
+          "type": "core::integer::u64",
+          "key": false
+        },
+        {
+          "name": "group",
+          "type": "core::felt252",
+          "key": false
+        },
+        {
+          "name": "icon",
+          "type": "core::felt252",
+          "key": false
+        },
+        {
+          "name": "title",
+          "type": "core::felt252",
+          "key": false
+        },
+        {
+          "name": "description",
+          "type": "core::byte_array::ByteArray",
+          "key": false
+        },
+        {
+          "name": "tasks",
+          "type": "core::array::Span::<achievement::types::task::Task>",
+          "key": false
+        },
+        {
+          "name": "data",
+          "type": "core::byte_array::ByteArray",
+          "key": false
+        }
+      ],
+      "class_hash": "0x706834e9ed630a715e2727c7ed3706c2f92d46f93568c4082f7030023947cf0",
+      "tag": "TB1-TrophyCreation",
+      "selector": "0x4d335e8f7d80985c22797f13723f29cb7355dd3a000b85b9e71368be8b120c4"
+    },
+    {
+      "members": [
+        {
+          "name": "player_id",
+          "type": "core::felt252",
+          "key": true
+        },
+        {
+          "name": "task_id",
+          "type": "core::felt252",
+          "key": true
+        },
+        {
+          "name": "count",
+          "type": "core::integer::u128",
+          "key": false
+        },
+        {
+          "name": "time",
+          "type": "core::integer::u64",
+          "key": false
+        }
+      ],
+      "class_hash": "0x313c566ceee5bdcaed4accfedc707b6b5a02feb96f9448a18bfa97bf43811e4",
+      "tag": "TB1-TrophyProgression",
+      "selector": "0x6c1ac8508f1c75f418b2c865c2551e8ef0ae106b87232c44d351feb7fb8648c"
     }
   ],
   "external_contracts": [],
   "abis": [
+    {
+      "type": "event",
+      "name": "achievement::components::achievable::AchievableComponent::Event",
+      "kind": "enum",
+      "variants": []
+    },
+    {
+      "type": "struct",
+      "name": "achievement::events::index::AchievementClaimed",
+      "members": [
+        {
+          "name": "player_id",
+          "type": "core::felt252"
+        },
+        {
+          "name": "achievement_id",
+          "type": "core::felt252"
+        },
+        {
+          "name": "time",
+          "type": "core::integer::u64"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "achievement::events::index::AchievementClaimedValue",
+      "members": [
+        {
+          "name": "time",
+          "type": "core::integer::u64"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "achievement::events::index::AchievementCompleted",
+      "members": [
+        {
+          "name": "player_id",
+          "type": "core::felt252"
+        },
+        {
+          "name": "achievement_id",
+          "type": "core::felt252"
+        },
+        {
+          "name": "time",
+          "type": "core::integer::u64"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "achievement::events::index::AchievementCompletedValue",
+      "members": [
+        {
+          "name": "time",
+          "type": "core::integer::u64"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "achievement::events::index::TrophyCreation",
+      "members": [
+        {
+          "name": "id",
+          "type": "core::felt252"
+        },
+        {
+          "name": "hidden",
+          "type": "core::bool"
+        },
+        {
+          "name": "index",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "points",
+          "type": "core::integer::u16"
+        },
+        {
+          "name": "start",
+          "type": "core::integer::u64"
+        },
+        {
+          "name": "end",
+          "type": "core::integer::u64"
+        },
+        {
+          "name": "group",
+          "type": "core::felt252"
+        },
+        {
+          "name": "icon",
+          "type": "core::felt252"
+        },
+        {
+          "name": "title",
+          "type": "core::felt252"
+        },
+        {
+          "name": "description",
+          "type": "core::byte_array::ByteArray"
+        },
+        {
+          "name": "tasks",
+          "type": "core::array::Span::<achievement::types::task::Task>"
+        },
+        {
+          "name": "data",
+          "type": "core::byte_array::ByteArray"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "achievement::events::index::TrophyCreationValue",
+      "members": [
+        {
+          "name": "hidden",
+          "type": "core::bool"
+        },
+        {
+          "name": "index",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "points",
+          "type": "core::integer::u16"
+        },
+        {
+          "name": "start",
+          "type": "core::integer::u64"
+        },
+        {
+          "name": "end",
+          "type": "core::integer::u64"
+        },
+        {
+          "name": "group",
+          "type": "core::felt252"
+        },
+        {
+          "name": "icon",
+          "type": "core::felt252"
+        },
+        {
+          "name": "title",
+          "type": "core::felt252"
+        },
+        {
+          "name": "description",
+          "type": "core::byte_array::ByteArray"
+        },
+        {
+          "name": "tasks",
+          "type": "core::array::Span::<achievement::types::task::Task>"
+        },
+        {
+          "name": "data",
+          "type": "core::byte_array::ByteArray"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "achievement::events::index::TrophyProgression",
+      "members": [
+        {
+          "name": "player_id",
+          "type": "core::felt252"
+        },
+        {
+          "name": "task_id",
+          "type": "core::felt252"
+        },
+        {
+          "name": "count",
+          "type": "core::integer::u128"
+        },
+        {
+          "name": "time",
+          "type": "core::integer::u64"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "achievement::events::index::TrophyProgressionValue",
+      "members": [
+        {
+          "name": "count",
+          "type": "core::integer::u128"
+        },
+        {
+          "name": "time",
+          "type": "core::integer::u64"
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "name": "achievement::events::index::e_AchievementClaimed::Event",
+      "kind": "enum",
+      "variants": []
+    },
+    {
+      "type": "event",
+      "name": "achievement::events::index::e_AchievementCompleted::Event",
+      "kind": "enum",
+      "variants": []
+    },
+    {
+      "type": "event",
+      "name": "achievement::events::index::e_TrophyCreation::Event",
+      "kind": "enum",
+      "variants": []
+    },
+    {
+      "type": "event",
+      "name": "achievement::events::index::e_TrophyProgression::Event",
+      "kind": "enum",
+      "variants": []
+    },
+    {
+      "type": "struct",
+      "name": "achievement::models::index::AchievementAdvancement",
+      "members": [
+        {
+          "name": "player_id",
+          "type": "core::felt252"
+        },
+        {
+          "name": "achievement_id",
+          "type": "core::felt252"
+        },
+        {
+          "name": "task_id",
+          "type": "core::felt252"
+        },
+        {
+          "name": "count",
+          "type": "core::integer::u128"
+        },
+        {
+          "name": "timestamp",
+          "type": "core::integer::u64"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "achievement::models::index::AchievementAdvancementValue",
+      "members": [
+        {
+          "name": "count",
+          "type": "core::integer::u128"
+        },
+        {
+          "name": "timestamp",
+          "type": "core::integer::u64"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "achievement::models::index::AchievementAssociation",
+      "members": [
+        {
+          "name": "task_id",
+          "type": "core::felt252"
+        },
+        {
+          "name": "achievements",
+          "type": "core::array::Array::<core::felt252>"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "achievement::models::index::AchievementAssociationValue",
+      "members": [
+        {
+          "name": "achievements",
+          "type": "core::array::Array::<core::felt252>"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "achievement::models::index::AchievementCompletion",
+      "members": [
+        {
+          "name": "player_id",
+          "type": "core::felt252"
+        },
+        {
+          "name": "achievement_id",
+          "type": "core::felt252"
+        },
+        {
+          "name": "timestamp",
+          "type": "core::integer::u64"
+        },
+        {
+          "name": "unclaimed",
+          "type": "core::bool"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "achievement::models::index::AchievementCompletionValue",
+      "members": [
+        {
+          "name": "timestamp",
+          "type": "core::integer::u64"
+        },
+        {
+          "name": "unclaimed",
+          "type": "core::bool"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "achievement::models::index::AchievementDefinition",
+      "members": [
+        {
+          "name": "id",
+          "type": "core::felt252"
+        },
+        {
+          "name": "rewarder",
+          "type": "core::starknet::contract_address::ContractAddress"
+        },
+        {
+          "name": "start",
+          "type": "core::integer::u64"
+        },
+        {
+          "name": "end",
+          "type": "core::integer::u64"
+        },
+        {
+          "name": "tasks",
+          "type": "core::array::Span::<achievement::types::task::Task>"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "achievement::models::index::AchievementDefinitionValue",
+      "members": [
+        {
+          "name": "rewarder",
+          "type": "core::starknet::contract_address::ContractAddress"
+        },
+        {
+          "name": "start",
+          "type": "core::integer::u64"
+        },
+        {
+          "name": "end",
+          "type": "core::integer::u64"
+        },
+        {
+          "name": "tasks",
+          "type": "core::array::Span::<achievement::types::task::Task>"
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "name": "achievement::models::index::m_AchievementAdvancement::Event",
+      "kind": "enum",
+      "variants": []
+    },
+    {
+      "type": "event",
+      "name": "achievement::models::index::m_AchievementAssociation::Event",
+      "kind": "enum",
+      "variants": []
+    },
+    {
+      "type": "event",
+      "name": "achievement::models::index::m_AchievementCompletion::Event",
+      "kind": "enum",
+      "variants": []
+    },
+    {
+      "type": "event",
+      "name": "achievement::models::index::m_AchievementDefinition::Event",
+      "kind": "enum",
+      "variants": []
+    },
+    {
+      "type": "struct",
+      "name": "achievement::types::task::Task",
+      "members": [
+        {
+          "name": "id",
+          "type": "core::felt252"
+        },
+        {
+          "name": "total",
+          "type": "core::integer::u128"
+        },
+        {
+          "name": "description",
+          "type": "core::byte_array::ByteArray"
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "name": "collection::components::erc4906::erc4906::ERC4906Component::BatchMetadataUpdate",
+      "kind": "struct",
+      "members": [
+        {
+          "name": "from_token_id",
+          "type": "core::integer::u256",
+          "kind": "key"
+        },
+        {
+          "name": "to_token_id",
+          "type": "core::integer::u256",
+          "kind": "key"
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "name": "collection::components::erc4906::erc4906::ERC4906Component::Event",
+      "kind": "enum",
+      "variants": [
+        {
+          "name": "MetadataUpdate",
+          "type": "collection::components::erc4906::erc4906::ERC4906Component::MetadataUpdate",
+          "kind": "nested"
+        },
+        {
+          "name": "BatchMetadataUpdate",
+          "type": "collection::components::erc4906::erc4906::ERC4906Component::BatchMetadataUpdate",
+          "kind": "nested"
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "name": "collection::components::erc4906::erc4906::ERC4906Component::MetadataUpdate",
+      "kind": "struct",
+      "members": [
+        {
+          "name": "token_id",
+          "type": "core::integer::u256",
+          "kind": "key"
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "name": "collection::components::erc7572::erc7572::ERC7572Component::ContractURIUpdated",
+      "kind": "struct",
+      "members": []
+    },
+    {
+      "type": "event",
+      "name": "collection::components::erc7572::erc7572::ERC7572Component::Event",
+      "kind": "enum",
+      "variants": [
+        {
+          "name": "ContractURIUpdated",
+          "type": "collection::components::erc7572::erc7572::ERC7572Component::ContractURIUpdated",
+          "kind": "nested"
+        }
+      ]
+    },
+    {
+      "type": "interface",
+      "name": "collection::components::erc7572::interface::IERC7572Metadata",
+      "items": [
+        {
+          "type": "function",
+          "name": "contract_uri",
+          "inputs": [],
+          "outputs": [
+            {
+              "type": "core::byte_array::ByteArray"
+            }
+          ],
+          "state_mutability": "view"
+        }
+      ]
+    },
     {
       "type": "constructor",
       "name": "constructor",
@@ -289,6 +1314,16 @@
         {
           "name": "snapshot",
           "type": "@core::array::Array::<(core::felt252, dojo::meta::introspect::Ty)>"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "core::array::Span::<achievement::types::task::Task>",
+      "members": [
+        {
+          "name": "snapshot",
+          "type": "@core::array::Array::<achievement::types::task::Task>"
         }
       ]
     },
@@ -401,6 +1436,20 @@
         {
           "name": "pending_word_len",
           "type": "core::internal::bounded_int::BoundedInt::<0, 30>"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "core::integer::u256",
+      "members": [
+        {
+          "name": "low",
+          "type": "core::integer::u128"
+        },
+        {
+          "name": "high",
+          "type": "core::integer::u128"
         }
       ]
     },
@@ -2098,7 +3147,7 @@
       "inputs": [
         {
           "name": "event",
-          "type": "rock_paper_scissors::events::index::PlayerJoined"
+          "type": "achievement::events::index::TrophyProgression"
         }
       ],
       "outputs": [],
@@ -2117,15 +3166,656 @@
       "inputs": [
         {
           "name": "value",
-          "type": "rock_paper_scissors::events::index::PlayerJoinedValue"
+          "type": "achievement::events::index::TrophyProgressionValue"
         }
       ],
       "outputs": [],
       "state_mutability": "view"
     },
     {
+      "type": "event",
+      "name": "leaderboard::components::rankable::RankableComponent::Event",
+      "kind": "enum",
+      "variants": []
+    },
+    {
       "type": "struct",
-      "name": "rock_paper_scissors::events::index::GameCreated",
+      "name": "leaderboard::events::index::LeaderboardScore",
+      "members": [
+        {
+          "name": "leaderboard_id",
+          "type": "core::felt252"
+        },
+        {
+          "name": "game_id",
+          "type": "core::felt252"
+        },
+        {
+          "name": "player",
+          "type": "core::felt252"
+        },
+        {
+          "name": "score",
+          "type": "core::integer::u64"
+        },
+        {
+          "name": "timestamp",
+          "type": "core::integer::u64"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "leaderboard::events::index::LeaderboardScoreValue",
+      "members": [
+        {
+          "name": "player",
+          "type": "core::felt252"
+        },
+        {
+          "name": "score",
+          "type": "core::integer::u64"
+        },
+        {
+          "name": "timestamp",
+          "type": "core::integer::u64"
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "name": "leaderboard::events::index::e_LeaderboardScore::Event",
+      "kind": "enum",
+      "variants": []
+    },
+    {
+      "type": "event",
+      "name": "openzeppelin_access::accesscontrol::accesscontrol::AccessControlComponent::Event",
+      "kind": "enum",
+      "variants": [
+        {
+          "name": "RoleGranted",
+          "type": "openzeppelin_access::accesscontrol::accesscontrol::AccessControlComponent::RoleGranted",
+          "kind": "nested"
+        },
+        {
+          "name": "RoleGrantedWithDelay",
+          "type": "openzeppelin_access::accesscontrol::accesscontrol::AccessControlComponent::RoleGrantedWithDelay",
+          "kind": "nested"
+        },
+        {
+          "name": "RoleRevoked",
+          "type": "openzeppelin_access::accesscontrol::accesscontrol::AccessControlComponent::RoleRevoked",
+          "kind": "nested"
+        },
+        {
+          "name": "RoleAdminChanged",
+          "type": "openzeppelin_access::accesscontrol::accesscontrol::AccessControlComponent::RoleAdminChanged",
+          "kind": "nested"
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "name": "openzeppelin_access::accesscontrol::accesscontrol::AccessControlComponent::RoleAdminChanged",
+      "kind": "struct",
+      "members": [
+        {
+          "name": "role",
+          "type": "core::felt252",
+          "kind": "data"
+        },
+        {
+          "name": "previous_admin_role",
+          "type": "core::felt252",
+          "kind": "data"
+        },
+        {
+          "name": "new_admin_role",
+          "type": "core::felt252",
+          "kind": "data"
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "name": "openzeppelin_access::accesscontrol::accesscontrol::AccessControlComponent::RoleGranted",
+      "kind": "struct",
+      "members": [
+        {
+          "name": "role",
+          "type": "core::felt252",
+          "kind": "data"
+        },
+        {
+          "name": "account",
+          "type": "core::starknet::contract_address::ContractAddress",
+          "kind": "data"
+        },
+        {
+          "name": "sender",
+          "type": "core::starknet::contract_address::ContractAddress",
+          "kind": "data"
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "name": "openzeppelin_access::accesscontrol::accesscontrol::AccessControlComponent::RoleGrantedWithDelay",
+      "kind": "struct",
+      "members": [
+        {
+          "name": "role",
+          "type": "core::felt252",
+          "kind": "data"
+        },
+        {
+          "name": "account",
+          "type": "core::starknet::contract_address::ContractAddress",
+          "kind": "data"
+        },
+        {
+          "name": "sender",
+          "type": "core::starknet::contract_address::ContractAddress",
+          "kind": "data"
+        },
+        {
+          "name": "delay",
+          "type": "core::integer::u64",
+          "kind": "data"
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "name": "openzeppelin_access::accesscontrol::accesscontrol::AccessControlComponent::RoleRevoked",
+      "kind": "struct",
+      "members": [
+        {
+          "name": "role",
+          "type": "core::felt252",
+          "kind": "data"
+        },
+        {
+          "name": "account",
+          "type": "core::starknet::contract_address::ContractAddress",
+          "kind": "data"
+        },
+        {
+          "name": "sender",
+          "type": "core::starknet::contract_address::ContractAddress",
+          "kind": "data"
+        }
+      ]
+    },
+    {
+      "type": "interface",
+      "name": "openzeppelin_access::accesscontrol::interface::IAccessControl",
+      "items": [
+        {
+          "type": "function",
+          "name": "has_role",
+          "inputs": [
+            {
+              "name": "role",
+              "type": "core::felt252"
+            },
+            {
+              "name": "account",
+              "type": "core::starknet::contract_address::ContractAddress"
+            }
+          ],
+          "outputs": [
+            {
+              "type": "core::bool"
+            }
+          ],
+          "state_mutability": "view"
+        },
+        {
+          "type": "function",
+          "name": "get_role_admin",
+          "inputs": [
+            {
+              "name": "role",
+              "type": "core::felt252"
+            }
+          ],
+          "outputs": [
+            {
+              "type": "core::felt252"
+            }
+          ],
+          "state_mutability": "view"
+        },
+        {
+          "type": "function",
+          "name": "grant_role",
+          "inputs": [
+            {
+              "name": "role",
+              "type": "core::felt252"
+            },
+            {
+              "name": "account",
+              "type": "core::starknet::contract_address::ContractAddress"
+            }
+          ],
+          "outputs": [],
+          "state_mutability": "external"
+        },
+        {
+          "type": "function",
+          "name": "revoke_role",
+          "inputs": [
+            {
+              "name": "role",
+              "type": "core::felt252"
+            },
+            {
+              "name": "account",
+              "type": "core::starknet::contract_address::ContractAddress"
+            }
+          ],
+          "outputs": [],
+          "state_mutability": "external"
+        },
+        {
+          "type": "function",
+          "name": "renounce_role",
+          "inputs": [
+            {
+              "name": "role",
+              "type": "core::felt252"
+            },
+            {
+              "name": "account",
+              "type": "core::starknet::contract_address::ContractAddress"
+            }
+          ],
+          "outputs": [],
+          "state_mutability": "external"
+        }
+      ]
+    },
+    {
+      "type": "interface",
+      "name": "openzeppelin_access::ownable::interface::IOwnable",
+      "items": [
+        {
+          "type": "function",
+          "name": "owner",
+          "inputs": [],
+          "outputs": [
+            {
+              "type": "core::starknet::contract_address::ContractAddress"
+            }
+          ],
+          "state_mutability": "view"
+        },
+        {
+          "type": "function",
+          "name": "transfer_ownership",
+          "inputs": [
+            {
+              "name": "new_owner",
+              "type": "core::starknet::contract_address::ContractAddress"
+            }
+          ],
+          "outputs": [],
+          "state_mutability": "external"
+        },
+        {
+          "type": "function",
+          "name": "renounce_ownership",
+          "inputs": [],
+          "outputs": [],
+          "state_mutability": "external"
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "name": "openzeppelin_access::ownable::ownable::OwnableComponent::Event",
+      "kind": "enum",
+      "variants": [
+        {
+          "name": "OwnershipTransferred",
+          "type": "openzeppelin_access::ownable::ownable::OwnableComponent::OwnershipTransferred",
+          "kind": "nested"
+        },
+        {
+          "name": "OwnershipTransferStarted",
+          "type": "openzeppelin_access::ownable::ownable::OwnableComponent::OwnershipTransferStarted",
+          "kind": "nested"
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "name": "openzeppelin_access::ownable::ownable::OwnableComponent::OwnershipTransferStarted",
+      "kind": "struct",
+      "members": [
+        {
+          "name": "previous_owner",
+          "type": "core::starknet::contract_address::ContractAddress",
+          "kind": "key"
+        },
+        {
+          "name": "new_owner",
+          "type": "core::starknet::contract_address::ContractAddress",
+          "kind": "key"
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "name": "openzeppelin_access::ownable::ownable::OwnableComponent::OwnershipTransferred",
+      "kind": "struct",
+      "members": [
+        {
+          "name": "previous_owner",
+          "type": "core::starknet::contract_address::ContractAddress",
+          "kind": "key"
+        },
+        {
+          "name": "new_owner",
+          "type": "core::starknet::contract_address::ContractAddress",
+          "kind": "key"
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "name": "openzeppelin_introspection::src5::SRC5Component::Event",
+      "kind": "enum",
+      "variants": []
+    },
+    {
+      "type": "event",
+      "name": "openzeppelin_token::erc721::erc721::ERC721Component::Approval",
+      "kind": "struct",
+      "members": [
+        {
+          "name": "owner",
+          "type": "core::starknet::contract_address::ContractAddress",
+          "kind": "key"
+        },
+        {
+          "name": "approved",
+          "type": "core::starknet::contract_address::ContractAddress",
+          "kind": "key"
+        },
+        {
+          "name": "token_id",
+          "type": "core::integer::u256",
+          "kind": "key"
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "name": "openzeppelin_token::erc721::erc721::ERC721Component::ApprovalForAll",
+      "kind": "struct",
+      "members": [
+        {
+          "name": "owner",
+          "type": "core::starknet::contract_address::ContractAddress",
+          "kind": "key"
+        },
+        {
+          "name": "operator",
+          "type": "core::starknet::contract_address::ContractAddress",
+          "kind": "key"
+        },
+        {
+          "name": "approved",
+          "type": "core::bool",
+          "kind": "data"
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "name": "openzeppelin_token::erc721::erc721::ERC721Component::Event",
+      "kind": "enum",
+      "variants": [
+        {
+          "name": "Transfer",
+          "type": "openzeppelin_token::erc721::erc721::ERC721Component::Transfer",
+          "kind": "nested"
+        },
+        {
+          "name": "Approval",
+          "type": "openzeppelin_token::erc721::erc721::ERC721Component::Approval",
+          "kind": "nested"
+        },
+        {
+          "name": "ApprovalForAll",
+          "type": "openzeppelin_token::erc721::erc721::ERC721Component::ApprovalForAll",
+          "kind": "nested"
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "name": "openzeppelin_token::erc721::erc721::ERC721Component::Transfer",
+      "kind": "struct",
+      "members": [
+        {
+          "name": "from",
+          "type": "core::starknet::contract_address::ContractAddress",
+          "kind": "key"
+        },
+        {
+          "name": "to",
+          "type": "core::starknet::contract_address::ContractAddress",
+          "kind": "key"
+        },
+        {
+          "name": "token_id",
+          "type": "core::integer::u256",
+          "kind": "key"
+        }
+      ]
+    },
+    {
+      "type": "interface",
+      "name": "openzeppelin_token::erc721::interface::IERC721",
+      "items": [
+        {
+          "type": "function",
+          "name": "balance_of",
+          "inputs": [
+            {
+              "name": "account",
+              "type": "core::starknet::contract_address::ContractAddress"
+            }
+          ],
+          "outputs": [
+            {
+              "type": "core::integer::u256"
+            }
+          ],
+          "state_mutability": "view"
+        },
+        {
+          "type": "function",
+          "name": "owner_of",
+          "inputs": [
+            {
+              "name": "token_id",
+              "type": "core::integer::u256"
+            }
+          ],
+          "outputs": [
+            {
+              "type": "core::starknet::contract_address::ContractAddress"
+            }
+          ],
+          "state_mutability": "view"
+        },
+        {
+          "type": "function",
+          "name": "safe_transfer_from",
+          "inputs": [
+            {
+              "name": "from",
+              "type": "core::starknet::contract_address::ContractAddress"
+            },
+            {
+              "name": "to",
+              "type": "core::starknet::contract_address::ContractAddress"
+            },
+            {
+              "name": "token_id",
+              "type": "core::integer::u256"
+            },
+            {
+              "name": "data",
+              "type": "core::array::Span::<core::felt252>"
+            }
+          ],
+          "outputs": [],
+          "state_mutability": "external"
+        },
+        {
+          "type": "function",
+          "name": "transfer_from",
+          "inputs": [
+            {
+              "name": "from",
+              "type": "core::starknet::contract_address::ContractAddress"
+            },
+            {
+              "name": "to",
+              "type": "core::starknet::contract_address::ContractAddress"
+            },
+            {
+              "name": "token_id",
+              "type": "core::integer::u256"
+            }
+          ],
+          "outputs": [],
+          "state_mutability": "external"
+        },
+        {
+          "type": "function",
+          "name": "approve",
+          "inputs": [
+            {
+              "name": "to",
+              "type": "core::starknet::contract_address::ContractAddress"
+            },
+            {
+              "name": "token_id",
+              "type": "core::integer::u256"
+            }
+          ],
+          "outputs": [],
+          "state_mutability": "external"
+        },
+        {
+          "type": "function",
+          "name": "set_approval_for_all",
+          "inputs": [
+            {
+              "name": "operator",
+              "type": "core::starknet::contract_address::ContractAddress"
+            },
+            {
+              "name": "approved",
+              "type": "core::bool"
+            }
+          ],
+          "outputs": [],
+          "state_mutability": "external"
+        },
+        {
+          "type": "function",
+          "name": "get_approved",
+          "inputs": [
+            {
+              "name": "token_id",
+              "type": "core::integer::u256"
+            }
+          ],
+          "outputs": [
+            {
+              "type": "core::starknet::contract_address::ContractAddress"
+            }
+          ],
+          "state_mutability": "view"
+        },
+        {
+          "type": "function",
+          "name": "is_approved_for_all",
+          "inputs": [
+            {
+              "name": "owner",
+              "type": "core::starknet::contract_address::ContractAddress"
+            },
+            {
+              "name": "operator",
+              "type": "core::starknet::contract_address::ContractAddress"
+            }
+          ],
+          "outputs": [
+            {
+              "type": "core::bool"
+            }
+          ],
+          "state_mutability": "view"
+        }
+      ]
+    },
+    {
+      "type": "interface",
+      "name": "openzeppelin_token::erc721::interface::IERC721Metadata",
+      "items": [
+        {
+          "type": "function",
+          "name": "name",
+          "inputs": [],
+          "outputs": [
+            {
+              "type": "core::byte_array::ByteArray"
+            }
+          ],
+          "state_mutability": "view"
+        },
+        {
+          "type": "function",
+          "name": "symbol",
+          "inputs": [],
+          "outputs": [
+            {
+              "type": "core::byte_array::ByteArray"
+            }
+          ],
+          "state_mutability": "view"
+        },
+        {
+          "type": "function",
+          "name": "token_uri",
+          "inputs": [
+            {
+              "name": "token_id",
+              "type": "core::integer::u256"
+            }
+          ],
+          "outputs": [
+            {
+              "type": "core::byte_array::ByteArray"
+            }
+          ],
+          "state_mutability": "view"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "tactical_beats::events::index::GameCreated",
       "members": [
         {
           "name": "game_id",
@@ -2143,7 +3833,7 @@
     },
     {
       "type": "struct",
-      "name": "rock_paper_scissors::events::index::GameCreatedValue",
+      "name": "tactical_beats::events::index::GameCreatedValue",
       "members": [
         {
           "name": "player1",
@@ -2157,7 +3847,7 @@
     },
     {
       "type": "struct",
-      "name": "rock_paper_scissors::events::index::GameFinished",
+      "name": "tactical_beats::events::index::GameFinished",
       "members": [
         {
           "name": "game_id",
@@ -2168,12 +3858,8 @@
           "type": "core::starknet::contract_address::ContractAddress"
         },
         {
-          "name": "player1_move",
-          "type": "core::integer::u8"
-        },
-        {
-          "name": "player2_move",
-          "type": "core::integer::u8"
+          "name": "rounds",
+          "type": "core::integer::u16"
         },
         {
           "name": "time",
@@ -2183,19 +3869,15 @@
     },
     {
       "type": "struct",
-      "name": "rock_paper_scissors::events::index::GameFinishedValue",
+      "name": "tactical_beats::events::index::GameFinishedValue",
       "members": [
         {
           "name": "winner",
           "type": "core::starknet::contract_address::ContractAddress"
         },
         {
-          "name": "player1_move",
-          "type": "core::integer::u8"
-        },
-        {
-          "name": "player2_move",
-          "type": "core::integer::u8"
+          "name": "rounds",
+          "type": "core::integer::u16"
         },
         {
           "name": "time",
@@ -2205,79 +3887,7 @@
     },
     {
       "type": "struct",
-      "name": "rock_paper_scissors::events::index::MoveCommitted",
-      "members": [
-        {
-          "name": "game_id",
-          "type": "core::integer::u32"
-        },
-        {
-          "name": "player",
-          "type": "core::starknet::contract_address::ContractAddress"
-        },
-        {
-          "name": "time",
-          "type": "core::integer::u64"
-        }
-      ]
-    },
-    {
-      "type": "struct",
-      "name": "rock_paper_scissors::events::index::MoveCommittedValue",
-      "members": [
-        {
-          "name": "player",
-          "type": "core::starknet::contract_address::ContractAddress"
-        },
-        {
-          "name": "time",
-          "type": "core::integer::u64"
-        }
-      ]
-    },
-    {
-      "type": "struct",
-      "name": "rock_paper_scissors::events::index::MoveRevealed",
-      "members": [
-        {
-          "name": "game_id",
-          "type": "core::integer::u32"
-        },
-        {
-          "name": "player",
-          "type": "core::starknet::contract_address::ContractAddress"
-        },
-        {
-          "name": "move_value",
-          "type": "core::integer::u8"
-        },
-        {
-          "name": "time",
-          "type": "core::integer::u64"
-        }
-      ]
-    },
-    {
-      "type": "struct",
-      "name": "rock_paper_scissors::events::index::MoveRevealedValue",
-      "members": [
-        {
-          "name": "player",
-          "type": "core::starknet::contract_address::ContractAddress"
-        },
-        {
-          "name": "move_value",
-          "type": "core::integer::u8"
-        },
-        {
-          "name": "time",
-          "type": "core::integer::u64"
-        }
-      ]
-    },
-    {
-      "type": "struct",
-      "name": "rock_paper_scissors::events::index::PlayerJoined",
+      "name": "tactical_beats::events::index::PlayerJoined",
       "members": [
         {
           "name": "game_id",
@@ -2295,7 +3905,7 @@
     },
     {
       "type": "struct",
-      "name": "rock_paper_scissors::events::index::PlayerJoinedValue",
+      "name": "tactical_beats::events::index::PlayerJoinedValue",
       "members": [
         {
           "name": "player2",
@@ -2309,37 +3919,129 @@
     },
     {
       "type": "event",
-      "name": "rock_paper_scissors::events::index::e_GameCreated::Event",
+      "name": "tactical_beats::events::index::e_GameCreated::Event",
       "kind": "enum",
       "variants": []
     },
     {
       "type": "event",
-      "name": "rock_paper_scissors::events::index::e_GameFinished::Event",
+      "name": "tactical_beats::events::index::e_GameFinished::Event",
       "kind": "enum",
       "variants": []
     },
     {
       "type": "event",
-      "name": "rock_paper_scissors::events::index::e_MoveCommitted::Event",
-      "kind": "enum",
-      "variants": []
-    },
-    {
-      "type": "event",
-      "name": "rock_paper_scissors::events::index::e_MoveRevealed::Event",
-      "kind": "enum",
-      "variants": []
-    },
-    {
-      "type": "event",
-      "name": "rock_paper_scissors::events::index::e_PlayerJoined::Event",
+      "name": "tactical_beats::events::index::e_PlayerJoined::Event",
       "kind": "enum",
       "variants": []
     },
     {
       "type": "struct",
-      "name": "rock_paper_scissors::models::index::Game",
+      "name": "tactical_beats::models::index::BeastState",
+      "members": [
+        {
+          "name": "game_id",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "player_index",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "beast_index",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "beast_id",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "beast_type",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "tier",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "level",
+          "type": "core::integer::u16"
+        },
+        {
+          "name": "hp",
+          "type": "core::integer::u16"
+        },
+        {
+          "name": "hp_max",
+          "type": "core::integer::u16"
+        },
+        {
+          "name": "extra_lives",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "position_row",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "position_col",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "alive",
+          "type": "core::bool"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "tactical_beats::models::index::BeastStateValue",
+      "members": [
+        {
+          "name": "beast_id",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "beast_type",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "tier",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "level",
+          "type": "core::integer::u16"
+        },
+        {
+          "name": "hp",
+          "type": "core::integer::u16"
+        },
+        {
+          "name": "hp_max",
+          "type": "core::integer::u16"
+        },
+        {
+          "name": "extra_lives",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "position_row",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "position_col",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "alive",
+          "type": "core::bool"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "tactical_beats::models::index::Game",
       "members": [
         {
           "name": "game_id",
@@ -2358,26 +4060,34 @@
           "type": "core::integer::u8"
         },
         {
+          "name": "current_attacker",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "round",
+          "type": "core::integer::u16"
+        },
+        {
           "name": "winner",
           "type": "core::starknet::contract_address::ContractAddress"
         },
         {
-          "name": "player1_move",
-          "type": "core::integer::u8"
+          "name": "p1_team_set",
+          "type": "core::bool"
         },
         {
-          "name": "player2_move",
-          "type": "core::integer::u8"
+          "name": "p2_team_set",
+          "type": "core::bool"
         },
         {
-          "name": "committed_at",
-          "type": "core::integer::u64"
+          "name": "is_friendly",
+          "type": "core::bool"
         }
       ]
     },
     {
       "type": "struct",
-      "name": "rock_paper_scissors::models::index::GameConfig",
+      "name": "tactical_beats::models::index::GameConfig",
       "members": [
         {
           "name": "id",
@@ -2388,28 +4098,92 @@
           "type": "core::integer::u32"
         },
         {
-          "name": "timeout_duration",
+          "name": "token_count",
           "type": "core::integer::u64"
         }
       ]
     },
     {
       "type": "struct",
-      "name": "rock_paper_scissors::models::index::GameConfigValue",
+      "name": "tactical_beats::models::index::GameConfigValue",
       "members": [
         {
           "name": "game_count",
           "type": "core::integer::u32"
         },
         {
-          "name": "timeout_duration",
+          "name": "token_count",
           "type": "core::integer::u64"
         }
       ]
     },
     {
       "type": "struct",
-      "name": "rock_paper_scissors::models::index::GameValue",
+      "name": "tactical_beats::models::index::GameToken",
+      "members": [
+        {
+          "name": "token_id",
+          "type": "core::integer::u64"
+        },
+        {
+          "name": "match_id",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "player",
+          "type": "core::starknet::contract_address::ContractAddress"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "tactical_beats::models::index::GameTokenValue",
+      "members": [
+        {
+          "name": "match_id",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "player",
+          "type": "core::starknet::contract_address::ContractAddress"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "tactical_beats::models::index::GameTokens",
+      "members": [
+        {
+          "name": "match_id",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "p1_token_id",
+          "type": "core::integer::u64"
+        },
+        {
+          "name": "p2_token_id",
+          "type": "core::integer::u64"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "tactical_beats::models::index::GameTokensValue",
+      "members": [
+        {
+          "name": "p1_token_id",
+          "type": "core::integer::u64"
+        },
+        {
+          "name": "p2_token_id",
+          "type": "core::integer::u64"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "tactical_beats::models::index::GameValue",
       "members": [
         {
           "name": "player1",
@@ -2424,26 +4198,242 @@
           "type": "core::integer::u8"
         },
         {
+          "name": "current_attacker",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "round",
+          "type": "core::integer::u16"
+        },
+        {
           "name": "winner",
           "type": "core::starknet::contract_address::ContractAddress"
         },
         {
-          "name": "player1_move",
-          "type": "core::integer::u8"
+          "name": "p1_team_set",
+          "type": "core::bool"
         },
         {
-          "name": "player2_move",
-          "type": "core::integer::u8"
+          "name": "p2_team_set",
+          "type": "core::bool"
         },
         {
-          "name": "committed_at",
-          "type": "core::integer::u64"
+          "name": "is_friendly",
+          "type": "core::bool"
         }
       ]
     },
     {
       "type": "struct",
-      "name": "rock_paper_scissors::models::index::PlayerCommit",
+      "name": "tactical_beats::models::index::MapState",
+      "members": [
+        {
+          "name": "game_id",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "obstacle_1_row",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_1_col",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_2_row",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_2_col",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_3_row",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_3_col",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_4_row",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_4_col",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_5_row",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_5_col",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_6_row",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_6_col",
+          "type": "core::integer::u8"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "tactical_beats::models::index::MapStateValue",
+      "members": [
+        {
+          "name": "obstacle_1_row",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_1_col",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_2_row",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_2_col",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_3_row",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_3_col",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_4_row",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_4_col",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_5_row",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_5_col",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_6_row",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "obstacle_6_col",
+          "type": "core::integer::u8"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "tactical_beats::models::index::MatchmakingQueue",
+      "members": [
+        {
+          "name": "id",
+          "type": "core::felt252"
+        },
+        {
+          "name": "waiting_player",
+          "type": "core::starknet::contract_address::ContractAddress"
+        },
+        {
+          "name": "waiting_game_id",
+          "type": "core::integer::u32"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "tactical_beats::models::index::MatchmakingQueueValue",
+      "members": [
+        {
+          "name": "waiting_player",
+          "type": "core::starknet::contract_address::ContractAddress"
+        },
+        {
+          "name": "waiting_game_id",
+          "type": "core::integer::u32"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "tactical_beats::models::index::PlayerProfile",
+      "members": [
+        {
+          "name": "player",
+          "type": "core::starknet::contract_address::ContractAddress"
+        },
+        {
+          "name": "games_played",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "wins",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "losses",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "total_kills",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "total_deaths",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "abandons",
+          "type": "core::integer::u32"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "tactical_beats::models::index::PlayerProfileValue",
+      "members": [
+        {
+          "name": "games_played",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "wins",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "losses",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "total_kills",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "total_deaths",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "abandons",
+          "type": "core::integer::u32"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "tactical_beats::models::index::PlayerState",
       "members": [
         {
           "name": "game_id",
@@ -2454,54 +4444,238 @@
           "type": "core::starknet::contract_address::ContractAddress"
         },
         {
-          "name": "commitment",
-          "type": "core::felt252"
+          "name": "player_index",
+          "type": "core::integer::u8"
         },
         {
-          "name": "revealed",
+          "name": "beast_1",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "beast_2",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "beast_3",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "potion_used",
           "type": "core::bool"
         }
       ]
     },
     {
       "type": "struct",
-      "name": "rock_paper_scissors::models::index::PlayerCommitValue",
+      "name": "tactical_beats::models::index::PlayerStateValue",
       "members": [
         {
-          "name": "commitment",
-          "type": "core::felt252"
+          "name": "player_index",
+          "type": "core::integer::u8"
         },
         {
-          "name": "revealed",
+          "name": "beast_1",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "beast_2",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "beast_3",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "potion_used",
           "type": "core::bool"
         }
       ]
     },
     {
       "type": "event",
-      "name": "rock_paper_scissors::models::index::m_Game::Event",
+      "name": "tactical_beats::models::index::m_BeastState::Event",
       "kind": "enum",
       "variants": []
     },
     {
       "type": "event",
-      "name": "rock_paper_scissors::models::index::m_GameConfig::Event",
+      "name": "tactical_beats::models::index::m_Game::Event",
       "kind": "enum",
       "variants": []
     },
     {
       "type": "event",
-      "name": "rock_paper_scissors::models::index::m_PlayerCommit::Event",
+      "name": "tactical_beats::models::index::m_GameConfig::Event",
       "kind": "enum",
       "variants": []
+    },
+    {
+      "type": "event",
+      "name": "tactical_beats::models::index::m_GameToken::Event",
+      "kind": "enum",
+      "variants": []
+    },
+    {
+      "type": "event",
+      "name": "tactical_beats::models::index::m_GameTokens::Event",
+      "kind": "enum",
+      "variants": []
+    },
+    {
+      "type": "event",
+      "name": "tactical_beats::models::index::m_MapState::Event",
+      "kind": "enum",
+      "variants": []
+    },
+    {
+      "type": "event",
+      "name": "tactical_beats::models::index::m_MatchmakingQueue::Event",
+      "kind": "enum",
+      "variants": []
+    },
+    {
+      "type": "event",
+      "name": "tactical_beats::models::index::m_PlayerProfile::Event",
+      "kind": "enum",
+      "variants": []
+    },
+    {
+      "type": "event",
+      "name": "tactical_beats::models::index::m_PlayerState::Event",
+      "kind": "enum",
+      "variants": []
+    },
+    {
+      "type": "event",
+      "name": "tactical_beats::systems::collection::Collection::Event",
+      "kind": "enum",
+      "variants": [
+        {
+          "name": "UpgradeableEvent",
+          "type": "dojo::contract::components::upgradeable::upgradeable_cpt::Event",
+          "kind": "nested"
+        },
+        {
+          "name": "WorldProviderEvent",
+          "type": "dojo::contract::components::world_provider::world_provider_cpt::Event",
+          "kind": "nested"
+        },
+        {
+          "name": "AccessControlEvent",
+          "type": "openzeppelin_access::accesscontrol::accesscontrol::AccessControlComponent::Event",
+          "kind": "flat"
+        },
+        {
+          "name": "OwnableEvent",
+          "type": "openzeppelin_access::ownable::ownable::OwnableComponent::Event",
+          "kind": "flat"
+        },
+        {
+          "name": "SRC5Event",
+          "type": "openzeppelin_introspection::src5::SRC5Component::Event",
+          "kind": "flat"
+        },
+        {
+          "name": "ERC721Event",
+          "type": "openzeppelin_token::erc721::erc721::ERC721Component::Event",
+          "kind": "flat"
+        },
+        {
+          "name": "ERC4906Event",
+          "type": "collection::components::erc4906::erc4906::ERC4906Component::Event",
+          "kind": "flat"
+        },
+        {
+          "name": "ERC7572Event",
+          "type": "collection::components::erc7572::erc7572::ERC7572Component::Event",
+          "kind": "flat"
+        }
+      ]
     },
     {
       "type": "interface",
-      "name": "rock_paper_scissors::systems::game_system::IGameSystem",
+      "name": "tactical_beats::systems::collection::ICollection",
+      "items": [
+        {
+          "type": "function",
+          "name": "mint",
+          "inputs": [
+            {
+              "name": "to",
+              "type": "core::starknet::contract_address::ContractAddress"
+            },
+            {
+              "name": "soulbound",
+              "type": "core::bool"
+            }
+          ],
+          "outputs": [
+            {
+              "type": "core::integer::u64"
+            }
+          ],
+          "state_mutability": "external"
+        },
+        {
+          "type": "function",
+          "name": "burn",
+          "inputs": [
+            {
+              "name": "token_id",
+              "type": "core::integer::u256"
+            }
+          ],
+          "outputs": [],
+          "state_mutability": "external"
+        },
+        {
+          "type": "function",
+          "name": "update",
+          "inputs": [
+            {
+              "name": "token_id",
+              "type": "core::integer::u256"
+            }
+          ],
+          "outputs": [],
+          "state_mutability": "external"
+        },
+        {
+          "type": "function",
+          "name": "assert_is_owner",
+          "inputs": [
+            {
+              "name": "owner",
+              "type": "core::starknet::contract_address::ContractAddress"
+            },
+            {
+              "name": "token_id",
+              "type": "core::integer::u256"
+            }
+          ],
+          "outputs": [],
+          "state_mutability": "external"
+        }
+      ]
+    },
+    {
+      "type": "interface",
+      "name": "tactical_beats::systems::game_system::IGameSystem",
       "items": [
         {
           "type": "function",
           "name": "create_game",
+          "inputs": [],
+          "outputs": [
+            {
+              "type": "core::integer::u32"
+            }
+          ],
+          "state_mutability": "external"
+        },
+        {
+          "type": "function",
+          "name": "create_friendly_game",
           "inputs": [],
           "outputs": [
             {
@@ -2524,15 +4698,23 @@
         },
         {
           "type": "function",
-          "name": "commit_move",
+          "name": "set_team",
           "inputs": [
             {
               "name": "game_id",
               "type": "core::integer::u32"
             },
             {
-              "name": "commitment",
-              "type": "core::felt252"
+              "name": "beast_1",
+              "type": "core::integer::u32"
+            },
+            {
+              "name": "beast_2",
+              "type": "core::integer::u32"
+            },
+            {
+              "name": "beast_3",
+              "type": "core::integer::u32"
             }
           ],
           "outputs": [],
@@ -2540,19 +4722,15 @@
         },
         {
           "type": "function",
-          "name": "reveal_move",
+          "name": "execute_turn",
           "inputs": [
             {
               "name": "game_id",
               "type": "core::integer::u32"
             },
             {
-              "name": "move_value",
-              "type": "core::integer::u8"
-            },
-            {
-              "name": "salt",
-              "type": "core::felt252"
+              "name": "actions",
+              "type": "core::array::Array::<tactical_beats::types::Action>"
             }
           ],
           "outputs": [],
@@ -2560,7 +4738,25 @@
         },
         {
           "type": "function",
-          "name": "claim_timeout",
+          "name": "find_match",
+          "inputs": [],
+          "outputs": [
+            {
+              "type": "core::integer::u32"
+            }
+          ],
+          "state_mutability": "external"
+        },
+        {
+          "type": "function",
+          "name": "cancel_matchmaking",
+          "inputs": [],
+          "outputs": [],
+          "state_mutability": "external"
+        },
+        {
+          "type": "function",
+          "name": "abandon_game",
           "inputs": [
             {
               "name": "game_id",
@@ -2574,7 +4770,7 @@
     },
     {
       "type": "interface",
-      "name": "rock_paper_scissors::systems::game_system::IMinigameTokenData",
+      "name": "tactical_beats::systems::game_system::IMinigameTokenData",
       "items": [
         {
           "type": "function",
@@ -2587,7 +4783,7 @@
           ],
           "outputs": [
             {
-              "type": "core::integer::u32"
+              "type": "core::integer::u64"
             }
           ],
           "state_mutability": "view"
@@ -2612,7 +4808,7 @@
     },
     {
       "type": "event",
-      "name": "rock_paper_scissors::systems::game_system::game_system::Event",
+      "name": "tactical_beats::systems::game_system::game_system::Event",
       "kind": "enum",
       "variants": [
         {
@@ -2624,6 +4820,42 @@
           "name": "WorldProviderEvent",
           "type": "dojo::contract::components::world_provider::world_provider_cpt::Event",
           "kind": "nested"
+        },
+        {
+          "name": "RankableEvent",
+          "type": "leaderboard::components::rankable::RankableComponent::Event",
+          "kind": "flat"
+        },
+        {
+          "name": "AchievableEvent",
+          "type": "achievement::components::achievable::AchievableComponent::Event",
+          "kind": "flat"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "tactical_beats::types::Action",
+      "members": [
+        {
+          "name": "beast_index",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "action_type",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "target_index",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "target_row",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "target_col",
+          "type": "core::integer::u8"
         }
       ]
     }

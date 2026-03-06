@@ -3,8 +3,7 @@ import { getManifest } from "../getManifest";
 import { setupWorld } from "../typescript/contracts.gen";
 import { VRF_PROVIDER_ADDRESS } from "./constants";
 
-const DOJO_NAMESPACE =
-  import.meta.env.VITE_DOJO_NAMESPACE || "RPS";
+import { DOJO_NAMESPACE } from "../../config/namespace";
 
 const ENABLE_VRF = import.meta.env.VITE_ENABLE_VRF === "true";
 

@@ -32,6 +32,7 @@
     "@starknet-io/types-js": "^0.8.4",
     "@starknet-react/chains": "^5.0.1",
     "@starknet-react/core": "^5.0.1",
+    "@supabase/supabase-js": "^2.98.0",
     "framer-motion": "^11.3.30",
     "graphql": "^16.8.1",
     "graphql-request": "^6.1.0",

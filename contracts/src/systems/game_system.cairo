@@ -6,6 +6,7 @@ pub fn NAME() -> ByteArray {
 #[starknet::interface]
 pub trait IGameSystem<T> {
     fn create_game(ref self: T) -> u32;
+    fn create_friendly_game(ref self: T) -> u32;
     fn join_game(ref self: T, game_id: u32);
     fn set_team(ref self: T, game_id: u32, beast_1: u32, beast_2: u32, beast_3: u32);
     fn execute_turn(ref self: T, game_id: u32, actions: Array<crate::types::Action>);
@@ -104,7 +105,13 @@ pub mod game_system {
         fn create_game(ref self: ContractState) -> u32 {
             let mut world = self.world(@NAMESPACE());
             let caller = starknet::get_caller_address();
-            _create_game(ref world, caller)
+            _create_game(ref world, caller, false)
+        }
+
+        fn create_friendly_game(ref self: ContractState) -> u32 {
+            let mut world = self.world(@NAMESPACE());
+            let caller = starknet::get_caller_address();
+            _create_game(ref world, caller, true)
         }
 
         fn join_game(ref self: ContractState, game_id: u32) {
@@ -121,7 +128,7 @@ pub mod game_system {
 
             if queue.waiting_player == zero_address() {
                 // No one waiting — create game and enter queue
-                let game_id = _create_game(ref world, caller);
+                let game_id = _create_game(ref world, caller, false);
                 world.write_model(@MatchmakingQueue { id: 0, waiting_player: caller, waiting_game_id: game_id });
                 game_id
             } else {
@@ -169,36 +176,39 @@ pub mod game_system {
             let time = starknet::get_block_timestamp();
             world.emit_event(@GameFinished { game_id, winner, rounds: game.round, time });
 
-            // Track abandon (always)
-            let mut abandoner_profile: PlayerProfile = world.read_model(caller);
-            abandoner_profile.abandons += 1;
-            abandoner_profile.losses += 1;
-            world.write_model(@abandoner_profile);
+            // Skip profile updates for friendly matches
+            if !game.is_friendly {
+                // Track abandon
+                let mut abandoner_profile: PlayerProfile = world.read_model(caller);
+                abandoner_profile.abandons += 1;
+                abandoner_profile.losses += 1;
+                world.write_model(@abandoner_profile);
 
-            // Update winner profile only if opponent exists
-            if winner != zero_address() {
-                let winner_index: u8 = if winner == game.player1 {
-                    1
-                } else {
-                    2
-                };
-                let winner_kills = count_dead_beasts(ref world, game_id, if winner_index == 1 { 2 } else { 1 });
-                let winner_deaths = count_dead_beasts(ref world, game_id, winner_index);
+                // Update winner profile only if opponent exists
+                if winner != zero_address() {
+                    let winner_index: u8 = if winner == game.player1 {
+                        1
+                    } else {
+                        2
+                    };
+                    let winner_kills = count_dead_beasts(ref world, game_id, if winner_index == 1 { 2 } else { 1 });
+                    let winner_deaths = count_dead_beasts(ref world, game_id, winner_index);
 
-                let mut winner_profile: PlayerProfile = world.read_model(winner);
-                winner_profile.wins += 1;
-                winner_profile.total_kills += winner_kills;
-                winner_profile.total_deaths += winner_deaths;
-                world.write_model(@winner_profile);
+                    let mut winner_profile: PlayerProfile = world.read_model(winner);
+                    winner_profile.wins += 1;
+                    winner_profile.total_kills += winner_kills;
+                    winner_profile.total_deaths += winner_deaths;
+                    world.write_model(@winner_profile);
 
-                // Also count kills/deaths for abandoner
-                let abandoner_index: u8 = if winner_index == 1 { 2 } else { 1 };
-                let abandoner_kills = count_dead_beasts(ref world, game_id, winner_index);
-                let abandoner_deaths = count_dead_beasts(ref world, game_id, abandoner_index);
-                let mut ap: PlayerProfile = world.read_model(caller);
-                ap.total_kills += abandoner_kills;
-                ap.total_deaths += abandoner_deaths;
-                world.write_model(@ap);
+                    // Also count kills/deaths for abandoner
+                    let abandoner_index: u8 = if winner_index == 1 { 2 } else { 1 };
+                    let abandoner_kills = count_dead_beasts(ref world, game_id, winner_index);
+                    let abandoner_deaths = count_dead_beasts(ref world, game_id, abandoner_index);
+                    let mut ap: PlayerProfile = world.read_model(caller);
+                    ap.total_kills += abandoner_kills;
+                    ap.total_deaths += abandoner_deaths;
+                    world.write_model(@ap);
+                }
             }
         }
 
@@ -294,41 +304,44 @@ pub mod game_system {
                 let time = starknet::get_block_timestamp();
                 world.emit_event(@GameFinished { game_id, winner, rounds: game.round, time });
 
-                // Calculate composite score and submit to leaderboard
-                let game_tokens: GameTokens = world.read_model(game_id);
-                let winner_token_id = if winner == game.player1 {
-                    game_tokens.p1_token_id
-                } else {
-                    game_tokens.p2_token_id
-                };
-                let score = compute_score(game.round);
-                let player_id: felt252 = winner.into();
-                self.rankable.submit(world, LEADERBOARD_ID, winner_token_id, player_id, score, time, true);
+                // Skip ranking, achievements, and profile updates for friendly matches
+                if !game.is_friendly {
+                    // Calculate composite score and submit to leaderboard
+                    let game_tokens: GameTokens = world.read_model(game_id);
+                    let winner_token_id = if winner == game.player1 {
+                        game_tokens.p1_token_id
+                    } else {
+                        game_tokens.p2_token_id
+                    };
+                    let score = compute_score(game.round);
+                    let player_id: felt252 = winner.into();
+                    self.rankable.submit(world, LEADERBOARD_ID, winner_token_id, player_id, score, time, true);
 
-                // Update collection metadata
-                let collection = get_collection(world);
-                collection.update(winner_token_id.into());
+                    // Update collection metadata
+                    let collection = get_collection(world);
+                    collection.update(winner_token_id.into());
 
-                // Progress achievements — Winner task
-                self.achievable.progress(world, player_id, TASK_WINNER, 1, true);
+                    // Progress achievements — Winner task
+                    self.achievable.progress(world, player_id, TASK_WINNER, 1, true);
 
-                // Check flawless victory (all 3 beasts alive)
-                let winner_index: u8 = if winner == game.player1 {
-                    1
-                } else {
-                    2
-                };
-                if all_beasts_alive(ref world, game_id, winner_index) {
-                    self.achievable.progress(world, player_id, TASK_FLAWLESS, 1, true);
+                    // Check flawless victory (all 3 beasts alive)
+                    let winner_index: u8 = if winner == game.player1 {
+                        1
+                    } else {
+                        2
+                    };
+                    if all_beasts_alive(ref world, game_id, winner_index) {
+                        self.achievable.progress(world, player_id, TASK_FLAWLESS, 1, true);
+                    }
+
+                    // Update player profiles
+                    let loser = if winner == game.player1 {
+                        game.player2
+                    } else {
+                        game.player1
+                    };
+                    update_profiles(ref world, game_id, winner, loser, winner_index);
                 }
-
-                // Update player profiles
-                let loser = if winner == game.player1 {
-                    game.player2
-                } else {
-                    game.player1
-                };
-                update_profiles(ref world, game_id, winner, loser, winner_index);
             } else {
                 // Switch turn
                 if game.current_attacker == 1 {
@@ -365,7 +378,7 @@ pub mod game_system {
 
     // --- Internal helpers ---
 
-    fn _create_game(ref world: WorldStorage, caller: ContractAddress) -> u32 {
+    fn _create_game(ref world: WorldStorage, caller: ContractAddress, is_friendly: bool) -> u32 {
         let mut config: GameConfig = world.read_model(0);
         config.game_count += 1;
         let game_id = config.game_count;
@@ -390,6 +403,7 @@ pub mod game_system {
             winner: zero_address(),
             p1_team_set: false,
             p2_team_set: false,
+            is_friendly,
         };
         world.write_model(@game);
 
@@ -653,14 +667,16 @@ pub mod game_system {
             // Assign spawn positions
             assign_spawn_positions(ref world, game_id);
 
-            // Increment games_played for both players
-            let mut p1_profile: PlayerProfile = world.read_model(game.player1);
-            p1_profile.games_played += 1;
-            world.write_model(@p1_profile);
+            // Increment games_played only for ranked matches
+            if !game.is_friendly {
+                let mut p1_profile: PlayerProfile = world.read_model(game.player1);
+                p1_profile.games_played += 1;
+                world.write_model(@p1_profile);
 
-            let mut p2_profile: PlayerProfile = world.read_model(game.player2);
-            p2_profile.games_played += 1;
-            world.write_model(@p2_profile);
+                let mut p2_profile: PlayerProfile = world.read_model(game.player2);
+                p2_profile.games_played += 1;
+                world.write_model(@p2_profile);
+            }
 
             world.write_model(@game);
         }

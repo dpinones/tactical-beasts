@@ -17,10 +17,27 @@ import {
   ModalCloseButton,
   useDisclosure,
 } from "@chakra-ui/react";
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "../dojo/WalletContext";
 import { useGameStore } from "../stores/gameStore";
+import {
+  getOrCreateProfile,
+  searchPlayers,
+  sendFriendRequest,
+  respondFriendRequest,
+  getFriends,
+  getPendingRequests,
+  getSentRequests,
+  sendGameInvite,
+  respondGameInvite,
+  getGameInvites,
+  subscribeFriendRequests,
+  subscribeGameInvites,
+  Friendship,
+  GameInvite,
+  PlayerConfig,
+} from "../services/supabase";
 
 const CHAIN = import.meta.env.VITE_CHAIN;
 
@@ -51,6 +68,166 @@ export function HomePage() {
   const [statusMsg, setStatusMsg] = useState("");
   const [friendOpen, setFriendOpen] = useState(false);
   const configsModal = useDisclosure();
+
+  // Supabase state
+  const [profile, setProfile] = useState<PlayerConfig | null>(null);
+  const [friends, setFriends] = useState<Friendship[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<Friendship[]>([]);
+  const [sentRequests, setSentRequests] = useState<Friendship[]>([]);
+  const [gameInvites, setGameInvites] = useState<GameInvite[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<PlayerConfig[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [friendProfiles, setFriendProfiles] = useState<Record<string, PlayerConfig>>({});
+
+  const friendPanelRef = useRef<HTMLDivElement>(null);
+  const walletAddress = finalAccount?.address || "";
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    if (!friendOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (friendPanelRef.current && !friendPanelRef.current.contains(e.target as Node)) {
+        setFriendOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [friendOpen]);
+
+  // Init profile on login
+  useEffect(() => {
+    if (!walletAddress) return;
+    (async () => {
+      const p = await getOrCreateProfile(walletAddress);
+      if (p) setProfile(p);
+    })();
+  }, [walletAddress]);
+
+  // Load friends data
+  const refreshFriendsData = useCallback(async () => {
+    if (!walletAddress) return;
+    const [f, p, sr, gi] = await Promise.all([
+      getFriends(walletAddress),
+      getPendingRequests(walletAddress),
+      getSentRequests(walletAddress),
+      getGameInvites(walletAddress),
+    ]);
+    setFriends(f);
+    setPendingRequests(p);
+    setSentRequests(sr);
+    setGameInvites(gi);
+
+    // Load profiles for friends
+    const allWallets = new Set<string>();
+    f.forEach((fr) => {
+      allWallets.add(fr.sender === walletAddress ? fr.receiver : fr.sender);
+    });
+    p.forEach((fr) => allWallets.add(fr.sender));
+    sr.forEach((fr) => allWallets.add(fr.receiver));
+    gi.forEach((inv) => allWallets.add(inv.host));
+
+    const profiles: Record<string, PlayerConfig> = {};
+    for (const w of allWallets) {
+      if (!friendProfiles[w]) {
+        const prof = await getOrCreateProfile(w);
+        if (prof) profiles[w] = prof;
+      } else {
+        profiles[w] = friendProfiles[w];
+      }
+    }
+    setFriendProfiles((prev) => ({ ...prev, ...profiles }));
+  }, [walletAddress]);
+
+  useEffect(() => {
+    if (walletAddress) refreshFriendsData();
+  }, [walletAddress, refreshFriendsData]);
+
+  // Realtime subscriptions
+  useEffect(() => {
+    if (!walletAddress) return;
+
+    const friendSub = subscribeFriendRequests(walletAddress, () => {
+      refreshFriendsData();
+    });
+
+    const inviteSub = subscribeGameInvites(
+      walletAddress,
+      () => refreshFriendsData(),
+      (invite) => {
+        if (invite.status === "accepted" && invite.game_id) {
+          // Friend accepted — navigate to team select
+          navigate(`/team-select/match/${invite.game_id}`);
+        }
+      }
+    );
+
+    return () => {
+      friendSub.unsubscribe();
+      inviteSub.unsubscribe();
+    };
+  }, [walletAddress, refreshFriendsData, navigate]);
+
+  // Search players
+  const handleSearch = async () => {
+    if (!searchQuery.trim() || !walletAddress) return;
+    setIsSearching(true);
+    const results = await searchPlayers(searchQuery.trim(), walletAddress);
+    setSearchResults(results);
+    setIsSearching(false);
+  };
+
+  // Send friend request
+  const handleSendFriendRequest = async (receiverWallet: string) => {
+    await sendFriendRequest(walletAddress, receiverWallet);
+    setSearchResults([]);
+    setSearchQuery("");
+    refreshFriendsData();
+  };
+
+  // Respond to friend request
+  const handleRespondFriend = async (id: string, accept: boolean) => {
+    await respondFriendRequest(id, accept);
+    refreshFriendsData();
+  };
+
+  // Invite friend to game
+  const handleInviteFriend = async (friendWallet: string) => {
+    const invite = await sendGameInvite(walletAddress, friendWallet);
+    if (invite) {
+      navigate("/matchmaking", { state: { waitingForFriend: true, inviteId: invite.id, friendName: friendProfiles[friendWallet]?.display_name || "friend" } });
+    }
+  };
+
+  // Respond to game invite
+  const handleRespondInvite = async (invite: GameInvite, accept: boolean) => {
+    await respondGameInvite(invite.id, accept);
+    if (accept && invite.game_id) {
+      clearSelectedBeasts();
+      // Guest joins via the join route so joinGame is called onchain
+      navigate(`/team-select/join/${invite.game_id}`);
+    } else {
+      refreshFriendsData();
+    }
+  };
+
+  // Notification count
+  const notifCount = pendingRequests.length + gameInvites.length;
+
+  // Refresh when opening dropdown
+  const handleToggleFriendPanel = () => {
+    const opening = !friendOpen;
+    setFriendOpen(opening);
+    if (opening) refreshFriendsData();
+  };
+
+  const getFriendWallet = (f: Friendship) =>
+    f.sender === walletAddress ? f.receiver : f.sender;
+
+  const getFriendName = (f: Friendship) => {
+    const w = getFriendWallet(f);
+    return friendProfiles[w]?.display_name || truncateAddr(w);
+  };
 
   const handleCreate = () => {
     clearSelectedBeasts();
@@ -149,13 +326,29 @@ export function HomePage() {
 
         <HStack gap={3}>
           {/* Play with Friend dropdown */}
-          <Box position="relative">
+          <Box position="relative" ref={friendPanelRef}>
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => setFriendOpen(!friendOpen)}
+              onClick={handleToggleFriendPanel}
             >
               Play with Friend
+              {notifCount > 0 && (
+                <Box
+                  as="span"
+                  ml={2}
+                  px={1.5}
+                  py={0.5}
+                  fontSize="9px"
+                  fontWeight="bold"
+                  bg="green.400"
+                  color="black"
+                  borderRadius="full"
+                  lineHeight="1"
+                >
+                  {notifCount}
+                </Box>
+              )}
             </Button>
             {friendOpen && (
               <Box
@@ -168,17 +361,127 @@ export function HomePage() {
                 borderColor="surface.border"
                 borderRadius="3px"
                 p={4}
-                w="280px"
+                w="320px"
                 zIndex={10}
                 boxShadow="panel"
+                maxH="80vh"
+                overflowY="auto"
               >
                 <VStack align="stretch" gap={3}>
-                  <Text fontSize="xs" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em">
-                    Play with Friend
+                  {/* Search players */}
+                  <Text fontSize="9px" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em">
+                    Search Player
                   </Text>
-                  <Text fontSize="xs" color="text.muted">
-                    Coming soon — invite friends by Controller name.
+                  <HStack gap={2}>
+                    <Input
+                      placeholder="Name or wallet..."
+                      size="sm"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                    />
+                    <Button size="sm" variant="primary" onClick={handleSearch} isLoading={isSearching}>
+                      Search
+                    </Button>
+                  </HStack>
+                  {searchResults.length > 0 && (
+                    <VStack align="stretch" gap={1}>
+                      {searchResults.map((p) => (
+                        <Flex key={p.wallet_address} justify="space-between" align="center" p={2} bg="surface.card" borderRadius="3px">
+                          <VStack align="start" gap={0}>
+                            <Text fontSize="xs" color="text.primary">{p.display_name}</Text>
+                            <Text fontSize="9px" color="text.muted">{truncateAddr(p.wallet_address)}</Text>
+                          </VStack>
+                          <Button size="xs" variant="secondary" onClick={() => handleSendFriendRequest(p.wallet_address)}>
+                            Add
+                          </Button>
+                        </Flex>
+                      ))}
+                    </VStack>
+                  )}
+
+                  {/* Game invites */}
+                  {gameInvites.length > 0 && (
+                    <>
+                      <Text fontSize="9px" color="text.gold" textTransform="uppercase" letterSpacing="0.1em">
+                        Invites ({gameInvites.length})
+                      </Text>
+                      {gameInvites.map((inv) => (
+                        <Flex key={inv.id} justify="space-between" align="center" p={2} bg="surface.card" borderRadius="3px" border="1px solid" borderColor="green.800">
+                          <Text fontSize="xs" color="text.primary">
+                            {friendProfiles[inv.host]?.display_name || truncateAddr(inv.host)} wants to play
+                          </Text>
+                          <HStack gap={1}>
+                            <Button size="xs" variant="primary" onClick={() => handleRespondInvite(inv, true)}>
+                              Accept
+                            </Button>
+                            <Button size="xs" variant="ghost" onClick={() => handleRespondInvite(inv, false)}>
+                              Decline
+                            </Button>
+                          </HStack>
+                        </Flex>
+                      ))}
+                    </>
+                  )}
+
+                  {/* Pending requests */}
+                  {pendingRequests.length > 0 && (
+                    <>
+                      <Text fontSize="9px" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em">
+                        Pending Requests ({pendingRequests.length})
+                      </Text>
+                      {pendingRequests.map((req) => (
+                        <Flex key={req.id} justify="space-between" align="center" p={2} bg="surface.card" borderRadius="3px">
+                          <Text fontSize="xs" color="text.primary">
+                            {friendProfiles[req.sender]?.display_name || truncateAddr(req.sender)}
+                          </Text>
+                          <HStack gap={1}>
+                            <Button size="xs" variant="primary" onClick={() => handleRespondFriend(req.id, true)}>
+                              Accept
+                            </Button>
+                            <Button size="xs" variant="ghost" onClick={() => handleRespondFriend(req.id, false)}>
+                              Reject
+                            </Button>
+                          </HStack>
+                        </Flex>
+                      ))}
+                    </>
+                  )}
+
+                  {/* Sent requests */}
+                  {sentRequests.length > 0 && (
+                    <>
+                      <Text fontSize="9px" color="text.muted" textTransform="uppercase" letterSpacing="0.1em">
+                        Sent ({sentRequests.length})
+                      </Text>
+                      {sentRequests.map((req) => (
+                        <Flex key={req.id} justify="space-between" align="center" p={2} bg="surface.card" borderRadius="3px">
+                          <Text fontSize="xs" color="text.muted">
+                            {friendProfiles[req.receiver]?.display_name || truncateAddr(req.receiver)}
+                          </Text>
+                          <Text fontSize="9px" color="text.muted">Pending...</Text>
+                        </Flex>
+                      ))}
+                    </>
+                  )}
+
+                  {/* Friends list */}
+                  <Text fontSize="9px" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em">
+                    Friends ({friends.length})
                   </Text>
+                  {friends.length === 0 ? (
+                    <Text fontSize="xs" color="text.muted">No friends yet. Search to add one.</Text>
+                  ) : (
+                    friends.map((f) => (
+                      <Flex key={f.id} justify="space-between" align="center" p={2} bg="surface.card" borderRadius="3px">
+                        <Text fontSize="xs" color="text.primary">{getFriendName(f)}</Text>
+                        <Button size="xs" variant="secondary" onClick={() => handleInviteFriend(getFriendWallet(f))}>
+                          Invite
+                        </Button>
+                      </Flex>
+                    ))
+                  )}
+
                   <Button variant="ghost" size="sm" onClick={() => setFriendOpen(false)}>
                     Close
                   </Button>

@@ -69,6 +69,7 @@ export interface Game {
 	winner: string;
 	p1_team_set: boolean;
 	p2_team_set: boolean;
+	is_friendly: boolean;
 }
 
 // Type definition for `tactical_beats::models::index::GameConfig` struct
@@ -383,6 +384,7 @@ export const schema: SchemaType = {
 			winner: "",
 			p1_team_set: false,
 			p2_team_set: false,
+			is_friendly: false,
 		},
 		GameConfig: {
 			id: 0,

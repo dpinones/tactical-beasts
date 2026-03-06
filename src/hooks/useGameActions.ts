@@ -40,6 +40,34 @@ export function useGameActions() {
     return null;
   }, [client, account, execute]);
 
+  const createFriendlyGame = useCallback(async (): Promise<number | null> => {
+    const response = await execute(client.game_system.createFriendlyGame, [account]);
+    if (!response) return null;
+
+    const txHash = (response as any)?.transaction_hash;
+    if (txHash) {
+      try {
+        const receipt: any = await account.waitForTransaction(txHash, {
+          retryInterval: 100,
+        });
+        const events = receipt?.events || [];
+        for (const event of events) {
+          if (event.keys?.[0] === EVENT_EMITTED && event.data && event.data.length >= 2) {
+            const gameId = parseInt(event.data[1], 16);
+            console.log("[TB] parsed friendly gameId:", gameId);
+            if (gameId > 0 && gameId < 100000) {
+              return gameId;
+            }
+          }
+        }
+        console.warn("[TB] no gameId found in events (friendly)");
+      } catch (e) {
+        console.error("Failed to get receipt:", e);
+      }
+    }
+    return null;
+  }, [client, account, execute]);
+
   const joinGame = useCallback(
     async (gameId: number) => {
       const response = await execute(client.game_system.joinGame, [
@@ -180,6 +208,7 @@ export function useGameActions() {
 
   return {
     createGame,
+    createFriendlyGame,
     joinGame,
     setTeam,
     executeTurn,

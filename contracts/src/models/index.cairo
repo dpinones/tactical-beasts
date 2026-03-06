@@ -13,6 +13,7 @@ pub struct Game {
     pub winner: ContractAddress,
     pub p1_team_set: bool,
     pub p2_team_set: bool,
+    pub is_friendly: bool,
 }
 
 #[derive(Copy, Drop, Serde)]

@@ -33,8 +33,8 @@
   },
   "contracts": [
     {
-      "address": "0xea966fdef3759f362fab5a4a441c37467b973bb63b434061c4070d008641f4",
-      "class_hash": "0x3020b36788dd54b3f9b5b961026ada10d675d1e7021a59c45985ca9d9cbc718",
+      "address": "0x3b046438e6677b48c2405f58af92a43bc3dd7750abf54c901425ccc21b35e0d",
+      "class_hash": "0x3fc6274848f15ea2bba3685c1892a7ff82d32b4c8012d72ca1d601d08617917",
       "init_calldata": [],
       "tag": "TB-Collection",
       "selector": "0x6ab5875b0c333712703995a0ccc9e3f8bcd6ece78f325070d85dda4fe7a7fe5",
@@ -57,14 +57,15 @@
       ]
     },
     {
-      "address": "0x48490006d11d95e9b20c73036d6ea77b0c30076cc157b188757af39b9773b32",
-      "class_hash": "0xe8326220977849ad577ce9858e85bc07d7f3a70544967e798ebc00f4bc56c",
+      "address": "0x7753edabd37fc0b84c47d867dd37a87b8b1cf24d06219a95ac1c3b356021ad5",
+      "class_hash": "0xafc4c787099c666fea13d316f6fb6605b78cc9a6c80f01aee4d92c80819c07",
       "init_calldata": [],
       "tag": "TB-game_system",
       "selector": "0x69e31139e40dc9c3cbdcbe65c1c8ee089a640efb42486fb78465d0fd6a75711",
       "systems": [
         "dojo_init",
         "create_game",
+        "create_friendly_game",
         "join_game",
         "set_team",
         "execute_turn",
@@ -303,9 +304,14 @@
           "name": "p2_team_set",
           "type": "core::bool",
           "key": false
+        },
+        {
+          "name": "is_friendly",
+          "type": "core::bool",
+          "key": false
         }
       ],
-      "class_hash": "0xcfb46cd14d3bf9f86b23a6e7831cc26e7196c9b6eafb2ae97b7eacc29cc12b",
+      "class_hash": "0x5a9ad6b1603f7829dc11740632e428b90cc306d40a0826e7f77f455cfc0828e",
       "tag": "TB-Game",
       "selector": "0x4c7a666aaf8806ed71006a50ed918c52b3b59846e960313307e8ba0a91ce746"
     },
@@ -4072,6 +4078,10 @@
         {
           "name": "p2_team_set",
           "type": "core::bool"
+        },
+        {
+          "name": "is_friendly",
+          "type": "core::bool"
         }
       ]
     },
@@ -4205,6 +4215,10 @@
         },
         {
           "name": "p2_team_set",
+          "type": "core::bool"
+        },
+        {
+          "name": "is_friendly",
           "type": "core::bool"
         }
       ]
@@ -4651,6 +4665,17 @@
         {
           "type": "function",
           "name": "create_game",
+          "inputs": [],
+          "outputs": [
+            {
+              "type": "core::integer::u32"
+            }
+          ],
+          "state_mutability": "external"
+        },
+        {
+          "type": "function",
+          "name": "create_friendly_game",
           "inputs": [],
           "outputs": [
             {

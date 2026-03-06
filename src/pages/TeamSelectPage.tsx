@@ -21,6 +21,7 @@ import { BeastCard } from "../components/BeastCard";
 import { HexGrid } from "../components/HexGrid";
 import { OBSTACLES } from "../domain/hexGrid";
 import { GameStatus, BeastType, ZERO_ADDR } from "../domain/types";
+import { updateRecentBeasts } from "../services/supabase";
 
 type Phase = "creating" | "joining" | "lobby" | "select" | "confirming" | "waiting" | "error";
 
@@ -162,13 +163,22 @@ export function TeamSelectPage() {
     }
   }, [phase, polledGame, gameId, navigate]);
 
-  // Confirm team: call set_team onchain
+  // Confirm team: call set_team onchain + save to supabase
   const handleConfirmTeam = async () => {
     if (selectedBeasts.length !== 3 || !gameId) return;
     setPhase("confirming");
     setStatusMsg("Setting team...");
     const res = await setTeam(gameId, selectedBeasts[0], selectedBeasts[1], selectedBeasts[2]);
     if (res) {
+      // Save recent beasts to Supabase
+      const walletAddress = account?.address || "";
+      if (walletAddress) {
+        const beastsToSave = selectedBeasts.map((tokenId) => {
+          const beast = catalog.find((b) => b.tokenId === tokenId);
+          return { id: tokenId, name: beast?.name || `Beast #${tokenId}` };
+        });
+        updateRecentBeasts(walletAddress, beastsToSave).catch(console.error);
+      }
       setPhase("waiting");
       setStatusMsg("");
     } else {

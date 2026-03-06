@@ -1,0 +1,124 @@
+// Game status constants matching Cairo contracts
+export enum GameStatus {
+  WAITING = 0,
+  PLAYING = 1,
+  FINISHED = 2,
+}
+
+// Action types matching Cairo Action struct
+export enum ActionType {
+  WAIT = 0,
+  MOVE = 1,
+  ATTACK = 2,
+  CONSUMABLE_ATTACK_POTION = 3,
+}
+
+// Beast types
+export enum BeastType {
+  Magical = 0,
+  Hunter = 1,
+  Brute = 2,
+}
+
+export interface HexCoord {
+  row: number;
+  col: number;
+}
+
+// Runtime beast during battle
+export interface BattleBeast {
+  beastIndex: number;
+  beastId: number;
+  name: string;
+  type: BeastType;
+  typeName: string;
+  tier: number;
+  level: number;
+  hp: number;
+  hpMax: number;
+  extraLives: number;
+  position: HexCoord;
+  alive: boolean;
+  powerBase: number;
+}
+
+// Beast from the catalog (beasts-all.json)
+export interface CatalogBeast {
+  tokenId: number;
+  name: string;
+  beastId: number;
+  beast: string;
+  type: BeastType;
+  typeName: string;
+  tier: number;
+  level: number;
+  health: number;
+  power: number;
+  prefix: string;
+  suffix: string;
+  adventurersKilled: number;
+  shiny: boolean;
+  animated: boolean;
+}
+
+export interface GameAction {
+  beastIndex: number;
+  actionType: ActionType;
+  targetIndex: number;
+  targetRow: number;
+  targetCol: number;
+}
+
+export interface BattleEvent {
+  type: "attack" | "counterattack" | "move" | "ko" | "extra_life" | "crit" | "potion" | "wait";
+  attackerIndex?: number;
+  defenderIndex?: number;
+  damage?: number;
+  isCrit?: boolean;
+  attackerPlayer?: number;
+  defenderPlayer?: number;
+  message: string;
+}
+
+// Onchain game model
+export interface GameModel {
+  game_id: number;
+  player1: string;
+  player2: string;
+  status: number;
+  current_attacker: number;
+  round: number;
+  winner: string;
+  p1_team_set: boolean;
+  p2_team_set: boolean;
+}
+
+// Onchain beast state model
+export interface BeastStateModel {
+  game_id: number;
+  player_index: number;
+  beast_index: number;
+  beast_id: number;
+  beast_type: number;
+  tier: number;
+  level: number;
+  hp: number;
+  hp_max: number;
+  extra_lives: number;
+  position_row: number;
+  position_col: number;
+  alive: boolean;
+}
+
+export interface PlayerStateModel {
+  game_id: number;
+  player: string;
+  player_index: number;
+  beast_1: number;
+  beast_2: number;
+  beast_3: number;
+  potion_used: boolean;
+}
+
+export const ZERO_ADDR =
+  "0x0000000000000000000000000000000000000000000000000000000000000000";

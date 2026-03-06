@@ -1,44 +1,78 @@
 import { useState, useEffect, useCallback } from "react";
 import graphQLClient from "../graphQLClient";
-import { GET_GAME, GET_OPEN_GAMES, GET_PLAYER_COMMIT } from "../queries/gameQueries";
-import type { Game, PlayerCommit } from "../dojo/typescript/models.gen";
+import {
+  GET_GAME,
+  GET_OPEN_GAMES,
+  GET_ALL_BEAST_STATES,
+  GET_PLAYER_STATE,
+} from "../queries/gameQueries";
+import type {
+  GameModel,
+  BeastStateModel,
+  PlayerStateModel,
+} from "../domain/types";
 
-const DOJO_NAMESPACE = (import.meta.env.VITE_DOJO_NAMESPACE || "RPS").toLowerCase();
+const NS = (import.meta.env.VITE_DOJO_NAMESPACE || "TB").toLowerCase();
 
-function parseGameNode(node: any): Game {
+function parseGameNode(node: any): GameModel {
   return {
     game_id: Number(node.game_id),
     player1: node.player1,
     player2: node.player2,
     status: Number(node.status),
+    current_attacker: Number(node.current_attacker),
+    round: Number(node.round),
     winner: node.winner,
-    player1_move: Number(node.player1_move),
-    player2_move: Number(node.player2_move),
-    committed_at: Number(node.committed_at),
+    p1_team_set: Boolean(node.p1_team_set),
+    p2_team_set: Boolean(node.p2_team_set),
   };
 }
 
-export function useGameQuery(gameId: number | null, pollInterval = 3000) {
-  const [game, setGame] = useState<Game | null>(null);
+function parseBeastNode(node: any): BeastStateModel {
+  return {
+    game_id: Number(node.game_id),
+    player_index: Number(node.player_index),
+    beast_index: Number(node.beast_index),
+    beast_id: Number(node.beast_id),
+    beast_type: Number(node.beast_type),
+    tier: Number(node.tier),
+    level: Number(node.level),
+    hp: Number(node.hp),
+    hp_max: Number(node.hp_max),
+    extra_lives: Number(node.extra_lives),
+    position_row: Number(node.position_row),
+    position_col: Number(node.position_col),
+    alive: Boolean(node.alive),
+  };
+}
+
+function parsePlayerNode(node: any): PlayerStateModel {
+  return {
+    game_id: Number(node.game_id),
+    player: node.player,
+    player_index: Number(node.player_index),
+    beast_1: Number(node.beast_1),
+    beast_2: Number(node.beast_2),
+    beast_3: Number(node.beast_3),
+    potion_used: Boolean(node.potion_used),
+  };
+}
+
+export function useGameQuery(gameId: number | null, pollInterval = 2000) {
+  const [game, setGame] = useState<GameModel | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const fetchGame = useCallback(async () => {
     if (gameId === null) return;
     try {
-      const result: any = await graphQLClient.request(GET_GAME, {
-        gameId,
-      });
-      const key = `${DOJO_NAMESPACE}GameModels`;
+      const result: any = await graphQLClient.request(GET_GAME, { gameId });
+      const key = `${NS}GameModels`;
       const edges = result?.[key]?.edges;
       if (edges && edges.length > 0) {
         setGame(parseGameNode(edges[0].node));
-        setError(null);
-      } else {
-        setGame(null);
       }
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e) {
+      console.error("Failed to fetch game:", e);
     }
   }, [gameId]);
 
@@ -53,17 +87,16 @@ export function useGameQuery(gameId: number | null, pollInterval = 3000) {
     return () => clearInterval(interval);
   }, [gameId, fetchGame, pollInterval]);
 
-  return { game, loading, error, refetch: fetchGame };
+  return { game, loading, refetch: fetchGame };
 }
 
 export function useOpenGames(pollInterval = 5000) {
-  const [games, setGames] = useState<Game[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [games, setGames] = useState<GameModel[]>([]);
 
   const fetchGames = useCallback(async () => {
     try {
       const result: any = await graphQLClient.request(GET_OPEN_GAMES);
-      const key = `${DOJO_NAMESPACE}GameModels`;
+      const key = `${NS}GameModels`;
       const edges = result?.[key]?.edges;
       if (edges) {
         setGames(edges.map((e: any) => parseGameNode(e.node)));
@@ -74,56 +107,79 @@ export function useOpenGames(pollInterval = 5000) {
   }, []);
 
   useEffect(() => {
-    setLoading(true);
-    fetchGames().finally(() => setLoading(false));
+    fetchGames();
     const interval = setInterval(fetchGames, pollInterval);
     return () => clearInterval(interval);
   }, [fetchGames, pollInterval]);
 
-  return { games, loading, refetch: fetchGames };
+  return { games, refetch: fetchGames };
 }
 
-export function usePlayerCommit(
+export function useBeastStates(gameId: number | null, pollInterval = 2000) {
+  const [beasts, setBeasts] = useState<BeastStateModel[]>([]);
+
+  const fetchBeasts = useCallback(async () => {
+    if (gameId === null) return;
+    try {
+      const result: any = await graphQLClient.request(GET_ALL_BEAST_STATES, {
+        gameId,
+      });
+      const key = `${NS}BeastStateModels`;
+      const edges = result?.[key]?.edges;
+      if (edges) {
+        setBeasts(edges.map((e: any) => parseBeastNode(e.node)));
+      }
+    } catch (e) {
+      console.error("Failed to fetch beast states:", e);
+    }
+  }, [gameId]);
+
+  useEffect(() => {
+    if (gameId === null) {
+      setBeasts([]);
+      return;
+    }
+    fetchBeasts();
+    const interval = setInterval(fetchBeasts, pollInterval);
+    return () => clearInterval(interval);
+  }, [gameId, fetchBeasts, pollInterval]);
+
+  return { beasts, refetch: fetchBeasts };
+}
+
+export function usePlayerState(
   gameId: number | null,
   player: string | null,
   pollInterval = 3000
 ) {
-  const [commit, setCommit] = useState<PlayerCommit | null>(null);
+  const [playerState, setPlayerState] = useState<PlayerStateModel | null>(null);
 
-  const fetchCommit = useCallback(async () => {
+  const fetchState = useCallback(async () => {
     if (gameId === null || !player) return;
     try {
-      const result: any = await graphQLClient.request(GET_PLAYER_COMMIT, {
+      const result: any = await graphQLClient.request(GET_PLAYER_STATE, {
         gameId,
         player,
       });
-      const key = `${DOJO_NAMESPACE}PlayerCommitModels`;
+      const key = `${NS}PlayerStateModels`;
       const edges = result?.[key]?.edges;
       if (edges && edges.length > 0) {
-        const node = edges[0].node;
-        setCommit({
-          game_id: Number(node.game_id),
-          player: node.player,
-          commitment: node.commitment,
-          revealed: node.revealed,
-        });
-      } else {
-        setCommit(null);
+        setPlayerState(parsePlayerNode(edges[0].node));
       }
     } catch (e) {
-      console.error("Failed to fetch player commit:", e);
+      console.error("Failed to fetch player state:", e);
     }
   }, [gameId, player]);
 
   useEffect(() => {
     if (gameId === null || !player) {
-      setCommit(null);
+      setPlayerState(null);
       return;
     }
-    fetchCommit();
-    const interval = setInterval(fetchCommit, pollInterval);
+    fetchState();
+    const interval = setInterval(fetchState, pollInterval);
     return () => clearInterval(interval);
-  }, [gameId, player, fetchCommit, pollInterval]);
+  }, [gameId, player, fetchState, pollInterval]);
 
-  return { commit, refetch: fetchCommit };
+  return { playerState, refetch: fetchState };
 }

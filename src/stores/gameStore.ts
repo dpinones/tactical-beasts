@@ -1,76 +1,74 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { GameAction, BattleEvent } from "../domain/types";
 
-interface PendingCommit {
-  moveValue: number;
-  salt: string;
-  timestamp: number;
+interface TBGameStore {
+  // Current active game
+  activeGameId: number | null;
+  setActiveGameId: (id: number | null) => void;
+
+  // Selected beasts for team
+  selectedBeasts: number[];
+  toggleBeast: (tokenId: number) => void;
+  clearSelectedBeasts: () => void;
+
+  // Actions being planned for current turn
+  plannedActions: GameAction[];
+  setPlanedActions: (actions: GameAction[]) => void;
+  clearPlannedActions: () => void;
+
+  // Battle log (local, reconstructed from events)
+  battleLog: BattleEvent[];
+  addBattleEvent: (event: BattleEvent) => void;
+  clearBattleLog: () => void;
+
+  // Selected beast on the board
+  selectedBeastIndex: number | null;
+  setSelectedBeastIndex: (index: number | null) => void;
+
+  // UI state
+  isAnimating: boolean;
+  setIsAnimating: (v: boolean) => void;
 }
 
-interface GameStore {
-  pendingCommits: Record<string, PendingCommit>;
-  saveCommit: (
-    gameId: number,
-    playerAddress: string,
-    moveValue: number,
-    salt: string
-  ) => void;
-  getCommit: (
-    gameId: number,
-    playerAddress: string
-  ) => PendingCommit | undefined;
-  clearCommit: (gameId: number, playerAddress: string) => void;
-  cleanupOldCommits: () => void;
-}
-
-const makeKey = (gameId: number, playerAddress: string) =>
-  `${gameId}-${playerAddress.toLowerCase()}`;
-
-const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
-
-export const useGameStore = create<GameStore>()(
+export const useGameStore = create<TBGameStore>()(
   persist(
     (set, get) => ({
-      pendingCommits: {},
+      activeGameId: null,
+      setActiveGameId: (id) => set({ activeGameId: id }),
 
-      saveCommit: (gameId, playerAddress, moveValue, salt) => {
-        const key = makeKey(gameId, playerAddress);
-        set((state) => ({
-          pendingCommits: {
-            ...state.pendingCommits,
-            [key]: { moveValue, salt, timestamp: Date.now() },
-          },
-        }));
+      selectedBeasts: [],
+      toggleBeast: (tokenId) => {
+        const current = get().selectedBeasts;
+        if (current.includes(tokenId)) {
+          set({ selectedBeasts: current.filter((id) => id !== tokenId) });
+        } else if (current.length < 3) {
+          set({ selectedBeasts: [...current, tokenId] });
+        }
       },
+      clearSelectedBeasts: () => set({ selectedBeasts: [] }),
 
-      getCommit: (gameId, playerAddress) => {
-        const key = makeKey(gameId, playerAddress);
-        return get().pendingCommits[key];
-      },
+      plannedActions: [],
+      setPlanedActions: (actions) => set({ plannedActions: actions }),
+      clearPlannedActions: () => set({ plannedActions: [] }),
 
-      clearCommit: (gameId, playerAddress) => {
-        const key = makeKey(gameId, playerAddress);
-        set((state) => {
-          const { [key]: _, ...rest } = state.pendingCommits;
-          return { pendingCommits: rest };
-        });
-      },
+      battleLog: [],
+      addBattleEvent: (event) =>
+        set((s) => ({ battleLog: [...s.battleLog, event] })),
+      clearBattleLog: () => set({ battleLog: [] }),
 
-      cleanupOldCommits: () => {
-        const now = Date.now();
-        set((state) => {
-          const cleaned: Record<string, PendingCommit> = {};
-          for (const [key, commit] of Object.entries(state.pendingCommits)) {
-            if (now - commit.timestamp < TWENTY_FOUR_HOURS) {
-              cleaned[key] = commit;
-            }
-          }
-          return { pendingCommits: cleaned };
-        });
-      },
+      selectedBeastIndex: null,
+      setSelectedBeastIndex: (index) => set({ selectedBeastIndex: index }),
+
+      isAnimating: false,
+      setIsAnimating: (v) => set({ isAnimating: v }),
     }),
     {
-      name: "rps-game-commits",
+      name: "tb-game-store",
+      partialize: (state) => ({
+        activeGameId: state.activeGameId,
+        selectedBeasts: state.selectedBeasts,
+      }),
     }
   )
 );

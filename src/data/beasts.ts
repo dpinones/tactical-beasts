@@ -1,0 +1,66 @@
+import { BeastType, CatalogBeast } from "../domain/types";
+import beastsData from "../../beasts-all.json";
+
+function parseType(type: string): BeastType {
+  switch (type) {
+    case "Magic":
+    case "Magical":
+      return BeastType.Magical;
+    case "Hunter":
+      return BeastType.Hunter;
+    case "Brute":
+      return BeastType.Brute;
+    default:
+      return BeastType.Magical;
+  }
+}
+
+function typeToName(type: BeastType): string {
+  switch (type) {
+    case BeastType.Magical:
+      return "Magical";
+    case BeastType.Hunter:
+      return "Hunter";
+    case BeastType.Brute:
+      return "Brute";
+  }
+}
+
+let catalog: CatalogBeast[] | null = null;
+
+export function loadBeastCatalog(): CatalogBeast[] {
+  if (catalog) return catalog;
+
+  catalog = (beastsData as any[]).map((b) => {
+    const bType = parseType(b.type);
+    return {
+      tokenId: b.tokenId,
+      name: b.name,
+      beastId: b.beastId,
+      beast: b.beast,
+      type: bType,
+      typeName: typeToName(bType),
+      tier: b.tier,
+      level: b.level,
+      health: b.health,
+      power: b.power,
+      prefix: b.prefix || "",
+      suffix: b.suffix || "",
+      adventurersKilled: b.adventurersKilled || 0,
+      shiny: b.shiny || false,
+      animated: b.animated || false,
+    };
+  });
+
+  return catalog;
+}
+
+export function getBeastById(tokenId: number): CatalogBeast | undefined {
+  return loadBeastCatalog().find((b) => b.tokenId === tokenId);
+}
+
+// Get unique beast species for display purposes
+export function getUniqueBeastSpecies(): string[] {
+  const beasts = loadBeastCatalog();
+  return [...new Set(beasts.map((b) => b.beast))];
+}

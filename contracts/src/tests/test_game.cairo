@@ -1,129 +1,54 @@
-use core::hash::HashStateTrait;
-use core::poseidon::PoseidonTrait;
-use dojo::model::ModelStorage;
-use starknet::testing::{set_account_contract_address, set_contract_address};
-use crate::constants::{
-    GAME_STATUS_COMMITTING, GAME_STATUS_FINISHED, GAME_STATUS_REVEALING, GAME_STATUS_WAITING, MOVE_PAPER, MOVE_ROCK,
-    MOVE_SCISSORS,
-};
-use crate::models::index::Game;
+use dojo::model::{ModelStorage, ModelStorageTest};
+use starknet::testing::{set_account_contract_address, set_block_timestamp, set_contract_address};
+use crate::constants::{GAME_STATUS_FINISHED, GAME_STATUS_PLAYING, GAME_STATUS_WAITING, MAX_ROUNDS, WIN_BONUS};
+use crate::models::index::{BeastState, Game, GameToken, GameTokens};
 use crate::systems::game_system::{
     IGameSystemDispatcherTrait, IMinigameTokenDataDispatcher, IMinigameTokenDataDispatcherTrait,
 };
 use crate::tests::setup::{PLAYER1, PLAYER2, Systems, spawn_game};
+use crate::types::Action;
 
-fn commit_hash(move_value: u8, salt: felt252) -> felt252 {
-    PoseidonTrait::new().update(move_value.into()).update(salt).finalize()
+fn set_player(player: starknet::ContractAddress) {
+    set_contract_address(player);
+    set_account_contract_address(player);
 }
 
-fn play_full_game(systems: Systems, move1: u8, move2: u8) -> u32 {
-    let salt1: felt252 = 'salt1';
-    let salt2: felt252 = 'salt2';
+fn setup_full_game(systems: Systems) -> u32 {
+    // P1: beasts 1 (Magical), 26 (Hunter), 51 (Brute)
+    set_player(PLAYER1());
+    let game_id = systems.game.create_game(1, 26, 51);
 
-    // Player 1 creates game
-    set_contract_address(PLAYER1());
-    set_account_contract_address(PLAYER1());
-    let game_id = systems.game.create_game();
-
-    // Player 2 joins
-    set_contract_address(PLAYER2());
-    set_account_contract_address(PLAYER2());
-    systems.game.join_game(game_id);
-
-    // Player 1 commits
-    set_contract_address(PLAYER1());
-    set_account_contract_address(PLAYER1());
-    systems.game.commit_move(game_id, commit_hash(move1, salt1));
-
-    // Player 2 commits
-    set_contract_address(PLAYER2());
-    set_account_contract_address(PLAYER2());
-    systems.game.commit_move(game_id, commit_hash(move2, salt2));
-
-    // Player 1 reveals
-    set_contract_address(PLAYER1());
-    set_account_contract_address(PLAYER1());
-    systems.game.reveal_move(game_id, move1, salt1);
-
-    // Player 2 reveals
-    set_contract_address(PLAYER2());
-    set_account_contract_address(PLAYER2());
-    systems.game.reveal_move(game_id, move2, salt2);
+    // P2: beasts 10 (Magical), 40 (Hunter), 60 (Brute)
+    set_player(PLAYER2());
+    systems.game.join_game(game_id, 10, 40, 60);
 
     game_id
 }
 
-#[test]
-fn test_rock_beats_scissors() {
-    let (world, systems) = spawn_game();
-    let game_id = play_full_game(systems, MOVE_ROCK, MOVE_SCISSORS);
-
-    let game: Game = world.read_model(game_id);
-    assert!(game.status == GAME_STATUS_FINISHED, "Game should be finished");
-    assert!(game.winner == PLAYER1(), "Player1 (rock) should beat player2 (scissors)");
-    assert!(game.player1_move == MOVE_ROCK, "Player1 move should be rock");
-    assert!(game.player2_move == MOVE_SCISSORS, "Player2 move should be scissors");
-}
+// --- Create & Join ---
 
 #[test]
-fn test_paper_beats_rock() {
-    let (world, systems) = spawn_game();
-    let game_id = play_full_game(systems, MOVE_PAPER, MOVE_ROCK);
-
-    let game: Game = world.read_model(game_id);
-    assert!(game.winner == PLAYER1(), "Player1 (paper) should beat player2 (rock)");
-}
-
-#[test]
-fn test_scissors_beats_paper() {
-    let (world, systems) = spawn_game();
-    let game_id = play_full_game(systems, MOVE_SCISSORS, MOVE_PAPER);
-
-    let game: Game = world.read_model(game_id);
-    assert!(game.winner == PLAYER1(), "Player1 (scissors) should beat player2 (paper)");
-}
-
-#[test]
-fn test_player2_wins() {
-    let (world, systems) = spawn_game();
-    let game_id = play_full_game(systems, MOVE_ROCK, MOVE_PAPER);
-
-    let game: Game = world.read_model(game_id);
-    assert!(game.winner == PLAYER2(), "Player2 (paper) should beat player1 (rock)");
-}
-
-#[test]
-fn test_draw() {
-    let (world, systems) = spawn_game();
-    let game_id = play_full_game(systems, MOVE_ROCK, MOVE_ROCK);
-
-    let game: Game = world.read_model(game_id);
-    assert!(game.status == GAME_STATUS_FINISHED, "Game should be finished");
-    assert!(game.winner == 0.try_into().unwrap(), "Draw should have zero winner");
-}
-
-#[test]
-fn test_create_and_join() {
+fn test_create_game() {
     let (world, systems) = spawn_game();
 
-    // Player 1 creates
-    set_contract_address(PLAYER1());
-    set_account_contract_address(PLAYER1());
-    let game_id = systems.game.create_game();
+    set_player(PLAYER1());
+    let game_id = systems.game.create_game(1, 26, 51);
 
-    let game: Game = world.read_model(game_id);
-    assert!(game.status == GAME_STATUS_WAITING, "New game should be waiting");
-    assert!(game.player1 == PLAYER1(), "Player1 should be creator");
     assert!(game_id == 1, "First game should have id 1");
+    let game: Game = world.read_model(game_id);
+    assert!(game.status == GAME_STATUS_WAITING);
+    assert!(game.player1 == PLAYER1());
+    assert!(game.p1_team_set, "P1 team should be set on create");
+}
 
-    // Player 2 joins
-    set_contract_address(PLAYER2());
-    set_account_contract_address(PLAYER2());
-    systems.game.join_game(game_id);
+#[test]
+fn test_join_game() {
+    let (world, systems) = spawn_game();
+    let game_id = setup_full_game(systems);
 
     let game: Game = world.read_model(game_id);
-    assert!(game.status == GAME_STATUS_COMMITTING, "Game should be committing after join");
-    assert!(game.player2 == PLAYER2(), "Player2 should be joiner");
+    assert!(game.player2 == PLAYER2());
+    assert!(game.status == GAME_STATUS_PLAYING, "Game should start after join");
 }
 
 #[test]
@@ -131,207 +56,315 @@ fn test_create_and_join() {
 fn test_cannot_join_own_game() {
     let (_world, systems) = spawn_game();
 
-    set_contract_address(PLAYER1());
-    set_account_contract_address(PLAYER1());
-    let game_id = systems.game.create_game();
-    systems.game.join_game(game_id);
+    set_player(PLAYER1());
+    let game_id = systems.game.create_game(1, 26, 51);
+    systems.game.join_game(game_id, 10, 40, 60);
 }
 
-#[test]
-#[should_panic]
-fn test_cannot_commit_twice() {
-    let (_world, systems) = spawn_game();
-
-    set_contract_address(PLAYER1());
-    set_account_contract_address(PLAYER1());
-    let game_id = systems.game.create_game();
-
-    set_contract_address(PLAYER2());
-    set_account_contract_address(PLAYER2());
-    systems.game.join_game(game_id);
-
-    set_contract_address(PLAYER1());
-    set_account_contract_address(PLAYER1());
-    let hash = commit_hash(MOVE_ROCK, 'salt');
-    systems.game.commit_move(game_id, hash);
-    systems.game.commit_move(game_id, hash); // Should panic
-}
+// --- Game Start ---
 
 #[test]
-#[should_panic]
-fn test_wrong_hash_fails_reveal() {
-    let (_world, systems) = spawn_game();
-
-    set_contract_address(PLAYER1());
-    set_account_contract_address(PLAYER1());
-    let game_id = systems.game.create_game();
-
-    set_contract_address(PLAYER2());
-    set_account_contract_address(PLAYER2());
-    systems.game.join_game(game_id);
-
-    // Both commit
-    set_contract_address(PLAYER1());
-    set_account_contract_address(PLAYER1());
-    systems.game.commit_move(game_id, commit_hash(MOVE_ROCK, 'salt1'));
-
-    set_contract_address(PLAYER2());
-    set_account_contract_address(PLAYER2());
-    systems.game.commit_move(game_id, commit_hash(MOVE_PAPER, 'salt2'));
-
-    // Player 1 tries to reveal with wrong move
-    set_contract_address(PLAYER1());
-    set_account_contract_address(PLAYER1());
-    systems.game.reveal_move(game_id, MOVE_PAPER, 'salt1'); // Committed rock, revealing paper
-}
-
-#[test]
-#[should_panic]
-fn test_invalid_move() {
-    let (_world, systems) = spawn_game();
-
-    set_contract_address(PLAYER1());
-    set_account_contract_address(PLAYER1());
-    let game_id = systems.game.create_game();
-
-    set_contract_address(PLAYER2());
-    set_account_contract_address(PLAYER2());
-    systems.game.join_game(game_id);
-
-    // Both commit
-    set_contract_address(PLAYER1());
-    set_account_contract_address(PLAYER1());
-    systems.game.commit_move(game_id, commit_hash(MOVE_ROCK, 'salt1'));
-
-    set_contract_address(PLAYER2());
-    set_account_contract_address(PLAYER2());
-    systems.game.commit_move(game_id, commit_hash(MOVE_PAPER, 'salt2'));
-
-    // Player 1 reveals with invalid move value (4)
-    set_contract_address(PLAYER1());
-    set_account_contract_address(PLAYER1());
-    systems.game.reveal_move(game_id, 4, 'salt1');
-}
-
-#[test]
-fn test_commit_phase_transitions() {
+fn test_join_starts_game() {
     let (world, systems) = spawn_game();
-
-    set_contract_address(PLAYER1());
-    set_account_contract_address(PLAYER1());
-    let game_id = systems.game.create_game();
-
-    set_contract_address(PLAYER2());
-    set_account_contract_address(PLAYER2());
-    systems.game.join_game(game_id);
-
-    // After first commit, still in committing
-    set_contract_address(PLAYER1());
-    set_account_contract_address(PLAYER1());
-    systems.game.commit_move(game_id, commit_hash(MOVE_ROCK, 'salt1'));
+    let game_id = setup_full_game(systems);
 
     let game: Game = world.read_model(game_id);
-    assert!(game.status == GAME_STATUS_COMMITTING, "Should still be committing after one commit");
-
-    // After second commit, transitions to revealing
-    set_contract_address(PLAYER2());
-    set_account_contract_address(PLAYER2());
-    systems.game.commit_move(game_id, commit_hash(MOVE_PAPER, 'salt2'));
-
-    let game: Game = world.read_model(game_id);
-    assert!(game.status == GAME_STATUS_REVEALING, "Should be revealing after both commit");
+    assert!(game.status == GAME_STATUS_PLAYING, "Game should be playing after join");
+    assert!(game.round == 1);
+    assert!(game.current_attacker == 1 || game.current_attacker == 2);
 }
 
 #[test]
-fn test_timeout_claim() {
+fn test_beasts_have_spawn_positions() {
+    let (world, systems) = spawn_game();
+    let game_id = setup_full_game(systems);
+
+    // P1 beast 0 should be at spawn (0,1)
+    let b: BeastState = world.read_model((game_id, 1_u8, 0_u8));
+    assert!(b.alive);
+    assert!(b.position_row == 0 && b.position_col == 1, "P1 beast 0 spawn wrong");
+
+    // P2 beast 0 should be at spawn (6,1)
+    let b2: BeastState = world.read_model((game_id, 2_u8, 0_u8));
+    assert!(b2.alive);
+    assert!(b2.position_row == 6 && b2.position_col == 1, "P2 beast 0 spawn wrong");
+}
+
+// --- Execute Turn ---
+
+#[test]
+fn test_move_beast() {
+    let (world, systems) = spawn_game();
+    set_block_timestamp(0); // Makes (0 + game_id) % 2 + 1 deterministic
+    let game_id = setup_full_game(systems);
+
+    let game: Game = world.read_model(game_id);
+    let attacker = game.current_attacker;
+    let attacker_addr = if attacker == 1 {
+        PLAYER1()
+    } else {
+        PLAYER2()
+    };
+
+    // Use WAIT for all beasts to test turn switching
+    set_player(attacker_addr);
+    systems
+        .game
+        .execute_turn(
+            game_id,
+            array![
+                Action { beast_index: 0, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
+                Action { beast_index: 1, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
+                Action { beast_index: 2, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
+            ],
+        );
+
+    // Turn should switch
+    let game_after: Game = world.read_model(game_id);
+    assert!(game_after.current_attacker != attacker, "Turn should switch");
+}
+
+#[test]
+#[should_panic]
+fn test_wrong_player_cannot_execute() {
     let (_world, systems) = spawn_game();
-
-    set_contract_address(PLAYER1());
-    set_account_contract_address(PLAYER1());
-    let game_id = systems.game.create_game();
-
-    set_contract_address(PLAYER2());
-    set_account_contract_address(PLAYER2());
-    systems.game.join_game(game_id);
-
-    // Both commit
-    set_contract_address(PLAYER1());
-    set_account_contract_address(PLAYER1());
-    systems.game.commit_move(game_id, commit_hash(MOVE_ROCK, 'salt1'));
-
-    set_contract_address(PLAYER2());
-    set_account_contract_address(PLAYER2());
-    systems.game.commit_move(game_id, commit_hash(MOVE_PAPER, 'salt2'));
-
-    // Player 1 reveals
-    set_contract_address(PLAYER1());
-    set_account_contract_address(PLAYER1());
-    systems.game.reveal_move(game_id, MOVE_ROCK, 'salt1');
-
-    // Advance time past timeout (600 seconds)
-    starknet::testing::set_block_timestamp(700);
-
-    // Player 1 claims timeout
-    set_contract_address(PLAYER1());
-    set_account_contract_address(PLAYER1());
-    systems.game.claim_timeout(game_id);
+    set_block_timestamp(0);
+    let game_id = setup_full_game(systems);
 
     let game: Game = _world.read_model(game_id);
-    assert!(game.status == GAME_STATUS_FINISHED, "Game should be finished after timeout");
-    assert!(game.winner == PLAYER1(), "Player1 should win by timeout");
+    let non_attacker = if game.current_attacker == 1 {
+        PLAYER2()
+    } else {
+        PLAYER1()
+    };
+
+    set_player(non_attacker);
+    systems
+        .game
+        .execute_turn(
+            game_id,
+            array![
+                Action { beast_index: 0, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
+                Action { beast_index: 1, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
+                Action { beast_index: 2, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
+            ],
+        );
 }
 
 #[test]
-fn test_egs_score_and_game_over() {
+#[should_panic]
+fn test_wrong_action_count_panics() {
     let (_world, systems) = spawn_game();
-    let game_id = play_full_game(systems, MOVE_ROCK, MOVE_SCISSORS);
+    set_block_timestamp(0);
+    let game_id = setup_full_game(systems);
 
-    let egs = IMinigameTokenDataDispatcher { contract_address: systems.game.contract_address };
+    let game: Game = _world.read_model(game_id);
+    let attacker_addr = if game.current_attacker == 1 {
+        PLAYER1()
+    } else {
+        PLAYER2()
+    };
 
-    assert!(egs.game_over(game_id.into()), "Game should be over");
-    assert!(egs.score(game_id.into()) == 1, "Score should be 1 for a won game");
+    // Only 2 actions when 3 beasts alive
+    set_player(attacker_addr);
+    systems
+        .game
+        .execute_turn(
+            game_id,
+            array![
+                Action { beast_index: 0, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
+                Action { beast_index: 1, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
+            ],
+        );
+}
+
+// --- EGS ---
+
+#[test]
+fn test_create_mints_nft() {
+    let (world, systems) = spawn_game();
+
+    set_player(PLAYER1());
+    let game_id = systems.game.create_game(1, 26, 51);
+
+    // Verify GameToken was created
+    let game_tokens: GameTokens = world.read_model(game_id);
+    assert!(game_tokens.p1_token_id == 1, "P1 should get token_id 1");
+    assert!(game_tokens.p2_token_id == 0, "P2 token should be 0 before join");
+
+    let game_token: GameToken = world.read_model(1_u64);
+    assert!(game_token.match_id == game_id);
+    assert!(game_token.player == PLAYER1());
 }
 
 #[test]
-fn test_egs_draw_score() {
-    let (_world, systems) = spawn_game();
-    let game_id = play_full_game(systems, MOVE_ROCK, MOVE_ROCK);
+fn test_join_mints_nft() {
+    let (world, systems) = spawn_game();
+    let game_id = setup_full_game(systems);
 
-    let egs = IMinigameTokenDataDispatcher { contract_address: systems.game.contract_address };
+    let game_tokens: GameTokens = world.read_model(game_id);
+    assert!(game_tokens.p1_token_id == 1, "P1 should get token_id 1");
+    assert!(game_tokens.p2_token_id == 2, "P2 should get token_id 2");
 
-    assert!(egs.game_over(game_id.into()), "Game should be over");
-    assert!(egs.score(game_id.into()) == 0, "Score should be 0 for a draw");
+    let game_token: GameToken = world.read_model(2_u64);
+    assert!(game_token.match_id == game_id);
+    assert!(game_token.player == PLAYER2());
 }
 
 #[test]
 fn test_egs_in_progress() {
     let (_world, systems) = spawn_game();
 
-    set_contract_address(PLAYER1());
-    set_account_contract_address(PLAYER1());
-    let game_id = systems.game.create_game();
+    set_player(PLAYER1());
+    let _game_id = systems.game.create_game(1, 26, 51);
 
     let egs = IMinigameTokenDataDispatcher { contract_address: systems.game.contract_address };
+    // token_id 1 maps to game_id 1
+    assert!(!egs.game_over(1));
+    assert!(egs.score(1) == 0);
+}
 
-    assert!(!egs.game_over(game_id.into()), "Game should not be over");
-    assert!(egs.score(game_id.into()) == 0, "Score should be 0 for in-progress game");
+#[test]
+fn test_finish_submits_score() {
+    let (mut world, systems) = spawn_game();
+    set_block_timestamp(0);
+    let game_id = setup_full_game(systems);
+
+    let game: Game = world.read_model(game_id);
+    let attacker = game.current_attacker;
+    let defender: u8 = if attacker == 1 {
+        2
+    } else {
+        1
+    };
+    let attacker_addr = if attacker == 1 {
+        PLAYER1()
+    } else {
+        PLAYER2()
+    };
+
+    // Kill all defender beasts via direct model write
+    let mut i: u8 = 0;
+    while i < 3 {
+        let mut b: BeastState = world.read_model((game_id, defender, i));
+        b.alive = false;
+        b.hp = 0;
+        b.extra_lives = 0;
+        world.write_model_test(@b);
+        i += 1;
+    }
+
+    // Execute WAIT turn — victory check triggers
+    set_player(attacker_addr);
+    systems
+        .game
+        .execute_turn(
+            game_id,
+            array![
+                Action { beast_index: 0, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
+                Action { beast_index: 1, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
+                Action { beast_index: 2, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
+            ],
+        );
+
+    // Verify game finished
+    let game_after: Game = world.read_model(game_id);
+    assert!(game_after.status == GAME_STATUS_FINISHED, "Game should be finished");
+    assert!(game_after.winner == attacker_addr, "Winner should be attacker");
+
+    // Verify EGS score
+    let egs = IMinigameTokenDataDispatcher { contract_address: systems.game.contract_address };
+    let game_tokens: GameTokens = world.read_model(game_id);
+    let winner_token = if attacker == 1 {
+        game_tokens.p1_token_id
+    } else {
+        game_tokens.p2_token_id
+    };
+    let loser_token = if attacker == 1 {
+        game_tokens.p2_token_id
+    } else {
+        game_tokens.p1_token_id
+    };
+
+    // Score = (MAX_ROUNDS - round) * 10 + WIN_BONUS = (50 - 1) * 10 + 100 = 590
+    let expected_score: u64 = (MAX_ROUNDS.into() - 1_u64) * 10 + WIN_BONUS;
+    assert!(egs.score(winner_token) == expected_score, "Winner score wrong");
+    assert!(egs.score(loser_token) == 0, "Loser score should be 0");
+}
+
+#[test]
+fn test_game_over_token() {
+    let (mut world, systems) = spawn_game();
+    set_block_timestamp(0);
+    let game_id = setup_full_game(systems);
+
+    let egs = IMinigameTokenDataDispatcher { contract_address: systems.game.contract_address };
+    let game_tokens: GameTokens = world.read_model(game_id);
+
+    // Before finish, game_over should be false for both tokens
+    assert!(!egs.game_over(game_tokens.p1_token_id), "P1 token should not be game_over");
+    assert!(!egs.game_over(game_tokens.p2_token_id), "P2 token should not be game_over");
+
+    // Kill defender beasts and trigger victory
+    let game: Game = world.read_model(game_id);
+    let attacker = game.current_attacker;
+    let defender: u8 = if attacker == 1 {
+        2
+    } else {
+        1
+    };
+    let attacker_addr = if attacker == 1 {
+        PLAYER1()
+    } else {
+        PLAYER2()
+    };
+
+    let mut i: u8 = 0;
+    while i < 3 {
+        let mut b: BeastState = world.read_model((game_id, defender, i));
+        b.alive = false;
+        b.hp = 0;
+        b.extra_lives = 0;
+        world.write_model_test(@b);
+        i += 1;
+    }
+
+    set_player(attacker_addr);
+    systems
+        .game
+        .execute_turn(
+            game_id,
+            array![
+                Action { beast_index: 0, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
+                Action { beast_index: 1, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
+                Action { beast_index: 2, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
+            ],
+        );
+
+    // After finish, game_over should be true for both tokens
+    assert!(egs.game_over(game_tokens.p1_token_id), "P1 token should be game_over");
+    assert!(egs.game_over(game_tokens.p2_token_id), "P2 token should be game_over");
 }
 
 #[test]
 fn test_multiple_games() {
     let (world, systems) = spawn_game();
 
-    // Create two games
-    set_contract_address(PLAYER1());
-    set_account_contract_address(PLAYER1());
-    let game1 = systems.game.create_game();
-    let game2 = systems.game.create_game();
+    set_player(PLAYER1());
+    let g1 = systems.game.create_game(1, 26, 51);
+    let g2 = systems.game.create_game(10, 40, 60);
 
-    assert!(game1 == 1, "First game id should be 1");
-    assert!(game2 == 2, "Second game id should be 2");
+    assert!(g1 == 1);
+    assert!(g2 == 2);
 
-    let g1: Game = world.read_model(game1);
-    let g2: Game = world.read_model(game2);
-    assert!(g1.player1 == PLAYER1(), "Game 1 player1");
-    assert!(g2.player1 == PLAYER1(), "Game 2 player1");
+    let game1: Game = world.read_model(g1);
+    let game2: Game = world.read_model(g2);
+    assert!(game1.player1 == PLAYER1());
+    assert!(game2.player1 == PLAYER1());
+
+    // Each game mints a new token
+    let tokens1: GameTokens = world.read_model(g1);
+    let tokens2: GameTokens = world.read_model(g2);
+    assert!(tokens1.p1_token_id == 1);
+    assert!(tokens2.p1_token_id == 2);
 }

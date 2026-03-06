@@ -1,8 +1,7 @@
 import { useCallback } from "react";
 import { useDojo } from "../dojo/DojoContext";
 import { useContractActions } from "./useContractActions";
-import { generateSalt, computeCommitment } from "../utils/commitment";
-import { useGameStore } from "../stores/gameStore";
+import { GameAction } from "../domain/types";
 
 export function useGameActions() {
   const {
@@ -10,10 +9,9 @@ export function useGameActions() {
     account: { account },
   } = useDojo();
   const { execute, isLoading, error } = useContractActions();
-  const { saveCommit, getCommit, clearCommit } = useGameStore();
 
-  const createGame = useCallback(async (): Promise<number | null> => {
-    const response = await execute(client.game_system.createGame, [account]);
+  const createGame = useCallback(async (beast1: number, beast2: number, beast3: number): Promise<number | null> => {
+    const response = await execute(client.game_system.createGame, [account, beast1, beast2, beast3]);
     if (!response) return null;
 
     const txHash = (response as any)?.transaction_hash;
@@ -22,17 +20,20 @@ export function useGameActions() {
         const receipt: any = await account.waitForTransaction(txHash, {
           retryInterval: 100,
         });
-        // Extract game_id from GameCreated event
         const events = receipt?.events || [];
+        // Dojo EventEmitted selector (different from StoreSetRecord)
+        const EVENT_EMITTED = "0x1c93f6e4703ae90f75338f29bffbe9c1662200cee981f49afeec26e892debcd";
         for (const event of events) {
-          // GameCreated event has game_id as first data element
-          if (event.data && event.data.length >= 1) {
-            const gameId = parseInt(event.data[0], 16);
+          if (event.keys?.[0] === EVENT_EMITTED && event.data && event.data.length >= 2) {
+            // EventEmitted data layout: [num_keys, game_id, num_values, ...values]
+            const gameId = parseInt(event.data[1], 16);
+            console.log("[TB] parsed gameId:", gameId);
             if (gameId > 0 && gameId < 100000) {
               return gameId;
             }
           }
         }
+        console.warn("[TB] no gameId found in events");
       } catch (e) {
         console.error("Failed to get receipt:", e);
       }
@@ -41,10 +42,13 @@ export function useGameActions() {
   }, [client, account, execute]);
 
   const joinGame = useCallback(
-    async (gameId: number) => {
+    async (gameId: number, beast1: number, beast2: number, beast3: number) => {
       const response = await execute(client.game_system.joinGame, [
         account,
         gameId,
+        beast1,
+        beast2,
+        beast3,
       ]);
       if (response) {
         const txHash = (response as any)?.transaction_hash;
@@ -61,73 +65,19 @@ export function useGameActions() {
     [client, account, execute]
   );
 
-  const commitMove = useCallback(
-    async (gameId: number, moveValue: number) => {
-      const salt = generateSalt();
-      const commitment = computeCommitment(moveValue, salt);
-
-      const response = await execute(client.game_system.commitMove, [
+  const executeTurn = useCallback(
+    async (gameId: number, actions: GameAction[]) => {
+      const contractActions = actions.map((a) => ({
+        beast_index: a.beastIndex,
+        action_type: a.actionType,
+        target_index: a.targetIndex,
+        target_row: a.targetRow,
+        target_col: a.targetCol,
+      }));
+      const response = await execute(client.game_system.executeTurn, [
         account,
         gameId,
-        commitment,
-      ]);
-
-      if (response) {
-        // Save salt to persist store (critical for reveal)
-        saveCommit(gameId, account.address, moveValue, salt);
-
-        const txHash = (response as any)?.transaction_hash;
-        if (txHash) {
-          try {
-            await account.waitForTransaction(txHash, { retryInterval: 100 });
-          } catch (e) {
-            console.error("Failed to confirm commit:", e);
-          }
-        }
-      }
-      return response;
-    },
-    [client, account, execute, saveCommit]
-  );
-
-  const revealMove = useCallback(
-    async (gameId: number) => {
-      const pending = getCommit(gameId, account.address);
-      if (!pending) {
-        throw new Error(
-          "No pending commit found. Cannot reveal without the original move and salt."
-        );
-      }
-
-      const response = await execute(client.game_system.revealMove, [
-        account,
-        gameId,
-        pending.moveValue,
-        pending.salt,
-      ]);
-
-      if (response) {
-        clearCommit(gameId, account.address);
-
-        const txHash = (response as any)?.transaction_hash;
-        if (txHash) {
-          try {
-            await account.waitForTransaction(txHash, { retryInterval: 100 });
-          } catch (e) {
-            console.error("Failed to confirm reveal:", e);
-          }
-        }
-      }
-      return response;
-    },
-    [client, account, execute, getCommit, clearCommit]
-  );
-
-  const claimTimeout = useCallback(
-    async (gameId: number) => {
-      const response = await execute(client.game_system.claimTimeout, [
-        account,
-        gameId,
+        contractActions,
       ]);
       if (response) {
         const txHash = (response as any)?.transaction_hash;
@@ -135,7 +85,7 @@ export function useGameActions() {
           try {
             await account.waitForTransaction(txHash, { retryInterval: 100 });
           } catch (e) {
-            console.error("Failed to confirm timeout claim:", e);
+            console.error("Failed to confirm execute_turn:", e);
           }
         }
       }
@@ -147,9 +97,7 @@ export function useGameActions() {
   return {
     createGame,
     joinGame,
-    commitMove,
-    revealMove,
-    claimTimeout,
+    executeTurn,
     isLoading,
     error,
   };

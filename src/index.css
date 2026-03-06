@@ -1,18 +1,282 @@
-* {
+/* =============================================================================
+   Provable Games Ecosystem — Tactical Beasts
+   Global styles + CSS custom properties
+   ============================================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+/* ---------------------------------------------------------------------------
+   CSS Custom Properties (usable outside Chakra)
+   --------------------------------------------------------------------------- */
+:root {
+  /* Primary greens */
+  --color-green-neon: #00FF44;
+  --color-green-light: #33FF66;
+  --color-green-mid: #009926;
+  --color-green-border: #2D5A2D;
+  --color-green-border-light: #3A6B3A;
+  --color-green-dark: #1A3A1A;
+  --color-green-panel: #0F1A0F;
+  --color-green-deep: #0A1F0A;
+
+  /* Accents */
+  --color-gold: #FFD700;
+  --color-gold-dark: #B39700;
+  --color-red: #FF3333;
+  --color-red-dark: #CC2222;
+
+  /* Surfaces */
+  --color-bg: #0D0D0D;
+  --color-panel: #0F1A0F;
+  --color-card: #142014;
+  --color-overlay: #1A2E1A;
+
+  /* Text */
+  --color-text: #E8E0D0;
+  --color-text-secondary: #7A8A7A;
+  --color-text-muted: #556655;
+
+  /* Shadows */
+  --glow-green: 0 0 12px rgba(0, 255, 68, 0.3);
+  --glow-green-strong: 0 0 20px rgba(0, 255, 68, 0.5);
+  --glow-gold: 0 0 12px rgba(255, 215, 0, 0.3);
+  --glow-red: 0 0 12px rgba(255, 51, 51, 0.3);
+
+  /* Typography */
+  --font-heading: 'EB Garamond', 'Crimson Text', Georgia, serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+}
+
+/* ---------------------------------------------------------------------------
+   Reset + base
+   --------------------------------------------------------------------------- */
+*, *::before, *::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: #1a1a2e;
-  color: white;
+  background: var(--color-bg);
+  color: var(--color-text);
   min-height: 100vh;
 }
 
 #root {
   min-height: 100vh;
+}
+
+/* ---------------------------------------------------------------------------
+   Scrollbar (green-tinted, thin)
+   --------------------------------------------------------------------------- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-green-deep);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-green-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-green-border-light);
+}
+
+/* ---------------------------------------------------------------------------
+   Selection
+   --------------------------------------------------------------------------- */
+::selection {
+  background: rgba(0, 255, 68, 0.2);
+  color: var(--color-text);
+}
+
+/* ---------------------------------------------------------------------------
+   Utility classes (para uso fuera de Chakra)
+   --------------------------------------------------------------------------- */
+
+/* Panel — contenedor principal con fondo semi-transparente */
+.panel {
+  background: rgba(15, 26, 15, 0.85);
+  border: 1px solid var(--color-green-border);
+  border-radius: 3px;
+  backdrop-filter: blur(8px);
+}
+
+.panel-header {
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-green-light);
+  border-bottom: 1px solid var(--color-green-border);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+
+/* Glow effect — para elementos activos */
+.glow {
+  box-shadow: var(--glow-green);
+}
+
+.glow-strong {
+  box-shadow: var(--glow-green-strong);
+}
+
+.glow-gold {
+  box-shadow: var(--glow-gold);
+}
+
+/* Text styles */
+.text-label {
+  color: var(--color-text-secondary);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.text-stat {
+  color: var(--color-gold);
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.text-damage {
+  color: var(--color-red);
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.text-heal {
+  color: var(--color-green-light);
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+/* HP bars */
+.hp-bar {
+  height: 6px;
+  background: #1A1A1A;
+  border: 1px solid var(--color-green-border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.hp-bar-fill {
+  height: 100%;
+  border-radius: 1px;
+  transition: width 0.3s ease;
+}
+
+.hp-bar-fill--ally {
+  background: linear-gradient(90deg, #009926, #33FF66);
+}
+
+.hp-bar-fill--enemy {
+  background: linear-gradient(90deg, #AA1111, #FF3333);
+}
+
+/* Beast type badges */
+.badge-magical {
+  background: rgba(0, 255, 68, 0.15);
+  color: var(--color-green-light);
+  border: 1px solid rgba(0, 255, 68, 0.3);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: 2px;
+}
+
+.badge-hunter {
+  background: rgba(255, 215, 0, 0.15);
+  color: var(--color-gold);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: 2px;
+}
+
+.badge-brute {
+  background: rgba(255, 51, 51, 0.15);
+  color: var(--color-red);
+  border: 1px solid rgba(255, 51, 51, 0.3);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: 2px;
+}
+
+/* Hex grid cell base */
+.hex-cell {
+  fill: rgba(15, 26, 15, 0.6);
+  stroke: var(--color-green-border);
+  stroke-width: 1;
+  transition: fill 0.15s ease, stroke 0.15s ease;
+}
+
+.hex-cell:hover {
+  fill: rgba(0, 255, 68, 0.08);
+  stroke: var(--color-green-border-light);
+}
+
+.hex-cell--obstacle {
+  fill: rgba(45, 90, 45, 0.3);
+  stroke: var(--color-green-border);
+}
+
+.hex-cell--selected {
+  fill: rgba(0, 255, 68, 0.15);
+  stroke: var(--color-green-neon);
+  stroke-width: 2;
+}
+
+.hex-cell--move-range {
+  fill: rgba(0, 255, 68, 0.12);
+  stroke: rgba(0, 255, 68, 0.6);
+  stroke-width: 1.5;
+  cursor: pointer;
+  animation: pulse-move 1.5s ease-in-out infinite;
+}
+
+.hex-cell--move-range:hover {
+  fill: rgba(0, 255, 68, 0.25);
+  stroke: #00FF44;
+  stroke-width: 2;
+}
+
+.hex-cell--attack-range {
+  fill: rgba(255, 51, 51, 0.12);
+  stroke: rgba(255, 51, 51, 0.6);
+  stroke-width: 1.5;
+  cursor: pointer;
+  animation: pulse-attack 1.5s ease-in-out infinite;
+}
+
+.hex-cell--attack-range:hover {
+  fill: rgba(255, 51, 51, 0.25);
+  stroke: #FF3333;
+  stroke-width: 2;
+}
+
+@keyframes pulse-move {
+  0%, 100% { fill: rgba(0, 255, 68, 0.08); }
+  50% { fill: rgba(0, 255, 68, 0.18); }
+}
+
+@keyframes pulse-attack {
+  0%, 100% { fill: rgba(255, 51, 51, 0.08); }
+  50% { fill: rgba(255, 51, 51, 0.18); }
 }

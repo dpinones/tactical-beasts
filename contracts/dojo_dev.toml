@@ -1,9 +1,9 @@
 [world]
-name = "Rock Paper Scissors"
-seed = "rps-dev"
+name = "Tactical Beasts"
+seed = "tb-dev"
 
 [namespace]
-default = "RPS"
+default = "TB"
 
 [env]
 chain_id = "KATANA_LOCAL"
@@ -11,8 +11,15 @@ rpc_url = "http://localhost:5050/"
 account_address = "0x6677fe62ee39c7b07401f754138502bab7fac99d2d3c5d37df7d1c6fab10819"
 private_key = "0x3e3979c1ed728490308054fe357a9f49cf67f80f9721f44cc57235129e090f4"
 
+[migration]
+order_inits = ["TB-game_system", "TB-Collection"]
+
 [writers]
-"RPS" = ["RPS-game_system"]
+"TB" = ["TB-game_system"]
+
+[owners]
+"TB" = ["TB-Collection"]
 
 [init_call_args]
-"RPS-game_system" = []
+"TB-game_system" = []
+"TB-Collection" = []

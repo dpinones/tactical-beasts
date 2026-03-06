@@ -8,6 +8,13 @@ import {
   VStack,
   Spinner,
   Badge,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalCloseButton,
+  useDisclosure,
 } from "@chakra-ui/react";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
@@ -57,6 +64,7 @@ export function BattlePage() {
   const { game, refetch: refetchGame } = useGameQuery(gameId);
   const { beasts, refetch: refetchBeasts } = useBeastStates(gameId);
   const { battleLog, addBattleEvent, clearBattleLog } = useGameStore();
+  const abandonModal = useDisclosure();
 
   const myAddress = account?.address || "";
 
@@ -391,14 +399,24 @@ export function BattlePage() {
           <Badge variant="magical">Round {game.round}</Badge>
         </Flex>
 
-        <Badge
-          variant={isMyTurn ? "magical" : "brute"}
-          fontSize="xs"
-          px={3}
-          py={1}
-        >
-          {isMyTurn ? "YOUR TURN" : "OPPONENT'S TURN"}
-        </Badge>
+        <HStack gap={3}>
+          <Badge
+            variant={isMyTurn ? "magical" : "brute"}
+            fontSize="xs"
+            px={3}
+            py={1}
+          >
+            {isMyTurn ? "YOUR TURN" : "OPPONENT'S TURN"}
+          </Badge>
+          <Button
+            size="xs"
+            variant="outline"
+            colorScheme="red"
+            onClick={abandonModal.onOpen}
+          >
+            Abandon
+          </Button>
+        </HStack>
       </Flex>
 
       {/* Guidance bar */}
@@ -547,6 +565,35 @@ export function BattlePage() {
           </Box>
         </VStack>
       </Flex>
+
+      {/* Abandon confirmation modal */}
+      <Modal isOpen={abandonModal.isOpen} onClose={abandonModal.onClose} isCentered>
+        <ModalOverlay />
+        <ModalContent bg="surface.panel" border="1px solid" borderColor="surface.border">
+          <ModalHeader fontSize="md" color="danger.300">Abandon Game</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={6}>
+            <Text fontSize="sm" color="text.secondary" mb={4}>
+              Are you sure you want to abandon this game? This will count as a loss.
+            </Text>
+            <HStack justify="flex-end" gap={3}>
+              <Button size="sm" variant="outline" onClick={abandonModal.onClose}>
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                colorScheme="red"
+                onClick={() => {
+                  abandonModal.onClose();
+                  navigate("/");
+                }}
+              >
+                Abandon
+              </Button>
+            </HStack>
+          </ModalBody>
+        </ModalContent>
+      </Modal>
     </Flex>
   );
 }

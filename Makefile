@@ -1,0 +1,82 @@
+# Rock Paper Scissors — Dev Commands
+
+CONTRACTS_DIR = contracts
+
+# ─── Default: Start Frontend ─────────────────────────────────
+
+all: dev
+
+# ─── Blockchain ───────────────────────────────────────────────
+
+katana:
+	katana --dev --dev.no-fee --http.cors_origins "*"
+
+setup: build migrate copy-manifest generate torii
+
+build:
+	cd $(CONTRACTS_DIR) && sozo build
+
+test:
+	cd $(CONTRACTS_DIR) && sozo test
+
+migrate:
+	cd $(CONTRACTS_DIR) && sozo migrate
+
+copy-manifest:
+	cp $(CONTRACTS_DIR)/manifest_dev.json manifest_slot.json
+
+torii:
+	@WORLD_ADDR=$$(python3 -c "import json; print(json.load(open('$(CONTRACTS_DIR)/manifest_dev.json'))['world']['address'])" 2>/dev/null); \
+	if [ -z "$$WORLD_ADDR" ]; then echo "Error: world address not found. Run 'make setup' first."; exit 1; fi; \
+	echo "Starting Torii with world address: $$WORLD_ADDR"; \
+	torii --world $$WORLD_ADDR --rpc http://localhost:5050/rpc/v0_9 --http.cors_origins "*"
+
+# ─── Frontend ─────────────────────────────────────────────────
+
+install:
+	npm install --legacy-peer-deps
+
+dev:
+	npm run dev
+
+generate:
+	npm run generate
+
+front-build:
+	npm run build
+
+# ─── Sepolia ─────────────────────────────────────────────
+
+migrate-sepolia:
+	cd $(CONTRACTS_DIR) && sozo -P sepolia build && sozo -P sepolia migrate
+
+copy-manifest-sepolia:
+	cp $(CONTRACTS_DIR)/manifest_sepolia.json manifest_sepolia.json
+
+dev-sepolia:
+	npm run dev:sepolia
+
+build-sepolia:
+	npm run build:sepolia
+
+torii-sepolia:
+	@WORLD_ADDR=$$(python3 -c "import json; print(json.load(open('$(CONTRACTS_DIR)/manifest_sepolia.json'))['world']['address'])" 2>/dev/null); \
+	if [ -z "$$WORLD_ADDR" ]; then echo "Error: world address not found. Run 'make migrate-sepolia' first."; exit 1; fi; \
+	echo "Starting Torii for Sepolia with world address: $$WORLD_ADDR"; \
+	torii --world $$WORLD_ADDR --rpc https://api.cartridge.gg/x/starknet/sepolia --http.cors_origins "*"
+
+# ─── Slot ─────────────────────────────────────────────────────
+
+slot-deploy:
+	@echo "Deploy to Slot: slot deployments create <name>"
+	@echo "Then: cd $(CONTRACTS_DIR) && sozo build && sozo -P slot migrate"
+
+# ─── Helpers ──────────────────────────────────────────────────
+
+fmt:
+	cd $(CONTRACTS_DIR) && scarb fmt
+
+fmt-check:
+	cd $(CONTRACTS_DIR) && scarb fmt --check
+
+.PHONY: all katana setup build test migrate copy-manifest torii install dev generate front-build migrate-sepolia copy-manifest-sepolia dev-sepolia build-sepolia torii-sepolia slot-deploy fmt fmt-check

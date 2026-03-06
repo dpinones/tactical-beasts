@@ -1,0 +1,29 @@
+[package]
+name = "rock_paper_scissors"
+version = "0.1.0"
+cairo-version = "2.13.1"
+edition = "2024_07"
+
+[dependencies]
+dojo = "1.8.0"
+dojo_cairo_macros = "1.8.0"
+starknet = "2.13.1"
+
+[dev-dependencies]
+dojo_cairo_test = "1.8.0"
+cairo_test = "2.13.1"
+
+[tool.fmt]
+sort-module-level-items = true
+max-line-length = 120
+
+[tool.scarb]
+allow-prebuilt-plugins = ["dojo_cairo_macros"]
+
+[[target.starknet-contract]]
+sierra = true
+casm = true
+build-external-contracts = ["dojo::world::world_contract::world"]
+
+[profile.sepolia]
+[profile.mainnet]

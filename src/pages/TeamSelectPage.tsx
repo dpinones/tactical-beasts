@@ -12,12 +12,13 @@ import {
 } from "@chakra-ui/react";
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useDojo } from "../dojo/DojoContext";
 import { useGameActions } from "../hooks/useGameActions";
-import { useGameQuery } from "../hooks/useGameQuery";
+import { useGameQuery, usePlayerProfile } from "../hooks/useGameQuery";
 import { useGameStore } from "../stores/gameStore";
 import { loadBeastCatalog } from "../data/beasts";
 import { BeastCard } from "../components/BeastCard";
-import { GameStatus, BeastType } from "../domain/types";
+import { GameStatus, BeastType, ZERO_ADDR } from "../domain/types";
 
 type Phase = "creating" | "joining" | "lobby" | "select" | "confirming" | "waiting" | "error";
 
@@ -30,6 +31,7 @@ export function TeamSelectPage() {
   const isMatchMode = location.pathname.startsWith("/team-select/match");
   const joinGameId = gameIdParam ? parseInt(gameIdParam) : null;
 
+  const { account: { account } } = useDojo();
   const { createGame, joinGame, setTeam, isLoading } = useGameActions();
   const { selectedBeasts, toggleBeast, clearSelectedBeasts, setActiveGameId } = useGameStore();
 
@@ -121,6 +123,21 @@ export function TeamSelectPage() {
 
   // Poll game state to detect when opponent joins (lobby) or when game starts (after set_team)
   const { game: polledGame } = useGameQuery(gameId);
+
+  // Determine opponent address from polled game
+  const myAddress = account?.address || "";
+  const opponentAddress = useMemo(() => {
+    if (!polledGame) return null;
+    const normalize = (a: string) => "0x" + a.replace("0x", "").toLowerCase().padStart(64, "0");
+    const me = normalize(myAddress);
+    const p1 = normalize(polledGame.player1 || "");
+    const p2 = normalize(polledGame.player2 || "");
+    if (p1 === me && p2 !== normalize(ZERO_ADDR)) return polledGame.player2;
+    if (p2 === me && p1 !== normalize(ZERO_ADDR)) return polledGame.player1;
+    return null;
+  }, [polledGame, myAddress]);
+
+  const { profile: opponentProfile } = usePlayerProfile(opponentAddress);
 
   // Lobby: wait for opponent to join, then move to team select
   useEffect(() => {
@@ -252,6 +269,31 @@ export function TeamSelectPage() {
           </Text>
         </Flex>
       </Box>
+
+      {/* Opponent profile */}
+      {opponentProfile && (
+        <Box bg="surface.panel" border="1px solid" borderColor="danger.700" borderRadius="3px" p={3} mb={4}>
+          <Flex justify="space-between" align="center" mb={2}>
+            <Text fontSize="9px" color="danger.300" textTransform="uppercase" letterSpacing="0.1em">
+              Opponent
+            </Text>
+            <Text fontSize="9px" color="text.muted" fontFamily="mono">
+              {opponentAddress ? opponentAddress.slice(0, 6) + "..." + opponentAddress.slice(-4) : ""}
+            </Text>
+          </Flex>
+          <HStack gap={4} fontSize="xs" fontFamily="mono" color="text.secondary">
+            <Text>Games: <Text as="span" color="text.gold">{opponentProfile.games_played}</Text></Text>
+            <Text>W: <Text as="span" color="green.300">{opponentProfile.wins}</Text></Text>
+            <Text>L: <Text as="span" color="danger.300">{opponentProfile.losses}</Text></Text>
+            <Text>Abandons: <Text as="span" color="text.muted">{opponentProfile.abandons}</Text></Text>
+            <Text>K/D: <Text as="span" color="text.primary">
+              {opponentProfile.total_deaths === 0
+                ? opponentProfile.total_kills > 0 ? `${opponentProfile.total_kills}/0` : "--"
+                : `${opponentProfile.total_kills}/${opponentProfile.total_deaths}`}
+            </Text></Text>
+          </HStack>
+        </Box>
+      )}
 
       {/* Filters */}
       <Flex gap={2} mb={3} flexWrap="wrap">

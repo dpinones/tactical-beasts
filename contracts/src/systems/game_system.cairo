@@ -5,8 +5,9 @@ pub fn NAME() -> ByteArray {
 
 #[starknet::interface]
 pub trait IGameSystem<T> {
-    fn create_game(ref self: T, beast_1: u32, beast_2: u32, beast_3: u32) -> u32;
-    fn join_game(ref self: T, game_id: u32, beast_1: u32, beast_2: u32, beast_3: u32);
+    fn create_game(ref self: T) -> u32;
+    fn join_game(ref self: T, game_id: u32);
+    fn set_team(ref self: T, game_id: u32, beast_1: u32, beast_2: u32, beast_3: u32);
     fn execute_turn(ref self: T, game_id: u32, actions: Array<crate::types::Action>);
 }
 
@@ -97,7 +98,7 @@ pub mod game_system {
 
     #[abi(embed_v0)]
     impl GameSystemImpl of IGameSystem<ContractState> {
-        fn create_game(ref self: ContractState, beast_1: u32, beast_2: u32, beast_3: u32) -> u32 {
+        fn create_game(ref self: ContractState) -> u32 {
             let mut world = self.world(@NAMESPACE());
             let caller = starknet::get_caller_address();
 
@@ -123,26 +124,17 @@ pub mod game_system {
                 current_attacker: 0,
                 round: 0,
                 winner: zero_address(),
-                p1_team_set: true,
+                p1_team_set: false,
                 p2_team_set: false,
             };
             world.write_model(@game);
-
-            // Set team for player1
-            let player_state = PlayerState {
-                game_id, player: caller, player_index: 1, beast_1, beast_2, beast_3, potion_used: false,
-            };
-            world.write_model(@player_state);
-            create_beast(ref world, game_id, 1, 0, beast_1);
-            create_beast(ref world, game_id, 1, 1, beast_2);
-            create_beast(ref world, game_id, 1, 2, beast_3);
 
             world.emit_event(@GameCreated { game_id, player1: caller, time: starknet::get_block_timestamp() });
 
             game_id
         }
 
-        fn join_game(ref self: ContractState, game_id: u32, beast_1: u32, beast_2: u32, beast_3: u32) {
+        fn join_game(ref self: ContractState, game_id: u32) {
             let mut world = self.world(@NAMESPACE());
             let caller = starknet::get_caller_address();
 
@@ -166,19 +158,40 @@ pub mod game_system {
             world.write_model(@game_tokens);
 
             game.player2 = caller;
-            game.p2_team_set = true;
             world.write_model(@game);
 
-            // Set team for player2
+            world.emit_event(@PlayerJoined { game_id, player2: caller, time: starknet::get_block_timestamp() });
+        }
+
+        fn set_team(ref self: ContractState, game_id: u32, beast_1: u32, beast_2: u32, beast_3: u32) {
+            let mut world = self.world(@NAMESPACE());
+            let caller = starknet::get_caller_address();
+
+            let mut game: Game = world.read_model(game_id);
+            assert!(game.status == GAME_STATUS_WAITING, "Game is not waiting");
+
+            let player_index: u8 = if caller == game.player1 {
+                assert!(!game.p1_team_set, "Team already set");
+                game.p1_team_set = true;
+                1
+            } else if caller == game.player2 {
+                assert!(!game.p2_team_set, "Team already set");
+                game.p2_team_set = true;
+                2
+            } else {
+                panic!("Not a player in this game");
+                0
+            };
+
+            world.write_model(@game);
+
             let player_state = PlayerState {
-                game_id, player: caller, player_index: 2, beast_1, beast_2, beast_3, potion_used: false,
+                game_id, player: caller, player_index, beast_1, beast_2, beast_3, potion_used: false,
             };
             world.write_model(@player_state);
-            create_beast(ref world, game_id, 2, 0, beast_1);
-            create_beast(ref world, game_id, 2, 1, beast_2);
-            create_beast(ref world, game_id, 2, 2, beast_3);
-
-            world.emit_event(@PlayerJoined { game_id, player2: caller, time: starknet::get_block_timestamp() });
+            create_beast(ref world, game_id, player_index, 0, beast_1);
+            create_beast(ref world, game_id, player_index, 1, beast_2);
+            create_beast(ref world, game_id, player_index, 2, beast_3);
 
             try_start_game(ref world, game_id);
         }

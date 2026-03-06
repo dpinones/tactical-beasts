@@ -464,19 +464,19 @@ export function setupWorld(provider: DojoProvider) {
 		}
 	};
 
-	const build_game_system_createGame_calldata = (beast1: BigNumberish, beast2: BigNumberish, beast3: BigNumberish): DojoCall => {
+	const build_game_system_createGame_calldata = (): DojoCall => {
 		return {
 			contractName: "game_system",
 			entrypoint: "create_game",
-			calldata: [beast1, beast2, beast3],
+			calldata: [],
 		};
 	};
 
-	const game_system_createGame = async (snAccount: Account | AccountInterface, beast1: BigNumberish, beast2: BigNumberish, beast3: BigNumberish) => {
+	const game_system_createGame = async (snAccount: Account | AccountInterface) => {
 		try {
 			return await provider.execute(
 				snAccount,
-				build_game_system_createGame_calldata(beast1, beast2, beast3),
+				build_game_system_createGame_calldata(),
 				"TB",
 			);
 		} catch (error) {
@@ -523,19 +523,19 @@ export function setupWorld(provider: DojoProvider) {
 		}
 	};
 
-	const build_game_system_joinGame_calldata = (gameId: BigNumberish, beast1: BigNumberish, beast2: BigNumberish, beast3: BigNumberish): DojoCall => {
+	const build_game_system_joinGame_calldata = (gameId: BigNumberish): DojoCall => {
 		return {
 			contractName: "game_system",
 			entrypoint: "join_game",
-			calldata: [gameId, beast1, beast2, beast3],
+			calldata: [gameId],
 		};
 	};
 
-	const game_system_joinGame = async (snAccount: Account | AccountInterface, gameId: BigNumberish, beast1: BigNumberish, beast2: BigNumberish, beast3: BigNumberish) => {
+	const game_system_joinGame = async (snAccount: Account | AccountInterface, gameId: BigNumberish) => {
 		try {
 			return await provider.execute(
 				snAccount,
-				build_game_system_joinGame_calldata(gameId, beast1, beast2, beast3),
+				build_game_system_joinGame_calldata(gameId),
 				"TB",
 			);
 		} catch (error) {
@@ -555,6 +555,27 @@ export function setupWorld(provider: DojoProvider) {
 	const game_system_score = async (tokenId: BigNumberish) => {
 		try {
 			return await provider.call("TB", build_game_system_score_calldata(tokenId));
+		} catch (error) {
+			console.error(error);
+			throw error;
+		}
+	};
+
+	const build_game_system_setTeam_calldata = (gameId: BigNumberish, beast1: BigNumberish, beast2: BigNumberish, beast3: BigNumberish): DojoCall => {
+		return {
+			contractName: "game_system",
+			entrypoint: "set_team",
+			calldata: [gameId, beast1, beast2, beast3],
+		};
+	};
+
+	const game_system_setTeam = async (snAccount: Account | AccountInterface, gameId: BigNumberish, beast1: BigNumberish, beast2: BigNumberish, beast3: BigNumberish) => {
+		try {
+			return await provider.execute(
+				snAccount,
+				build_game_system_setTeam_calldata(gameId, beast1, beast2, beast3),
+				"TB",
+			);
 		} catch (error) {
 			console.error(error);
 			throw error;
@@ -625,6 +646,8 @@ export function setupWorld(provider: DojoProvider) {
 			buildJoinGameCalldata: build_game_system_joinGame_calldata,
 			score: game_system_score,
 			buildScoreCalldata: build_game_system_score_calldata,
+			setTeam: game_system_setTeam,
+			buildSetTeamCalldata: build_game_system_setTeam_calldata,
 		},
 	};
 }

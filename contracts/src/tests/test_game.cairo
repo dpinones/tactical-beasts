@@ -14,13 +14,21 @@ fn set_player(player: starknet::ContractAddress) {
 }
 
 fn setup_full_game(systems: Systems) -> u32 {
-    // P1: beasts 1 (Magical), 26 (Hunter), 51 (Brute)
+    // P1 creates game
     set_player(PLAYER1());
-    let game_id = systems.game.create_game(1, 26, 51);
+    let game_id = systems.game.create_game();
 
-    // P2: beasts 10 (Magical), 40 (Hunter), 60 (Brute)
+    // P2 joins
     set_player(PLAYER2());
-    systems.game.join_game(game_id, 10, 40, 60);
+    systems.game.join_game(game_id);
+
+    // P1 sets team: beasts 1 (Magical), 26 (Hunter), 51 (Brute)
+    set_player(PLAYER1());
+    systems.game.set_team(game_id, 1, 26, 51);
+
+    // P2 sets team: beasts 10 (Magical), 40 (Hunter), 60 (Brute)
+    set_player(PLAYER2());
+    systems.game.set_team(game_id, 10, 40, 60);
 
     game_id
 }
@@ -32,23 +40,29 @@ fn test_create_game() {
     let (world, systems) = spawn_game();
 
     set_player(PLAYER1());
-    let game_id = systems.game.create_game(1, 26, 51);
+    let game_id = systems.game.create_game();
 
     assert!(game_id == 1, "First game should have id 1");
     let game: Game = world.read_model(game_id);
     assert!(game.status == GAME_STATUS_WAITING);
     assert!(game.player1 == PLAYER1());
-    assert!(game.p1_team_set, "P1 team should be set on create");
+    assert!(!game.p1_team_set, "P1 team should NOT be set on create");
+    assert!(!game.p2_team_set, "P2 team should NOT be set on create");
 }
 
 #[test]
 fn test_join_game() {
     let (world, systems) = spawn_game();
-    let game_id = setup_full_game(systems);
+
+    set_player(PLAYER1());
+    let game_id = systems.game.create_game();
+
+    set_player(PLAYER2());
+    systems.game.join_game(game_id);
 
     let game: Game = world.read_model(game_id);
     assert!(game.player2 == PLAYER2());
-    assert!(game.status == GAME_STATUS_PLAYING, "Game should start after join");
+    assert!(game.status == GAME_STATUS_WAITING, "Game should still be waiting (no teams set)");
 }
 
 #[test]
@@ -57,19 +71,56 @@ fn test_cannot_join_own_game() {
     let (_world, systems) = spawn_game();
 
     set_player(PLAYER1());
-    let game_id = systems.game.create_game(1, 26, 51);
-    systems.game.join_game(game_id, 10, 40, 60);
+    let game_id = systems.game.create_game();
+    systems.game.join_game(game_id);
+}
+
+// --- Set Team ---
+
+#[test]
+fn test_set_team_p1() {
+    let (world, systems) = spawn_game();
+
+    set_player(PLAYER1());
+    let game_id = systems.game.create_game();
+
+    set_player(PLAYER2());
+    systems.game.join_game(game_id);
+
+    set_player(PLAYER1());
+    systems.game.set_team(game_id, 1, 26, 51);
+
+    let game: Game = world.read_model(game_id);
+    assert!(game.p1_team_set, "P1 team should be set");
+    assert!(!game.p2_team_set, "P2 team should NOT be set yet");
+    assert!(game.status == GAME_STATUS_WAITING, "Game should still be waiting");
+}
+
+#[test]
+#[should_panic]
+fn test_cannot_set_team_twice() {
+    let (_world, systems) = spawn_game();
+
+    set_player(PLAYER1());
+    let game_id = systems.game.create_game();
+
+    set_player(PLAYER2());
+    systems.game.join_game(game_id);
+
+    set_player(PLAYER1());
+    systems.game.set_team(game_id, 1, 26, 51);
+    systems.game.set_team(game_id, 2, 27, 52); // Should panic
 }
 
 // --- Game Start ---
 
 #[test]
-fn test_join_starts_game() {
+fn test_both_teams_start_game() {
     let (world, systems) = spawn_game();
     let game_id = setup_full_game(systems);
 
     let game: Game = world.read_model(game_id);
-    assert!(game.status == GAME_STATUS_PLAYING, "Game should be playing after join");
+    assert!(game.status == GAME_STATUS_PLAYING, "Game should be playing after both teams set");
     assert!(game.round == 1);
     assert!(game.current_attacker == 1 || game.current_attacker == 2);
 }
@@ -95,7 +146,7 @@ fn test_beasts_have_spawn_positions() {
 #[test]
 fn test_move_beast() {
     let (world, systems) = spawn_game();
-    set_block_timestamp(0); // Makes (0 + game_id) % 2 + 1 deterministic
+    set_block_timestamp(0);
     let game_id = setup_full_game(systems);
 
     let game: Game = world.read_model(game_id);
@@ -185,7 +236,7 @@ fn test_create_mints_nft() {
     let (world, systems) = spawn_game();
 
     set_player(PLAYER1());
-    let game_id = systems.game.create_game(1, 26, 51);
+    let game_id = systems.game.create_game();
 
     // Verify GameToken was created
     let game_tokens: GameTokens = world.read_model(game_id);
@@ -216,7 +267,7 @@ fn test_egs_in_progress() {
     let (_world, systems) = spawn_game();
 
     set_player(PLAYER1());
-    let _game_id = systems.game.create_game(1, 26, 51);
+    let _game_id = systems.game.create_game();
 
     let egs = IMinigameTokenDataDispatcher { contract_address: systems.game.contract_address };
     // token_id 1 maps to game_id 1
@@ -351,8 +402,8 @@ fn test_multiple_games() {
     let (world, systems) = spawn_game();
 
     set_player(PLAYER1());
-    let g1 = systems.game.create_game(1, 26, 51);
-    let g2 = systems.game.create_game(10, 40, 60);
+    let g1 = systems.game.create_game();
+    let g2 = systems.game.create_game();
 
     assert!(g1 == 1);
     assert!(g2 == 2);

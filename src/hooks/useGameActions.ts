@@ -3,6 +3,8 @@ import { useDojo } from "../dojo/DojoContext";
 import { useContractActions } from "./useContractActions";
 import { GameAction } from "../domain/types";
 
+const EVENT_EMITTED = "0x1c93f6e4703ae90f75338f29bffbe9c1662200cee981f49afeec26e892debcd";
+
 export function useGameActions() {
   const {
     setup: { client },
@@ -10,8 +12,8 @@ export function useGameActions() {
   } = useDojo();
   const { execute, isLoading, error } = useContractActions();
 
-  const createGame = useCallback(async (beast1: number, beast2: number, beast3: number): Promise<number | null> => {
-    const response = await execute(client.game_system.createGame, [account, beast1, beast2, beast3]);
+  const createGame = useCallback(async (): Promise<number | null> => {
+    const response = await execute(client.game_system.createGame, [account]);
     if (!response) return null;
 
     const txHash = (response as any)?.transaction_hash;
@@ -21,11 +23,8 @@ export function useGameActions() {
           retryInterval: 100,
         });
         const events = receipt?.events || [];
-        // Dojo EventEmitted selector (different from StoreSetRecord)
-        const EVENT_EMITTED = "0x1c93f6e4703ae90f75338f29bffbe9c1662200cee981f49afeec26e892debcd";
         for (const event of events) {
           if (event.keys?.[0] === EVENT_EMITTED && event.data && event.data.length >= 2) {
-            // EventEmitted data layout: [num_keys, game_id, num_values, ...values]
             const gameId = parseInt(event.data[1], 16);
             console.log("[TB] parsed gameId:", gameId);
             if (gameId > 0 && gameId < 100000) {
@@ -42,8 +41,29 @@ export function useGameActions() {
   }, [client, account, execute]);
 
   const joinGame = useCallback(
-    async (gameId: number, beast1: number, beast2: number, beast3: number) => {
+    async (gameId: number) => {
       const response = await execute(client.game_system.joinGame, [
+        account,
+        gameId,
+      ]);
+      if (response) {
+        const txHash = (response as any)?.transaction_hash;
+        if (txHash) {
+          try {
+            await account.waitForTransaction(txHash, { retryInterval: 100 });
+          } catch (e) {
+            console.error("Failed to confirm join:", e);
+          }
+        }
+      }
+      return response;
+    },
+    [client, account, execute]
+  );
+
+  const setTeam = useCallback(
+    async (gameId: number, beast1: number, beast2: number, beast3: number) => {
+      const response = await execute(client.game_system.setTeam, [
         account,
         gameId,
         beast1,
@@ -56,7 +76,7 @@ export function useGameActions() {
           try {
             await account.waitForTransaction(txHash, { retryInterval: 100 });
           } catch (e) {
-            console.error("Failed to confirm join:", e);
+            console.error("Failed to confirm set_team:", e);
           }
         }
       }
@@ -97,6 +117,7 @@ export function useGameActions() {
   return {
     createGame,
     joinGame,
+    setTeam,
     executeTurn,
     isLoading,
     error,

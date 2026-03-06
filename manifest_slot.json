@@ -57,8 +57,8 @@
       ]
     },
     {
-      "address": "0x75627bcfd0a22bd965d3bb44de80ce90c13b7f0fc7e990e487f2545914db869",
-      "class_hash": "0x245f9c23f302a1e0de46678dcbc2bf545a922036d30e7e8b86e0bbf2cdc5890",
+      "address": "0x6465df2564874c4793dd6b51ec7f7ba8badf216e5655a31757964285545d314",
+      "class_hash": "0x20505aecfe2f6b1b392b14647d79857a7aab3af5c6ad7f1523ca2dc22fc3a71",
       "init_calldata": [],
       "tag": "TB-game_system",
       "selector": "0x69e31139e40dc9c3cbdcbe65c1c8ee089a640efb42486fb78465d0fd6a75711",
@@ -66,6 +66,7 @@
         "dojo_init",
         "create_game",
         "join_game",
+        "set_team",
         "execute_turn",
         "upgrade"
       ]
@@ -4285,20 +4286,7 @@
         {
           "type": "function",
           "name": "create_game",
-          "inputs": [
-            {
-              "name": "beast_1",
-              "type": "core::integer::u32"
-            },
-            {
-              "name": "beast_2",
-              "type": "core::integer::u32"
-            },
-            {
-              "name": "beast_3",
-              "type": "core::integer::u32"
-            }
-          ],
+          "inputs": [],
           "outputs": [
             {
               "type": "core::integer::u32"
@@ -4309,6 +4297,18 @@
         {
           "type": "function",
           "name": "join_game",
+          "inputs": [
+            {
+              "name": "game_id",
+              "type": "core::integer::u32"
+            }
+          ],
+          "outputs": [],
+          "state_mutability": "external"
+        },
+        {
+          "type": "function",
+          "name": "set_team",
           "inputs": [
             {
               "name": "game_id",

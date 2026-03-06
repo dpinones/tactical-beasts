@@ -784,3 +784,115 @@ order_inits = ["TB-game_system", "TB-Collection"]
 - [x] Tests end-to-end (33 tests, todos pasan)
 - [ ] (Futuro) Quests (`QuestableComponent`)
 - [ ] (Futuro) Starterpacks (`StarterpackComponent`)
+
+---
+
+## 10. Backlog post-MVP
+
+### Estado actual de pantallas
+
+| Pantalla | Ruta | Estado |
+|----------|------|--------|
+| Home | `/` | Existe (HomePage.tsx) |
+| Team Select + Lobby | `/team-select/create`, `/team-select/join/:gameId` | Existe (TeamSelectPage.tsx) |
+| Battle | `/battle/:gameId` | Existe (BattlePage.tsx) |
+| Result | `/result/:gameId` | Existe (ResultPage.tsx) |
+
+
+| Play with Friend | - | No existe |
+
+---
+
+### P0 — Critico (bloquea jugabilidad)
+
+#### Home (rediseno)
+quiero que aparezca toda la sección de botones en la parte izquierda 
+En el home que solo aparezca el botón Create Game y el input join
+Agregar boton de **Matchmaking**
+Agregar seccion desplegable **Play with Friend** en ls esquina superior derecha
+Agregar boton a **Mis Bestias**
+Agregar boton de **Configs** Que abre un pop up.
+crear estas pantallas y que tengan su /
+| Matchmaking | - | No existe |
+| Mis Bestias | - | No existe |
+| Perfil | - | No existe |
+
+#### Matchmaking
+- [ ] Implementar cola de matchmaking (create/join automatico)
+- [ ] Pantalla de "Buscando partida..." con animacion
+- [ ] Al encontrar rival: mostrar perfil de ambos jugadores
+- [ ] Mostrar el mapa donde se va a jugar
+- [ ] Seleccion de bestias e items con barrita de tiempo (countdown)
+- [ ] Transicion a Battle al confirmar ambos
+
+#### Team Select (mejoras)
+- [ ] Mostrar las bestias del jugador (las que tiene como NFT)
+- [ ] Agregar 3 bestias por defecto para jugadores sin NFTs (starter beasts)
+- [ ] Mostrar bestias disponibles con sus stats completos
+
+#### Game (batalla)
+- [ ] Animacion de tirada de moneda para decidir quien empieza (coin flip visual)
+
+---
+
+### P1 — Importante (mejora la experiencia)
+
+#### Sinergia de equipos
+- [ ] Disenar sistema de sinergias (bonus por combinaciones de tipos/tiers)
+- [ ] Mostrar sinergias activas en Team Select
+- [ ] Aplicar bonus de sinergia en combate
+
+#### Mis Bestias (pantalla nueva: `/my-beasts`)
+- [ ] Listado completo de las 75 bestias
+- [ ] En gris las que no tenes, con color las que tenes
+- [ ] Al hacer click: ver stats detallados
+- [ ] Filtros por tipo (Magical/Hunter/Brute), tier, nivel
+
+#### Perfil Publico (pantalla nueva: `/profile/:address`)
+- [ ] Cantidad de partidas jugadas
+- [ ] Cantidad de victorias
+- [ ] KD ratio (kills / deaths de bestias)
+- [ ] Bestia favorita (la mas usada)
+
+#### Mapas
+- [ ] Multiples layouts de mapa (solo cambian los obstaculos, misma grilla hex)
+- [ ] Seleccion aleatoria de mapa al iniciar partida
+
+---
+
+### P2 — Nice to have
+
+#### Play with Friend (seccion en Home)
+- [ ] Desplegable para agregar amigos (por nombre de Controller)
+- [ ] Boton "Jugar con" al lado de cada amigo
+- [ ] Sistema de notificacion/invitacion para unirse a partida
+
+#### Team Select
+- [ ] Recordar las 3 bestias que use la ultima vez (localStorage)
+
+#### Arte y polish
+- [ ] Arte de bestias (sprites/ilustraciones por bestia)
+- [ ] Animaciones de combate (ataque, contraataque, critico, KO, extra life)
+- [ ] Efectos visuales (particulas, highlights de tipo, damage numbers)
+- [ ] Musica (menu, batalla, victoria, derrota)
+- [ ] Efectos de sonido (ataque, hit, critico, muerte, pocion)
+
+---
+
+### Orden de implementacion sugerido
+
+```
+1. Fix bug Game ID del evento
+2. Login (1 pantalla, rapido)
+3. Team Select: bestias por defecto + bestias propias
+4. Matchmaking (cola basica)
+5. Coin flip animacion
+6. Rediseno Home (matchmaking + play with friend + mis bestias)
+7. Mis Bestias (pantalla)
+8. Sinergias de equipo
+9. Mapas multiples
+10. Perfil Publico
+11. Arte / animaciones / musica / efectos
+12. Play with Friend (invitaciones)
+13. Recordar ultimo equipo
+```

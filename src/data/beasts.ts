@@ -64,3 +64,23 @@ export function getUniqueBeastSpecies(): string[] {
   const beasts = loadBeastCatalog();
   return [...new Set(beasts.map((b) => b.beast))];
 }
+
+// Map beast_id (1-75) to species name from the catalog
+let speciesMap: Map<number, string> | null = null;
+
+export function getSpeciesNameById(beastId: number): string {
+  if (!speciesMap) {
+    speciesMap = new Map();
+    for (const b of beastsData as any[]) {
+      if (!speciesMap.has(b.beastId)) {
+        speciesMap.set(b.beastId, b.beast);
+      }
+    }
+  }
+  return speciesMap.get(beastId) || "Unknown";
+}
+
+export function getBeastImagePath(beastId: number): string {
+  const species = getSpeciesNameById(beastId);
+  return `/beasts/${species.toLowerCase()}.png`;
+}

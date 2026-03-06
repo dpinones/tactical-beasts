@@ -1,6 +1,7 @@
-import { Box, Flex, Text, Badge, Progress } from "@chakra-ui/react";
+import { Box, Flex, Text, Badge, Progress, Image } from "@chakra-ui/react";
 import { BeastStateModel, BeastType, ActionType, GameAction } from "../domain/types";
 import { getTypeColor, getTypeName } from "../domain/combat";
+import { getBeastImagePath } from "../data/beasts";
 
 interface BeastHUDProps {
   beast: BeastStateModel;
@@ -63,73 +64,94 @@ export function BeastHUD({
       boxShadow={isSelected ? "glow" : "none"}
       minW="140px"
     >
-      <Flex justify="space-between" align="center" mb={1}>
-        <Flex align="center" gap={1}>
-          <Text
-            fontSize="xs"
-            fontWeight="600"
-            color={alive ? typeColor : "text.muted"}
-            fontFamily="heading"
-            textTransform="uppercase"
-          >
-            {Number(beast.beast_index) + 1}.{" "}
-            {beastName || typeName}
-          </Text>
-        </Flex>
-        <Badge variant={badgeVariant} fontSize="7px">
-          {typeName}
-        </Badge>
-      </Flex>
-
-      {/* HP Bar */}
-      <Box mb={1}>
-        <Flex justify="space-between" mb="2px">
-          <Text fontSize="7px" color="text.secondary" textTransform="uppercase">
-            HP
-          </Text>
-          <Text fontSize="7px" color="text.gold" fontFamily="mono" fontWeight="700">
-            {hp}/{hpMax}
-          </Text>
-        </Flex>
-        <Progress
-          value={hpPct}
-          size="xs"
-          variant={isMine ? "hp" : "hpEnemy"}
-          borderRadius="2px"
+      <Flex gap={2} mb={1}>
+        {/* Beast portrait */}
+        <Image
+          src={getBeastImagePath(Number(beast.beast_id))}
+          alt={beastName || typeName}
+          w="40px"
+          h="40px"
+          objectFit="contain"
+          borderRadius="4px"
+          border="1px solid"
+          borderColor={isMine ? "rgba(0,255,68,0.2)" : "rgba(232,64,64,0.2)"}
+          bg="surface.card"
+          flexShrink={0}
+          fallback={
+            <Flex w="40px" h="40px" align="center" justify="center" bg="surface.card" borderRadius="4px" border="1px solid" borderColor="surface.border" flexShrink={0}>
+              <Text fontSize="sm" color={typeColor} fontWeight="bold">{typeName[0]}</Text>
+            </Flex>
+          }
         />
-      </Box>
+        <Box flex={1} minW={0}>
+          <Flex justify="space-between" align="center" mb={1}>
+            <Text
+              fontSize="xs"
+              fontWeight="600"
+              color={alive ? typeColor : "text.muted"}
+              fontFamily="heading"
+              textTransform="uppercase"
+              noOfLines={1}
+            >
+              {Number(beast.beast_index) + 1}.{" "}
+              {beastName || typeName}
+            </Text>
+            <Badge variant={badgeVariant} fontSize="7px">
+              {typeName}
+            </Badge>
+          </Flex>
 
-      {/* Stats row */}
-      <Flex justify="space-between" gap={2}>
-        <Flex direction="column" align="center">
-          <Text fontSize="6px" color="text.secondary" textTransform="uppercase">
-            LVL
-          </Text>
-          <Text fontSize="xs" color="text.gold" fontFamily="mono" fontWeight="700">
-            {Number(beast.level)}
-          </Text>
-        </Flex>
-        <Flex direction="column" align="center">
-          <Text fontSize="6px" color="text.secondary" textTransform="uppercase">
-            TIER
-          </Text>
-          <Text fontSize="xs" color="text.gold" fontFamily="mono" fontWeight="700">
-            T{Number(beast.tier)}
-          </Text>
-        </Flex>
-        <Flex direction="column" align="center">
-          <Text fontSize="6px" color="text.secondary" textTransform="uppercase">
-            LIVES
-          </Text>
-          <Text
-            fontSize="xs"
-            fontFamily="mono"
-            fontWeight="700"
-            color={extraLives > 0 ? "gold.400" : "text.muted"}
-          >
-            {extraLives}
-          </Text>
-        </Flex>
+          {/* HP Bar */}
+          <Box mb={1}>
+            <Flex justify="space-between" mb="2px">
+              <Text fontSize="7px" color="text.secondary" textTransform="uppercase">
+                HP
+              </Text>
+              <Text fontSize="7px" color="text.gold" fontFamily="mono" fontWeight="700">
+                {hp}/{hpMax}
+              </Text>
+            </Flex>
+            <Progress
+              value={hpPct}
+              size="xs"
+              variant={isMine ? "hp" : "hpEnemy"}
+              borderRadius="2px"
+            />
+          </Box>
+
+          {/* Stats row */}
+          <Flex justify="space-between" gap={2}>
+            <Flex direction="column" align="center">
+              <Text fontSize="6px" color="text.secondary" textTransform="uppercase">
+                LVL
+              </Text>
+              <Text fontSize="xs" color="text.gold" fontFamily="mono" fontWeight="700">
+                {Number(beast.level)}
+              </Text>
+            </Flex>
+            <Flex direction="column" align="center">
+              <Text fontSize="6px" color="text.secondary" textTransform="uppercase">
+                TIER
+              </Text>
+              <Text fontSize="xs" color="text.gold" fontFamily="mono" fontWeight="700">
+                T{Number(beast.tier)}
+              </Text>
+            </Flex>
+            <Flex direction="column" align="center">
+              <Text fontSize="6px" color="text.secondary" textTransform="uppercase">
+                LIVES
+              </Text>
+              <Text
+                fontSize="xs"
+                fontFamily="mono"
+                fontWeight="700"
+                color={extraLives > 0 ? "gold.400" : "text.muted"}
+              >
+                {extraLives}
+              </Text>
+            </Flex>
+          </Flex>
+        </Box>
       </Flex>
 
       {!alive && (

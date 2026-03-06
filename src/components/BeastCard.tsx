@@ -1,4 +1,4 @@
-import { Box, Flex, Text, Badge } from "@chakra-ui/react";
+import { Box, Flex, Text, Badge, Image } from "@chakra-ui/react";
 import { CatalogBeast, BeastType } from "../domain/types";
 import { getTypeColor } from "../domain/combat";
 
@@ -63,8 +63,25 @@ export function BeastCard({ beast, isSelected, onToggle, disabled }: BeastCardPr
       }
       boxShadow={isSelected ? "glow" : "none"}
       w="100%"
-      maxW="220px"
+      maxW="240px"
     >
+      {/* Beast image */}
+      <Box mb={2} borderRadius="3px" overflow="hidden" bg="surface.card">
+        <Image
+          src={`/beasts/${beast.beast.toLowerCase()}.png`}
+          alt={beast.beast}
+          w="100%"
+          h="100px"
+          objectFit="contain"
+          loading="lazy"
+          fallback={
+            <Flex w="100%" h="100px" align="center" justify="center" bg="surface.card">
+              <Text fontSize="lg" color="text.muted">{beast.typeName[0]}</Text>
+            </Flex>
+          }
+        />
+      </Box>
+
       {/* Header */}
       <Flex justify="space-between" align="center" mb={2}>
         <Text

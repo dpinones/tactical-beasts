@@ -189,7 +189,7 @@ export function MyBeastsPage() {
             <Skeleton
               key={i}
               height="260px"
-              borderRadius="3px"
+              borderRadius="5px"
               startColor="surface.panel"
               endColor="surface.overlay"
             />
@@ -248,7 +248,7 @@ function BeastCard({ beast, imageMode }: { beast: OwnedBeast; imageMode: ImageMo
       bg="surface.card"
       border="1px solid"
       borderColor="surface.border"
-      borderRadius="3px"
+      borderRadius="5px"
       overflow="hidden"
       transition="border-color 0.2s, box-shadow 0.2s"
       _hover={{

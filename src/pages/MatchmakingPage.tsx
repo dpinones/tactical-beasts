@@ -99,7 +99,7 @@ export function MatchmakingPage() {
           bg="surface.panel"
           border="1px solid"
           borderColor="surface.border"
-          borderRadius="3px"
+          borderRadius="5px"
           p={8}
           textAlign="center"
         >
@@ -150,7 +150,7 @@ export function MatchmakingPage() {
           bg="surface.panel"
           border="1px solid"
           borderColor="green.700"
-          borderRadius="3px"
+          borderRadius="5px"
           p={8}
           textAlign="center"
         >
@@ -187,7 +187,7 @@ export function MatchmakingPage() {
         bg="surface.panel"
         border="1px solid"
         borderColor="surface.border"
-        borderRadius="3px"
+        borderRadius="5px"
         p={8}
         textAlign="center"
       >

@@ -13,22 +13,22 @@
   --color-green-neon: #00FF44;
   --color-green-light: #33FF66;
   --color-green-mid: #009926;
-  --color-green-border: #2D5A2D;
-  --color-green-border-light: #3A6B3A;
+  --color-green-border: #3A5A3A;
+  --color-green-border-light: #4A7A4A;
   --color-green-dark: #1A3A1A;
-  --color-green-panel: #0F1A0F;
+  --color-green-panel: #121E12;
   --color-green-deep: #0A1F0A;
 
   /* Accents */
   --color-gold: #FFD700;
   --color-gold-dark: #B39700;
-  --color-red: #FF3333;
+  --color-red: #E84040;
   --color-red-dark: #CC2222;
 
   /* Surfaces */
-  --color-bg: #0D0D0D;
-  --color-panel: #0F1A0F;
-  --color-card: #142014;
+  --color-bg: #0B1A0B;
+  --color-panel: #121E12;
+  --color-card: #1A2E1A;
   --color-overlay: #1A2E1A;
 
   /* Text */
@@ -105,7 +105,7 @@ body {
 
 /* Panel — contenedor principal con fondo semi-transparente */
 .panel {
-  background: rgba(15, 26, 15, 0.85);
+  background: rgba(18, 30, 18, 0.85);
   border: 1px solid var(--color-green-border);
   border-radius: 3px;
   backdrop-filter: blur(8px);
@@ -182,7 +182,7 @@ body {
 }
 
 .hp-bar-fill--enemy {
-  background: linear-gradient(90deg, #AA1111, #FF3333);
+  background: linear-gradient(90deg, #AA1111, #E84040);
 }
 
 /* Beast type badges */
@@ -221,9 +221,9 @@ body {
 
 /* Hex grid cell base */
 .hex-cell {
-  fill: rgba(15, 26, 15, 0.6);
-  stroke: var(--color-green-border);
-  stroke-width: 1;
+  fill: rgba(18, 30, 18, 0.6);
+  stroke: rgba(58, 90, 58, 0.5);
+  stroke-width: 0.8;
   transition: fill 0.15s ease, stroke 0.15s ease;
 }
 
@@ -232,9 +232,15 @@ body {
   stroke: var(--color-green-border-light);
 }
 
+/* Terrain variations */
+.hex-cell--terrain-1 { fill: rgba(18, 30, 18, 0.55); }
+.hex-cell--terrain-2 { fill: rgba(22, 36, 22, 0.55); }
+.hex-cell--terrain-3 { fill: rgba(16, 28, 16, 0.6); }
+.hex-cell--terrain-4 { fill: rgba(20, 34, 20, 0.5); }
+
 .hex-cell--obstacle {
-  fill: rgba(45, 90, 45, 0.3);
-  stroke: var(--color-green-border);
+  fill: rgba(60, 45, 25, 0.35);
+  stroke: rgba(90, 70, 40, 0.4);
 }
 
 .hex-cell--selected {
@@ -267,7 +273,7 @@ body {
 
 .hex-cell--attack-range:hover {
   fill: rgba(255, 51, 51, 0.25);
-  stroke: #FF3333;
+  stroke: #E84040;
   stroke-width: 2;
 }
 

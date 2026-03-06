@@ -1,4 +1,4 @@
-import { Box, Button, Flex, Text, HStack } from "@chakra-ui/react";
+import { Box, Button, Flex, Text, HStack, Image } from "@chakra-ui/react";
 import {
   BeastStateModel,
   BeastType,
@@ -6,6 +6,7 @@ import {
   GameAction,
 } from "../domain/types";
 import { getTypeColor, getTypeName } from "../domain/combat";
+import { getBeastImagePath } from "../data/beasts";
 
 interface ActionPanelProps {
   myBeasts: BeastStateModel[];
@@ -94,7 +95,16 @@ export function ActionPanel({
                 position="relative"
               >
                 <Flex align="center" gap={1}>
-                  <Box w="6px" h="6px" borderRadius="full" bg={color} flexShrink={0} />
+                  <Image
+                    src={getBeastImagePath(Number(beast.beast_id))}
+                    alt=""
+                    w="20px"
+                    h="20px"
+                    objectFit="contain"
+                    borderRadius="2px"
+                    flexShrink={0}
+                    fallback={<Box w="20px" h="20px" borderRadius="2px" bg={color} opacity={0.3} flexShrink={0} />}
+                  />
                   <Text fontSize="xs" color={isActive ? "green.300" : "text.primary"} fontWeight="600" fontFamily="mono">
                     {getTypeName(bType)}
                   </Text>

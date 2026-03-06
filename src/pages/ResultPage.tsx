@@ -8,6 +8,7 @@ import {
   HStack,
   Badge,
   Spinner,
+  Image,
 } from "@chakra-ui/react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useMemo } from "react";
@@ -16,6 +17,7 @@ import { useGameQuery, useBeastStates } from "../hooks/useGameQuery";
 import { useGameStore } from "../stores/gameStore";
 import { GameStatus, ZERO_ADDR, BeastType } from "../domain/types";
 import { getTypeName, getTypeColor } from "../domain/combat";
+import { getBeastImagePath } from "../data/beasts";
 
 function normalizeAddr(addr: string): string {
   if (!addr) return ZERO_ADDR;
@@ -205,6 +207,15 @@ export function ResultPage() {
                 align="center"
               >
                 <HStack>
+                  <Image
+                    src={getBeastImagePath(Number(beast.beast_id))}
+                    alt={getTypeName(bType)}
+                    w="24px"
+                    h="24px"
+                    objectFit="contain"
+                    borderRadius="3px"
+                    fallback={<Box w="24px" h="24px" />}
+                  />
                   <Text fontSize="xs" color={getTypeColor(bType)}>
                     {getTypeName(bType)}
                   </Text>

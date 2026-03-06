@@ -8,6 +8,7 @@ import {
 } from "../domain/hexGrid";
 import { BeastStateModel, BeastType, ActionType, GameAction, HexCoord } from "../domain/types";
 import { getTypeColor } from "../domain/combat";
+import { getBeastImagePath } from "../data/beasts";
 
 interface HexGridProps {
   hexSize?: number;
@@ -21,6 +22,11 @@ interface HexGridProps {
   myPlayerIndex: number;
   actions?: Map<number, GameAction>;
   obstacles?: HexCoord[];
+}
+
+function terrainClass(row: number, col: number): string {
+  const hash = (row * 7 + col * 13) % 4;
+  return `hex-cell--terrain-${hash + 1}`;
 }
 
 export function HexGrid({
@@ -65,7 +71,7 @@ export function HexGrid({
         ? "hex-cell--attack-range"
         : "hex-cell--move-range";
     }
-    return "hex-cell";
+    return `hex-cell ${terrainClass(row, col)}`;
   }
 
   function getActionBadge(beastIndex: number): string | null {
@@ -80,6 +86,16 @@ export function HexGrid({
     }
   }
 
+  // Generate hex clip path points string for a given size
+  function hexClipPoints(cx: number, cy: number, size: number): string {
+    const pts: string[] = [];
+    for (let i = 0; i < 6; i++) {
+      const angle = (Math.PI / 3) * i - Math.PI / 6;
+      pts.push(`${cx + size * Math.cos(angle)},${cy + size * Math.sin(angle)}`);
+    }
+    return pts.join(" ");
+  }
+
   function renderBeast(beast: BeastStateModel, cx: number, cy: number) {
     const isMine = Number(beast.player_index) === myPlayerIndex;
     const bType = Number(beast.beast_type) as BeastType;
@@ -92,6 +108,11 @@ export function HexGrid({
     const extraLives = Number(beast.extra_lives);
     const actionBadge = isMine ? getActionBadge(beastIdx) : null;
 
+    const beastId = Number(beast.beast_id);
+    const imgPath = getBeastImagePath(beastId);
+    const clipId = `beast-clip-${beast.player_index}-${beast.beast_index}`;
+    const imgSize = hexSize * 0.82;
+
     return (
       <g
         key={`beast-${beast.player_index}-${beast.beast_index}`}
@@ -101,102 +122,87 @@ export function HexGrid({
         }}
         style={{ cursor: "pointer" }}
       >
+        {/* Clip path for hex shape */}
+        <defs>
+          <clipPath id={clipId}>
+            <polygon points={hexClipPoints(cx, cy - 2, imgSize)} />
+          </clipPath>
+        </defs>
+
         {/* Selection ring pulse */}
         {isSelected && (
-          <circle
-            cx={cx}
-            cy={cy - 2}
-            r={hexSize * 0.44}
+          <polygon
+            points={hexClipPoints(cx, cy - 2, hexSize * 0.46)}
             fill="none"
             stroke="#00FF44"
-            strokeWidth={1}
-            opacity={0.4}
+            strokeWidth={1.5}
+            opacity={0.5}
           >
-            <animate attributeName="r" values={`${hexSize * 0.42};${hexSize * 0.48};${hexSize * 0.42}`} dur="1.5s" repeatCount="indefinite" />
-            <animate attributeName="opacity" values="0.4;0.1;0.4" dur="1.5s" repeatCount="indefinite" />
-          </circle>
+            <animate attributeName="opacity" values="0.5;0.15;0.5" dur="1.5s" repeatCount="indefinite" />
+          </polygon>
         )}
 
-        {/* Beast circle */}
-        <circle
-          cx={cx}
-          cy={cy - 2}
-          r={hexSize * 0.38}
-          fill={isMine ? "rgba(0,255,68,0.2)" : "rgba(255,51,51,0.2)"}
+        {/* Beast image clipped to hex */}
+        <image
+          href={imgPath}
+          x={cx - imgSize}
+          y={cy - 2 - imgSize}
+          width={imgSize * 2}
+          height={imgSize * 2}
+          clipPath={`url(#${clipId})`}
+          filter="url(#beastShadow)"
+          preserveAspectRatio="xMidYMid slice"
+        />
+
+        {/* Team color tint overlay */}
+        <polygon
+          points={hexClipPoints(cx, cy - 2, imgSize)}
+          fill={isMine ? "rgba(0,255,68,0.12)" : "rgba(255,51,51,0.12)"}
           stroke={isSelected ? "#00FF44" : color}
-          strokeWidth={isSelected ? 2.5 : 1.5}
-          filter={isSelected ? "url(#glowFilter)" : undefined}
+          strokeWidth={isSelected ? 2 : 1}
         />
 
-        {/* Beast type letter */}
-        <text
-          x={cx}
-          y={cy + 2}
-          textAnchor="middle"
-          fill={color}
-          fontSize={hexSize * 0.32}
-          fontWeight="bold"
-          fontFamily="'EB Garamond', serif"
-          style={{ pointerEvents: "none" }}
-        >
-          {bType === BeastType.Magical
-            ? "M"
-            : bType === BeastType.Hunter
-              ? "H"
-              : "B"}
-        </text>
-
-        {/* Beast index number */}
-        <text
-          x={cx}
-          y={cy - hexSize * 0.28}
-          textAnchor="middle"
-          fill={isMine ? "#33FF66" : "#FF3333"}
-          fontSize={8}
-          fontFamily="'JetBrains Mono', monospace"
-          fontWeight="700"
-          style={{ pointerEvents: "none" }}
-        >
-          {beastIdx + 1}
-        </text>
-
-        {/* HP bar background */}
-        <rect
-          x={cx - hexSize * 0.3}
-          y={cy + hexSize * 0.25}
-          width={hexSize * 0.6}
-          height={3}
-          rx={1}
-          fill="#1A1A1A"
-          stroke="#2D5A2D"
-          strokeWidth={0.5}
-        />
-
-        {/* HP bar fill */}
-        <rect
-          x={cx - hexSize * 0.3}
-          y={cy + hexSize * 0.25}
-          width={hexSize * 0.6 * hpPct}
-          height={3}
-          rx={1}
-          fill={
-            isMine
-              ? hpPct > 0.5
-                ? "#33FF66"
-                : hpPct > 0.25
-                  ? "#FFD700"
-                  : "#FF3333"
-              : "#FF3333"
-          }
-        />
+        {/* HP badge below hex */}
+        <g>
+          <rect
+            x={cx - hexSize * 0.38}
+            y={cy + imgSize - 2}
+            width={hexSize * 0.76}
+            height={14}
+            rx={4}
+            fill="rgba(0,0,0,0.75)"
+            stroke={isMine ? "rgba(0,255,68,0.3)" : "rgba(232,64,64,0.3)"}
+            strokeWidth={0.5}
+          />
+          <text
+            x={cx}
+            y={cy + imgSize + 9}
+            textAnchor="middle"
+            fill={
+              isMine
+                ? hpPct > 0.5
+                  ? "#33FF66"
+                  : hpPct > 0.25
+                    ? "#FFD700"
+                    : "#E84040"
+                : "#E84040"
+            }
+            fontSize={9}
+            fontWeight="bold"
+            fontFamily="'JetBrains Mono', monospace"
+            style={{ pointerEvents: "none" }}
+          >
+            {hp}/{hpMax}
+          </text>
+        </g>
 
         {/* Extra lives indicator */}
         {extraLives > 0 && (
           <text
-            x={cx + hexSize * 0.35}
-            y={cy + hexSize * 0.36}
+            x={cx + hexSize * 0.38}
+            y={cy - imgSize + 6}
             fill="#FFD700"
-            fontSize={7}
+            fontSize={8}
             fontWeight="bold"
             fontFamily="'JetBrains Mono', monospace"
             style={{ pointerEvents: "none" }}
@@ -209,19 +215,19 @@ export function HexGrid({
         {actionBadge && (
           <g>
             <rect
-              x={cx - 10}
-              y={cy + hexSize * 0.38}
-              width={20}
-              height={10}
-              rx={2}
+              x={cx - 12}
+              y={cy + imgSize + 13}
+              width={24}
+              height={11}
+              rx={3}
               fill="rgba(255,215,0,0.9)"
             />
             <text
               x={cx}
-              y={cy + hexSize * 0.38 + 8}
+              y={cy + imgSize + 21}
               textAnchor="middle"
-              fill="#0D0D0D"
-              fontSize={6}
+              fill="#0B1A0B"
+              fontSize={7}
               fontWeight="bold"
               fontFamily="'JetBrains Mono', monospace"
               style={{ pointerEvents: "none" }}
@@ -250,6 +256,9 @@ export function HexGrid({
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
+          <filter id="beastShadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="1" stdDeviation="2" floodColor="#000" floodOpacity="0.5" />
+          </filter>
         </defs>
 
         {/* Render cells */}
@@ -269,11 +278,12 @@ export function HexGrid({
                   style={{ cursor: highlighted ? "pointer" : "default" }}
                 />
 
-                {/* Obstacle marker */}
+                {/* Obstacle marker — stone circles */}
                 {isObstacle(row, col, obstacles) && (
                   <g style={{ pointerEvents: "none" }}>
-                    <line x1={x - 5} y1={y - 5} x2={x + 5} y2={y + 5} stroke="#556655" strokeWidth={1.5} />
-                    <line x1={x + 5} y1={y - 5} x2={x - 5} y2={y + 5} stroke="#556655" strokeWidth={1.5} />
+                    <circle cx={x} cy={y} r={hexSize * 0.18} fill="rgba(90,70,40,0.5)" stroke="rgba(70,55,30,0.6)" strokeWidth={0.8} />
+                    <circle cx={x - hexSize * 0.15} cy={y + hexSize * 0.1} r={hexSize * 0.1} fill="rgba(80,60,35,0.4)" />
+                    <circle cx={x + hexSize * 0.12} cy={y - hexSize * 0.08} r={hexSize * 0.08} fill="rgba(85,65,38,0.35)" />
                   </g>
                 )}
 

@@ -26,7 +26,7 @@ const theme = {
       400: "#00FF44", // primary accent — borders, highlights
       500: "#00CC33", // buttons, active states
       600: "#009926", // hover states
-      700: "#2D5A2D", // panel borders, secondary borders
+      700: "#3A5A3A", // panel borders, secondary borders
       800: "#1A3A1A", // panel backgrounds
       900: "#0A1F0A", // dark overlay backgrounds
       950: "#061206", // deepest green-black
@@ -51,7 +51,7 @@ const theme = {
       50: "#FFE6E6",
       100: "#FFB3B3",
       200: "#FF6666",
-      300: "#FF3333", // primary red — damage numbers
+      300: "#E84040", // primary red — damage numbers
       400: "#CC2222", // enemy HP bars
       500: "#AA1111",
       600: "#881111",
@@ -62,12 +62,12 @@ const theme = {
 
     // Surface colors — panels, cards, backgrounds
     surface: {
-      bg: "#0D0D0D",       // base background (near black)
-      panel: "#0F1A0F",    // panel fill (dark green-black)
-      card: "#142014",     // card backgrounds
+      bg: "#0B1A0B",       // base background (dark forest)
+      panel: "#121E12",    // panel fill (dark green-black)
+      card: "#1A2E1A",     // card backgrounds
       overlay: "#1A2E1A",  // modal/overlay backgrounds
-      border: "#2D5A2D",   // default border (green-tinted)
-      borderLight: "#3A6B3A", // hover/active border
+      border: "#3A5A3A",   // default border (green-tinted)
+      borderLight: "#4A7A4A", // hover/active border
       hover: "#1A331A",    // hover state for interactive elements
     },
 
@@ -86,16 +86,16 @@ const theme = {
   // ---------------------------------------------------------------------------
   semanticTokens: {
     colors: {
-      "bg.base": { default: "#0D0D0D", _dark: "#0D0D0D" },
-      "bg.panel": { default: "#0F1A0F", _dark: "#0F1A0F" },
-      "bg.card": { default: "#142014", _dark: "#142014" },
-      "border.default": { default: "#2D5A2D", _dark: "#2D5A2D" },
+      "bg.base": { default: "#0B1A0B", _dark: "#0B1A0B" },
+      "bg.panel": { default: "#121E12", _dark: "#121E12" },
+      "bg.card": { default: "#1A2E1A", _dark: "#1A2E1A" },
+      "border.default": { default: "#3A5A3A", _dark: "#3A5A3A" },
       "border.active": { default: "#00FF44", _dark: "#00FF44" },
       "text.primary": { default: "#E8E0D0", _dark: "#E8E0D0" },
       "text.secondary": { default: "#7A8A7A", _dark: "#7A8A7A" },
       "accent.green": { default: "#00FF44", _dark: "#00FF44" },
       "accent.gold": { default: "#FFD700", _dark: "#FFD700" },
-      "accent.danger": { default: "#FF3333", _dark: "#FF3333" },
+      "accent.danger": { default: "#E84040", _dark: "#E84040" },
     },
   },
 
@@ -128,7 +128,7 @@ const theme = {
         boxSizing: "border-box",
       },
       body: {
-        bg: "#0D0D0D",
+        bg: "#0B1A0B",
         color: "#E8E0D0",
         margin: 0,
         minHeight: "100vh",
@@ -147,11 +147,11 @@ const theme = {
         bg: "#0A1F0A",
       },
       "::-webkit-scrollbar-thumb": {
-        bg: "#2D5A2D",
+        bg: "#3A5A3A",
         borderRadius: "3px",
       },
       "::-webkit-scrollbar-thumb:hover": {
-        bg: "#3A6B3A",
+        bg: "#4A7A4A",
       },
     },
   },
@@ -192,9 +192,9 @@ const theme = {
           bg: "transparent",
           color: "#E8E0D0",
           border: "1px solid",
-          borderColor: "#2D5A2D",
+          borderColor: "#3A5A3A",
           _hover: {
-            borderColor: "#3A6B3A",
+            borderColor: "#4A7A4A",
             bg: "rgba(45, 90, 45, 0.2)",
           },
         },
@@ -236,9 +236,9 @@ const theme = {
     Card: {
       baseStyle: {
         container: {
-          bg: "rgba(15, 26, 15, 0.85)",
+          bg: "rgba(18, 30, 18, 0.85)",
           border: "1px solid",
-          borderColor: "#2D5A2D",
+          borderColor: "#3A5A3A",
           borderRadius: "3px",
           backdropFilter: "blur(8px)",
           color: "#E8E0D0",
@@ -250,7 +250,7 @@ const theme = {
           fontSize: "sm",
           fontWeight: "600",
           color: "#33FF66",
-          borderBottom: "1px solid #2D5A2D",
+          borderBottom: "1px solid #3A5A3A",
           pb: 2,
         },
         body: {
@@ -305,7 +305,7 @@ const theme = {
         track: {
           bg: "#1A1A1A",
           borderRadius: "2px",
-          border: "1px solid #2D5A2D",
+          border: "1px solid #3A5A3A",
         },
       },
       variants: {
@@ -360,9 +360,9 @@ const theme = {
     // Tooltip
     Tooltip: {
       baseStyle: {
-        bg: "#142014",
+        bg: "#1A2E1A",
         color: "#E8E0D0",
-        border: "1px solid #2D5A2D",
+        border: "1px solid #3A5A3A",
         borderRadius: "3px",
         fontSize: "xs",
         px: 3,
@@ -376,12 +376,12 @@ const theme = {
         outline: {
           field: {
             bg: "#0A1F0A",
-            borderColor: "#2D5A2D",
+            borderColor: "#3A5A3A",
             color: "#E8E0D0",
             fontSize: "sm",
             borderRadius: "3px",
             _hover: {
-              borderColor: "#3A6B3A",
+              borderColor: "#4A7A4A",
             },
             _focus: {
               borderColor: "#00FF44",
@@ -402,8 +402,8 @@ const theme = {
     Modal: {
       baseStyle: {
         dialog: {
-          bg: "#0F1A0F",
-          border: "1px solid #2D5A2D",
+          bg: "#121E12",
+          border: "1px solid #3A5A3A",
           borderRadius: "4px",
         },
         header: {
@@ -411,7 +411,7 @@ const theme = {
           textTransform: "uppercase",
           letterSpacing: "0.08em",
           color: "#E8E0D0",
-          borderBottom: "1px solid #2D5A2D",
+          borderBottom: "1px solid #3A5A3A",
         },
         overlay: {
           bg: "rgba(0, 0, 0, 0.7)",
@@ -429,7 +429,7 @@ const theme = {
     // Divider
     Divider: {
       baseStyle: {
-        borderColor: "#2D5A2D",
+        borderColor: "#3A5A3A",
       },
     },
 
@@ -439,7 +439,7 @@ const theme = {
         simple: {
           th: {
             color: "#7A8A7A",
-            borderColor: "#2D5A2D",
+            borderColor: "#3A5A3A",
             textTransform: "uppercase",
             letterSpacing: "0.1em",
             fontSize: "xs",
@@ -477,11 +477,11 @@ const theme = {
   // ---------------------------------------------------------------------------
   radii: {
     none: "0",
-    sm: "2px",
-    base: "3px",
-    md: "4px",
-    lg: "6px",
-    xl: "8px",
+    sm: "3px",
+    base: "5px",
+    md: "6px",
+    lg: "8px",
+    xl: "10px",
   },
 };
 

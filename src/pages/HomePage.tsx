@@ -9,6 +9,7 @@ import {
   HStack,
   Spinner,
   Code,
+  Image,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -17,7 +18,7 @@ import {
   ModalCloseButton,
   useDisclosure,
 } from "@chakra-ui/react";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "../dojo/WalletContext";
 import { useGameStore } from "../stores/gameStore";
@@ -38,6 +39,7 @@ import {
   GameInvite,
   PlayerConfig,
 } from "../services/supabase";
+import { getUniqueBeastSpecies } from "../data/beasts";
 
 const CHAIN = import.meta.env.VITE_CHAIN;
 
@@ -603,7 +605,7 @@ export function HomePage() {
           </VStack>
         </Flex>
 
-        {/* Right half — placeholder for beast images */}
+        {/* Right half — beast showcase */}
         <Flex
           direction="column"
           w="50%"
@@ -613,26 +615,7 @@ export function HomePage() {
           borderLeft="1px solid"
           borderColor="surface.border"
         >
-          <VStack gap={4}>
-            <Box
-              w="280px"
-              h="280px"
-              border="1px solid"
-              borderColor="surface.border"
-              borderRadius="3px"
-              bg="surface.panel"
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
-            >
-              <Text fontSize="xs" color="text.muted" textAlign="center" px={4}>
-                Beast artwork coming soon
-              </Text>
-            </Box>
-            <Text fontSize="xs" color="text.secondary" textAlign="center" maxW="300px">
-              Defeated beasts will appear here
-            </Text>
-          </VStack>
+          <BeastShowcase />
         </Flex>
       </Flex>
 
@@ -669,5 +652,79 @@ export function HomePage() {
         </ModalContent>
       </Modal>
     </Flex>
+  );
+}
+
+function BeastShowcase() {
+  const species = useMemo(() => {
+    const all = getUniqueBeastSpecies();
+    // Pick 3 random beasts
+    const shuffled = [...all].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 3);
+  }, []);
+
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex((i) => (i + 1) % species.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [species.length]);
+
+  return (
+    <VStack gap={4}>
+      <Box
+        w="280px"
+        h="280px"
+        border="1px solid"
+        borderColor="surface.border"
+        borderRadius="5px"
+        bg="surface.panel"
+        overflow="hidden"
+        position="relative"
+      >
+        {species.map((name, i) => (
+          <Image
+            key={name}
+            src={`/beasts/${name.toLowerCase()}.png`}
+            alt={name}
+            position="absolute"
+            top={0}
+            left={0}
+            w="100%"
+            h="100%"
+            objectFit="contain"
+            p={4}
+            opacity={i === currentIndex ? 1 : 0}
+            transition="opacity 0.6s ease"
+          />
+        ))}
+      </Box>
+      <Text
+        fontSize="sm"
+        color="green.300"
+        fontFamily="heading"
+        textTransform="uppercase"
+        letterSpacing="0.1em"
+        transition="opacity 0.3s"
+      >
+        {species[currentIndex]}
+      </Text>
+      <HStack gap={2}>
+        {species.map((_, i) => (
+          <Box
+            key={i}
+            w="8px"
+            h="8px"
+            borderRadius="full"
+            bg={i === currentIndex ? "green.400" : "surface.border"}
+            cursor="pointer"
+            onClick={() => setCurrentIndex(i)}
+            transition="background 0.2s"
+          />
+        ))}
+      </HStack>
+    </VStack>
   );
 }

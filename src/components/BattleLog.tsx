@@ -10,9 +10,9 @@ function eventColor(type: BattleEvent["type"]): string {
   switch (type) {
     case "attack":
     case "counterattack":
-      return "#FF3333";
+      return "#E84040";
     case "ko":
-      return "#FF3333";
+      return "#E84040";
     case "extra_life":
       return "#FFD700";
     case "crit":

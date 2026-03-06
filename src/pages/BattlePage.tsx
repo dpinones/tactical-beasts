@@ -391,7 +391,7 @@ export function BattlePage() {
   const potionUsed = false; // TODO: read from PlayerState
 
   return (
-    <Flex direction="column" h="100vh" p={3} maxW="1200px" mx="auto" overflow="hidden">
+    <Flex direction="column" h="100vh" p={3} maxW="1400px" mx="auto" overflow="hidden">
       {/* Top bar */}
       <Flex justify="space-between" align="center" mb={2} flexShrink={0}>
         <Flex align="center" gap={3}>
@@ -447,7 +447,7 @@ export function BattlePage() {
       <Flex gap={3} flex={1} minH={0}>
         {/* Left: My beasts (compact) */}
         <VStack
-          w="170px"
+          w="190px"
           gap={2}
           align="stretch"
           flexShrink={0}
@@ -486,7 +486,7 @@ export function BattlePage() {
         <VStack flex={1} minW={0} gap={2} align="stretch">
           <Box flex={1} minH={0} overflow="auto">
             <HexGrid
-              hexSize={36}
+              hexSize={46}
               myBeasts={myBeasts}
               enemyBeasts={enemyBeasts}
               selectedBeastIndex={isMyTurn ? selectedBeastIndex : null}
@@ -545,7 +545,7 @@ export function BattlePage() {
 
         {/* Right: Enemy beasts + Battle log */}
         <VStack
-          w="170px"
+          w="190px"
           gap={2}
           align="stretch"
           flexShrink={0}

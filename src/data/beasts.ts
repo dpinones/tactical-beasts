@@ -80,7 +80,21 @@ export function getSpeciesNameById(beastId: number): string {
   return speciesMap.get(beastId) || "Unknown";
 }
 
+// Map tokenId -> species name from the catalog
+let tokenSpeciesMap: Map<number, string> | null = null;
+
+export function getSpeciesNameByTokenId(tokenId: number): string {
+  if (!tokenSpeciesMap) {
+    tokenSpeciesMap = new Map();
+    for (const b of beastsData as any[]) {
+      tokenSpeciesMap.set(b.tokenId, b.beast);
+    }
+  }
+  return tokenSpeciesMap.get(tokenId) || getSpeciesNameById(tokenId);
+}
+
 export function getBeastImagePath(beastId: number): string {
-  const species = getSpeciesNameById(beastId);
+  // Try tokenId first, then fall back to species beastId
+  const species = getSpeciesNameByTokenId(beastId) || getSpeciesNameById(beastId);
   return `/beasts/${species.toLowerCase()}.png`;
 }

@@ -430,6 +430,49 @@ body {
 }
 
 /* ---------------------------------------------------------------------------
+   Battle panels (round-badge style)
+   --------------------------------------------------------------------------- */
+.battle-panel {
+  background: linear-gradient(180deg, #0d4a30 0%, #0a3825 60%, #081f16 100%);
+  border: 2px solid #2dd88a;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+  overflow: hidden;
+}
+
+.battle-panel--enemy {
+  background: linear-gradient(180deg, #5c1010 0%, #3a0c0c 60%, #1f0808 100%);
+  border-color: #dd4444;
+}
+
+.battle-panel__header {
+  padding: 6px 14px;
+  border-bottom: 1px solid rgba(45, 216, 138, 0.25);
+  text-align: center;
+}
+
+.battle-panel--enemy .battle-panel__header {
+  border-bottom-color: rgba(220, 60, 60, 0.25);
+}
+
+.battle-panel__title {
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  color: #8BFFC4;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-weight: 600;
+}
+
+.battle-panel--enemy .battle-panel__title {
+  color: #FF8888;
+}
+
+.battle-panel__body {
+  padding: 8px;
+}
+
+/* ---------------------------------------------------------------------------
    Bottom-right action buttons
    --------------------------------------------------------------------------- */
 .action-buttons {

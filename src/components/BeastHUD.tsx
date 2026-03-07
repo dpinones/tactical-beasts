@@ -1,7 +1,7 @@
 import { Box, Flex, Text, Badge, Progress, Image } from "@chakra-ui/react";
 import { BeastStateModel, BeastType, ActionType, GameAction } from "../domain/types";
 import { getTypeColor, getTypeName } from "../domain/combat";
-import { getBeastImagePath } from "../data/beasts";
+import { getBeastImagePath, getSpeciesNameByTokenId } from "../data/beasts";
 
 interface BeastHUDProps {
   beast: BeastStateModel;
@@ -55,6 +55,7 @@ export function BeastHUD({
   const bType = Number(beast.beast_type) as BeastType;
   const typeColor = getTypeColor(bType);
   const typeName = getTypeName(bType);
+  const speciesName = getSpeciesNameByTokenId(Number(beast.beast_id));
 
   const badgeVariant =
     bType === BeastType.Magical
@@ -65,9 +66,9 @@ export function BeastHUD({
 
   return (
     <Box
-      bg={isSelected ? "rgba(0,255,68,0.1)" : "surface.panel"}
+      bg={isSelected ? "rgba(45,216,138,0.15)" : "rgba(0,0,0,0.3)"}
       border={isSelected ? "2px solid" : "1px solid"}
-      borderColor={isSelected ? "green.400" : alive ? "surface.border" : "danger.700"}
+      borderColor={isSelected ? "#2dd88a" : alive ? "rgba(45,216,138,0.2)" : "rgba(220,60,60,0.4)"}
       borderRadius="3px"
       p={2}
       opacity={alive ? 1 : 0.35}
@@ -84,67 +85,53 @@ export function BeastHUD({
       position="relative"
       className={isSelected ? "beast-selected-glow" : !alive ? "beast-ko" : undefined}
     >
-      {onWait && alive && (
-        <Box
-          as="button"
-          position="absolute"
-          top="6px"
-          right="6px"
-          bg="rgba(255,215,0,0.15)"
-          border="1px solid rgba(255,215,0,0.3)"
-          borderRadius="3px"
-          px={2}
-          py={1}
-          fontSize="9px"
-          fontWeight="700"
-          fontFamily="mono"
-          color="gold.400"
-          cursor="pointer"
-          zIndex={1}
-          _hover={{ bg: "rgba(255,215,0,0.3)" }}
-          onClick={(e: React.MouseEvent) => {
-            e.stopPropagation();
-            onWait();
-          }}
-        >
-          WAIT
-        </Box>
-      )}
-      <Flex gap={2} mb={1}>
-        {/* Beast portrait */}
-        <Image
-          src={getBeastImagePath(Number(beast.beast_id))}
-          alt={beastName || typeName}
-          w="52px"
-          h="52px"
-          objectFit="contain"
-          borderRadius="4px"
-          borderTop="2px solid"
-          borderTopColor={typeColor}
-          border="1px solid"
-          borderColor={isMine ? "rgba(0,255,68,0.2)" : "rgba(232,64,64,0.2)"}
-          bg="surface.card"
-          flexShrink={0}
-          fallback={
-            <Flex w="52px" h="52px" align="center" justify="center" bg="surface.card" borderRadius="4px" border="1px solid" borderColor="surface.border" borderTop="2px solid" borderTopColor={typeColor} flexShrink={0}>
-              <Text fontSize="md" color={typeColor} fontWeight="bold">{typeName[0]}</Text>
+      {/* Beast portrait - prominent */}
+      <Flex align="center" gap={3}>
+        <Box position="relative" flexShrink={0}>
+          <Image
+            src={getBeastImagePath(Number(beast.beast_id))}
+            alt={beastName || speciesName}
+            w="64px"
+            h="64px"
+            objectFit="contain"
+            borderRadius="6px"
+            border="2px solid"
+            borderColor={isSelected ? "#2dd88a" : typeColor}
+            bg="rgba(0,0,0,0.4)"
+            filter={alive ? "none" : "grayscale(1)"}
+            fallback={
+              <Flex w="64px" h="64px" align="center" justify="center" bg="rgba(0,0,0,0.4)" borderRadius="6px" border="2px solid" borderColor={typeColor} flexShrink={0}>
+                <Text fontSize="xl" color={typeColor} fontWeight="bold">{speciesName[0]}</Text>
+              </Flex>
+            }
+          />
+          {!alive && (
+            <Flex
+              position="absolute"
+              top={0} left={0} right={0} bottom={0}
+              align="center" justify="center"
+              bg="rgba(0,0,0,0.5)"
+              borderRadius="6px"
+            >
+              <Text fontSize="xs" color="#FF4444" fontWeight="800" fontFamily="mono">KO</Text>
             </Flex>
-          }
-        />
+          )}
+        </Box>
+
         <Box flex={1} minW={0}>
+          {/* Name + Badge */}
           <Flex justify="space-between" align="center" mb={1}>
             <Text
               fontSize="sm"
-              fontWeight="600"
-              color={alive ? typeColor : "text.muted"}
+              fontWeight="700"
+              color={alive ? "#fff" : "rgba(255,255,255,0.4)"}
               fontFamily="heading"
               textTransform="uppercase"
               noOfLines={1}
             >
-              {Number(beast.beast_index) + 1}.{" "}
-              {beastName || typeName}
+              {speciesName}
             </Text>
-            <Badge variant={badgeVariant} fontSize="xs">
+            <Badge variant={badgeVariant} fontSize="9px">
               {typeName}
             </Badge>
           </Flex>
@@ -152,10 +139,10 @@ export function BeastHUD({
           {/* HP Bar */}
           <Box mb={1}>
             <Flex justify="space-between" mb="2px">
-              <Text fontSize="xs" color="text.secondary" textTransform="uppercase">
+              <Text fontSize="9px" color="#8BFFC4" fontFamily="mono" textTransform="uppercase" opacity={0.7}>
                 HP
               </Text>
-              <Text fontSize="xs" color="text.gold" fontFamily="mono" fontWeight="700">
+              <Text fontSize="xs" color="#fff" fontFamily="mono" fontWeight="700">
                 {hp}/{hpMax}
               </Text>
             </Flex>
@@ -170,55 +157,67 @@ export function BeastHUD({
           {/* Stats row */}
           <Flex justify="space-between" gap={2}>
             <Flex direction="column" align="center">
-              <Text fontSize="8px" color="text.secondary" textTransform="uppercase">
+              <Text fontSize="8px" color="#8BFFC4" textTransform="uppercase" opacity={0.6}>
                 LVL
               </Text>
-              <Text fontSize="xs" color="text.gold" fontFamily="mono" fontWeight="700">
+              <Text fontSize="xs" color="#fff" fontFamily="mono" fontWeight="700">
                 {Number(beast.level)}
               </Text>
             </Flex>
             <Flex direction="column" align="center">
-              <Text fontSize="8px" color="text.secondary" textTransform="uppercase">
+              <Text fontSize="8px" color="#8BFFC4" textTransform="uppercase" opacity={0.6}>
                 TIER
               </Text>
-              <Text fontSize="xs" color="text.gold" fontFamily="mono" fontWeight="700">
+              <Text fontSize="xs" color="#fff" fontFamily="mono" fontWeight="700">
                 T{Number(beast.tier)}
               </Text>
             </Flex>
             <Flex direction="column" align="center">
-              <Text fontSize="8px" color="text.secondary" textTransform="uppercase">
+              <Text fontSize="8px" color="#8BFFC4" textTransform="uppercase" opacity={0.6}>
                 LIVES
               </Text>
               <Text
                 fontSize="xs"
                 fontFamily="mono"
                 fontWeight="700"
-                color={extraLives > 0 ? "gold.400" : "text.muted"}
+                color={extraLives > 0 ? "#2dd88a" : "rgba(255,255,255,0.3)"}
               >
                 {extraLives}
               </Text>
             </Flex>
           </Flex>
         </Box>
-      </Flex>
 
-      {!alive && (
-        <Text
-          fontSize="xs"
-          color="danger.300"
-          textAlign="center"
-          mt={1}
-          fontWeight="600"
-          textTransform="uppercase"
-        >
-          KO
-        </Text>
-      )}
+        {/* Wait button */}
+        {onWait && alive && (
+          <Box
+            as="button"
+            bg="rgba(45,216,138,0.15)"
+            border="1px solid rgba(45,216,138,0.3)"
+            borderRadius="3px"
+            px={1.5}
+            py={1}
+            fontSize="9px"
+            fontWeight="700"
+            fontFamily="mono"
+            color="#8BFFC4"
+            cursor="pointer"
+            flexShrink={0}
+            _hover={{ bg: "rgba(45,216,138,0.3)" }}
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation();
+              onWait();
+            }}
+          >
+            WAIT
+          </Box>
+        )}
+      </Flex>
 
       {plannedAction && alive && (
         <Box
-          mt={1}
-          bg="rgba(255,215,0,0.1)"
+          mt={1.5}
+          bg="rgba(45,216,138,0.1)"
           border="1px solid"
           borderColor={actionColor(plannedAction.actionType)}
           borderRadius="2px"

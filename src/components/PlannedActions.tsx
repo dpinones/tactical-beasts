@@ -75,20 +75,20 @@ export function PlannedActions({
       <Flex
         align="center"
         justify="space-between"
-        bg="surface.panel"
+        bg="rgba(45, 216, 138, 0.08)"
         border="1px solid"
-        borderColor={potionToggle ? "gold.400" : "surface.border"}
+        borderColor={potionToggle ? "#2dd88a" : "rgba(45, 216, 138, 0.2)"}
         borderRadius="3px"
         px={3}
         py={2}
-        boxShadow={potionToggle ? "glowGold" : "none"}
+        boxShadow={potionToggle ? "0 0 8px rgba(45, 216, 138, 0.3)" : "none"}
       >
-        <Text fontSize="xs" color={potionUsed ? "text.muted" : "gold.400"} fontFamily="mono" fontWeight="600" textTransform="uppercase">
+        <Text fontSize="xs" color={potionUsed ? "rgba(139,255,196,0.4)" : "#8BFFC4"} fontFamily="mono" fontWeight="600" textTransform="uppercase">
           Use Potion
         </Text>
         <Switch
           size="sm"
-          colorScheme="yellow"
+          colorScheme="green"
           isChecked={potionToggle}
           isDisabled={potionUsed}
           onChange={onTogglePotion}
@@ -96,23 +96,7 @@ export function PlannedActions({
       </Flex>
 
       {/* Planned actions list */}
-      <Box
-        bg="surface.panel"
-        border="1px solid"
-        borderColor="surface.border"
-        borderRadius="3px"
-        p={2}
-      >
-        <Text
-          fontSize="sm"
-          color="gold.400"
-          fontFamily="heading"
-          textTransform="uppercase"
-          letterSpacing="0.1em"
-          mb={1.5}
-        >
-          Planned Actions
-        </Text>
+      <Box p={0}>
         <VStack gap={1} align="stretch">
           {/* Actions in execution order (selection order) */}
           {actionHistory.map((idx, i) => {
@@ -131,21 +115,21 @@ export function PlannedActions({
                 gap={1.5}
                 px={2}
                 py={1.5}
-                bg="rgba(255,215,0,0.05)"
+                bg="rgba(45, 216, 138, 0.06)"
                 borderRadius="2px"
                 borderLeft="3px solid"
                 borderLeftColor={actionBorderColor(action.actionType)}
               >
-                <Text fontSize="xs" color="text.muted" fontFamily="mono" fontWeight="700" w="14px">
+                <Text fontSize="xs" color="rgba(139,255,196,0.5)" fontFamily="mono" fontWeight="700" w="14px">
                   {i + 1}.
                 </Text>
                 <Text fontSize="xs" color={color} fontFamily="mono" fontWeight="600" minW="40px">
                   {typeName}
                 </Text>
-                <Text fontSize="xs" color="text.muted" fontFamily="mono" fontWeight="700" minW="16px">
+                <Text fontSize="xs" color="rgba(139,255,196,0.5)" fontFamily="mono" fontWeight="700" minW="16px">
                   {actionSymbol(action.actionType)}
                 </Text>
-                <Text fontSize="xs" color="gold.400" fontFamily="mono" flex={1} noOfLines={1}>
+                <Text fontSize="xs" color="#8BFFC4" fontFamily="mono" flex={1} noOfLines={1}>
                   {describeAction(action, enemyBeasts)}
                 </Text>
               </Flex>
@@ -168,13 +152,13 @@ export function PlannedActions({
                   py={1.5}
                   borderRadius="2px"
                 >
-                  <Text fontSize="xs" color="text.muted" fontFamily="mono" fontWeight="700" w="14px">
+                  <Text fontSize="xs" color="rgba(139,255,196,0.4)" fontFamily="mono" fontWeight="700" w="14px">
                     -
                   </Text>
                   <Text fontSize="xs" color={color} fontFamily="mono" fontWeight="600" minW="40px">
                     {typeName}
                   </Text>
-                  <Box as="span" w="6px" h="6px" borderRadius="50%" bg="gold.400" className="pending-dot" />
+                  <Box as="span" w="6px" h="6px" borderRadius="50%" bg="#2dd88a" className="pending-dot" />
                 </Flex>
               );
             })}

@@ -481,108 +481,127 @@ export function BattlePage() {
         )}
       </Box>
 
-      {/* === LEFT PANEL - My beasts === */}
-      <Box
+      {/* === LEFT PANEL - My beasts + Actions === */}
+      <VStack
         position="absolute"
         top="80px"
         left="12px"
+        bottom="16px"
         zIndex={10}
-        w="200px"
-        display={{ base: "none", lg: "block" }}
+        w="220px"
+        gap={3}
+        align="stretch"
+        display={{ base: "none", lg: "flex" }}
+        overflow="auto"
       >
-        <VStack gap={2} align="stretch">
-          {myBeasts.map((beast) => (
-            <BeastHUD
-              key={Number(beast.beast_index)}
-              beast={beast}
-              isMine={true}
-              isSelected={
-                isMyTurn &&
-                selectedBeastIndex === Number(beast.beast_index)
-              }
-              plannedAction={actions.get(Number(beast.beast_index))}
-              onClick={
-                isMyTurn
-                  ? () => setSelectedBeastIndex(Number(beast.beast_index))
-                  : undefined
-              }
-              onWait={
-                isMyTurn && beast.alive
-                  ? () => handleWait(Number(beast.beast_index))
-                  : undefined
-              }
-            />
-          ))}
-        </VStack>
-      </Box>
+        <Box className="battle-panel">
+          <Box className="battle-panel__header">
+            <Text className="battle-panel__title">Your Beasts</Text>
+          </Box>
+          <Box className="battle-panel__body">
+            <VStack gap={2} align="stretch">
+              {myBeasts.map((beast) => (
+                <BeastHUD
+                  key={Number(beast.beast_index)}
+                  beast={beast}
+                  isMine={true}
+                  isSelected={
+                    isMyTurn &&
+                    selectedBeastIndex === Number(beast.beast_index)
+                  }
+                  plannedAction={actions.get(Number(beast.beast_index))}
+                  onClick={
+                    isMyTurn
+                      ? () => setSelectedBeastIndex(Number(beast.beast_index))
+                      : undefined
+                  }
+                  onWait={
+                    isMyTurn && beast.alive
+                      ? () => handleWait(Number(beast.beast_index))
+                      : undefined
+                  }
+                />
+              ))}
+            </VStack>
+          </Box>
+        </Box>
+
+        {/* Planned Actions - below my beasts */}
+        {isMyTurn && (
+          <>
+            <Box className="battle-panel">
+              <Box className="battle-panel__header">
+                <Text className="battle-panel__title">
+                  {guidanceMessage}
+                </Text>
+              </Box>
+              <Box className="battle-panel__body">
+                <PlannedActions
+                  myBeasts={myBeasts}
+                  enemyBeasts={enemyBeasts}
+                  actions={actions}
+                  actionHistory={actionHistory}
+                  potionToggle={potionToggle}
+                  potionUsed={potionUsed}
+                  onTogglePotion={() => setPotionToggle((v) => !v)}
+                  onUndoLast={handleUndoLast}
+                  onClearAll={handleClearAll}
+                  onConfirm={handleConfirmActions}
+                  isLoading={isLoading}
+                />
+              </Box>
+            </Box>
+            <Button
+              size="xs"
+              variant="ghost"
+              color="gray.500"
+              _hover={{ color: "red.300" }}
+              onClick={abandonModal.onOpen}
+              fontSize="0.65rem"
+            >
+              Abandon
+            </Button>
+          </>
+        )}
+      </VStack>
 
       {/* === RIGHT PANEL - Enemy beasts + Battle log === */}
-      <Box
+      <VStack
         position="absolute"
         top="80px"
         right="12px"
         zIndex={10}
-        w="200px"
+        w="220px"
+        gap={3}
+        align="stretch"
         display={{ base: "none", lg: "block" }}
       >
-        <VStack gap={2} align="stretch">
-          {enemyBeasts.map((beast) => (
-            <BeastHUD
-              key={Number(beast.beast_index)}
-              beast={beast}
-              isMine={false}
-            />
-          ))}
-          <Box maxH="200px" overflow="auto">
+        <Box className="battle-panel battle-panel--enemy">
+          <Box className="battle-panel__header">
+            <Text className="battle-panel__title">Enemy Beasts</Text>
+          </Box>
+          <Box className="battle-panel__body">
+            <VStack gap={2} align="stretch">
+              {enemyBeasts.map((beast) => (
+                <BeastHUD
+                  key={Number(beast.beast_index)}
+                  beast={beast}
+                  isMine={false}
+                />
+              ))}
+            </VStack>
+          </Box>
+        </Box>
+
+        <Box className="battle-panel" mt={3}>
+          <Box className="battle-panel__header">
+            <Text className="battle-panel__title">Battle Log</Text>
+          </Box>
+          <Box className="battle-panel__body" maxH="160px" overflowY="auto">
             <BattleLog events={battleLog} />
           </Box>
-        </VStack>
-      </Box>
-
-      {/* === BOTTOM-RIGHT ACTION BUTTONS === */}
-      {isMyTurn && (
-        <Box className="action-buttons" zIndex={10}>
-          {/* Guidance */}
-          <Box
-            bg="rgba(0,0,0,0.7)"
-            border="1px solid rgba(0,180,170,0.3)"
-            borderRadius="6px"
-            px={3} py={1.5}
-            mb={1}
-          >
-            <Text fontSize="xs" color="teal.200" fontFamily="mono" textAlign="center">
-              {guidanceMessage}
-            </Text>
-          </Box>
-
-          {/* Planned Actions */}
-          <PlannedActions
-            myBeasts={myBeasts}
-            enemyBeasts={enemyBeasts}
-            actions={actions}
-            actionHistory={actionHistory}
-            potionToggle={potionToggle}
-            potionUsed={potionUsed}
-            onTogglePotion={() => setPotionToggle((v) => !v)}
-            onUndoLast={handleUndoLast}
-            onClearAll={handleClearAll}
-            onConfirm={handleConfirmActions}
-            isLoading={isLoading}
-          />
-
-          {/* Abandon small button */}
-          <Button
-            size="xs"
-            variant="ghost"
-            color="gray.500"
-            _hover={{ color: "red.300" }}
-            onClick={abandonModal.onOpen}
-            fontSize="0.65rem"
-          >
-            Abandon
-          </Button>
         </Box>
-      )}
+      </VStack>
 
       {/* Abandon confirmation modal */}
       <Modal isOpen={abandonModal.isOpen} onClose={abandonModal.onClose} isCentered>

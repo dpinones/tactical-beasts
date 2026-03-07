@@ -1,4 +1,4 @@
-import { Box, Flex, Text, VStack } from "@chakra-ui/react";
+import { Flex, Text, VStack } from "@chakra-ui/react";
 import { BattleEvent } from "../domain/types";
 import { useRef, useEffect } from "react";
 
@@ -69,72 +69,42 @@ export function BattleLog({ events }: BattleLogProps) {
   }, [events.length]);
 
   return (
-    <Box
-      bg="surface.panel"
-      border="1px solid"
-      borderColor="surface.border"
-      borderRadius="3px"
-      h="100%"
-      overflow="hidden"
-      display="flex"
-      flexDirection="column"
-    >
-      <Box
-        px={3}
-        py={2}
-        borderBottom="1px solid"
-        borderColor="surface.border"
-      >
-        <Text
-          fontFamily="heading"
-          fontSize="sm"
-          fontWeight="600"
-          color="green.300"
-          textTransform="uppercase"
-          letterSpacing="0.1em"
-        >
-          Battle Log
+    <VStack align="stretch" gap={1}>
+      {events.length === 0 ? (
+        <Text fontSize="xs" color="#8BFFC4" fontFamily="mono" opacity={0.6}>
+          Waiting for actions...
         </Text>
-      </Box>
-      <Box flex={1} overflowY="auto" px={3} py={2}>
-        <VStack align="stretch" gap={1}>
-          {events.length === 0 ? (
-            <Text fontSize="sm" color="text.muted">
-              Waiting for actions...
+      ) : (
+        events.map((event, i) => (
+          <Flex
+            key={i}
+            gap={2}
+            align="flex-start"
+            borderLeft="2px solid"
+            borderLeftColor={eventColor(event.type)}
+            px={3}
+            py={1.5}
+            borderRadius="2px"
+            bg={eventBg(event.type)}
+            className="battle-log-entry-appear"
+          >
+            <Text
+              fontSize="xs"
+              color={eventColor(event.type)}
+              fontFamily="mono"
+              fontWeight="700"
+              minW="32px"
+              flexShrink={0}
+            >
+              {eventSymbol(event.type)}
             </Text>
-          ) : (
-            events.map((event, i) => (
-              <Flex
-                key={i}
-                gap={2}
-                align="flex-start"
-                borderLeft="2px solid"
-                borderLeftColor={eventColor(event.type)}
-                px={3}
-                py={1.5}
-                borderRadius="2px"
-                bg={eventBg(event.type)}
-                className="battle-log-entry-appear"
-              >
-                <Text
-                  fontSize="xs"
-                  color={eventColor(event.type)}
-                  fontFamily="mono"
-                  fontWeight="700"
-                  minW="32px"
-                  flexShrink={0}
-                >
-                  {eventSymbol(event.type)}
-                </Text>
-                <Text fontSize="sm" color={eventColor(event.type)}>
-                  {event.message}
-                </Text>
-              </Flex>
-            ))
-          )}
-          <div ref={endRef} />
-        </VStack>
-      </Box>
-    </Box>
+            <Text fontSize="xs" color={eventColor(event.type)}>
+              {event.message}
+            </Text>
+          </Flex>
+        ))
+      )}
+      <div ref={endRef} />
+    </VStack>
   );
 }

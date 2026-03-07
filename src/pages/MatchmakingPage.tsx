@@ -86,7 +86,7 @@ export function MatchmakingPage() {
 
   if (phase === "searching") {
     return (
-      <Flex direction="column" align="center" justify="center" minH="100vh" gap={6} p={4}>
+      <Flex direction="column" align="center" justify="center" minH="100vh" bgImage="url('/bg_select_team.png')" bgSize="cover" bgPosition="center" gap={6} p={4}>
         <BeastClothesline />
         <Heading
           size="lg"
@@ -110,7 +110,7 @@ export function MatchmakingPage() {
 
   if (phase === "error") {
     return (
-      <Flex direction="column" align="center" justify="center" minH="100vh" gap={4}>
+      <Flex direction="column" align="center" justify="center" minH="100vh" bgImage="url('/bg_select_team.png')" bgSize="cover" bgPosition="center" gap={4}>
         <Text fontSize="sm" color="danger.300">{errorMsg}</Text>
         <Button variant="secondary" onClick={() => navigate("/")}>Back to Home</Button>
       </Flex>
@@ -119,7 +119,7 @@ export function MatchmakingPage() {
 
   if (phase === "cancelling") {
     return (
-      <Flex direction="column" align="center" justify="center" minH="100vh" gap={4}>
+      <Flex direction="column" align="center" justify="center" minH="100vh" bgImage="url('/bg_select_team.png')" bgSize="cover" bgPosition="center" gap={4}>
         <Spinner size="lg" color="green.400" />
         <Text fontSize="sm" color="text.secondary">Cancelling...</Text>
       </Flex>
@@ -129,7 +129,7 @@ export function MatchmakingPage() {
   // Phase: waiting for friend
   if (phase === "waiting-friend") {
     return (
-      <Flex direction="column" align="center" justify="center" minH="100vh" gap={6} p={4}>
+      <Flex direction="column" align="center" justify="center" minH="100vh" bgImage="url('/bg_select_team.png')" bgSize="cover" bgPosition="center" gap={6} p={4}>
         <BeastClothesline />
         <Heading
           size="lg"
@@ -158,7 +158,7 @@ export function MatchmakingPage() {
 
   // Phase: waiting
   return (
-    <Flex direction="column" align="center" justify="center" minH="100vh" gap={6} p={4}>
+    <Flex direction="column" align="center" justify="center" minH="100vh" bgImage="url('/bg_select_team.png')" bgSize="cover" bgPosition="center" gap={6} p={4}>
       <BeastClothesline />
       <Heading
         size="lg"

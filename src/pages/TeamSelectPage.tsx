@@ -224,7 +224,7 @@ export function TeamSelectPage() {
   // --- Creating / Joining ---
   if (phase === "creating" || phase === "joining") {
     return (
-      <Flex direction="column" align="center" justify="center" minH="100vh" gap={4}>
+      <Flex direction="column" align="center" justify="center" minH="100vh" bgImage="url('/bg_select_team.png')" bgSize="cover" bgPosition="center" gap={4}>
         <Spinner color="green.400" size="lg" />
         <Text fontSize="sm" color="text.secondary">{statusMsg}</Text>
         <Button variant="ghost" size="sm" onClick={() => navigate("/")}>Cancel</Button>
@@ -235,7 +235,7 @@ export function TeamSelectPage() {
   // --- Error ---
   if (phase === "error") {
     return (
-      <Flex direction="column" align="center" justify="center" minH="100vh" gap={4}>
+      <Flex direction="column" align="center" justify="center" minH="100vh" bgImage="url('/bg_select_team.png')" bgSize="cover" bgPosition="center" gap={4}>
         <Text fontSize="sm" color="danger.300">{statusMsg}</Text>
         <Button variant="secondary" onClick={() => navigate("/")}>Back to Home</Button>
       </Flex>
@@ -245,7 +245,7 @@ export function TeamSelectPage() {
   // --- Lobby: waiting for opponent ---
   if (phase === "lobby" && gameId) {
     return (
-      <Flex direction="column" align="center" justify="center" minH="100vh" gap={6} p={4}>
+      <Flex direction="column" align="center" justify="center" minH="100vh" bgImage="url('/bg_select_team.png')" bgSize="cover" bgPosition="center" gap={6} p={4}>
         <Heading size="lg" fontFamily="heading" color="green.300" textTransform="uppercase">
           Game Created
         </Heading>
@@ -287,7 +287,7 @@ export function TeamSelectPage() {
   // --- Waiting for opponent's team ---
   if (phase === "waiting") {
     return (
-      <Flex direction="column" align="center" justify="center" minH="100vh" gap={4}>
+      <Flex direction="column" align="center" justify="center" minH="100vh" bgImage="url('/bg_select_team.png')" bgSize="cover" bgPosition="center" gap={4}>
         <Heading size="md" fontFamily="heading" color="green.300" textTransform="uppercase">
           Team Confirmed
         </Heading>
@@ -300,7 +300,7 @@ export function TeamSelectPage() {
 
   // --- Team selection (2-panel layout) ---
   return (
-    <Flex direction="column" minH="100vh" p={4} maxW="1400px" mx="auto">
+    <Flex direction="column" minH="100vh" p={4} maxW="1400px" mx="auto" bgImage="url('/bg_select_team.png')" bgSize="cover" bgPosition="center">
       {/* Header */}
       <Flex justify="space-between" align="center" mb={4}>
         <Flex align="center" gap={3}>

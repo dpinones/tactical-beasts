@@ -483,7 +483,8 @@ pub mod game_system {
             }
         };
 
-        let (beast_type, tier, level, hp) = if beast_nft_addr != zero_address() {
+        // beast_id is always a token_id; resolve species + stats from NFT or hardcoded data
+        let (species_id, beast_type, tier, level, hp) = if beast_nft_addr != zero_address() {
             // Real beasts mode: read from NFT contract
             let beast_dispatcher = IBeastsDispatcher { contract_address: beast_nft_addr };
             let erc721_dispatcher = IERC721Dispatcher { contract_address: beast_nft_addr };
@@ -499,22 +500,23 @@ pub mod game_system {
             let packable = beast_dispatcher.get_beast(beast_id.into());
             let beast_type = beast::get_beast_type(packable.id.into());
             let tier = beast::derive_tier(packable.id);
-            (beast_type, tier, packable.level, packable.health)
+            (packable.id, beast_type, tier, packable.level, packable.health)
         } else {
-            // Hardcoded mode (local dev / no config set)
-            (
-                beast::get_beast_type(beast_id),
-                beast::get_beast_tier(beast_id),
-                beast::get_beast_level(beast_id),
-                beast::get_beast_hp(beast_id),
-            )
+            // Hardcoded mode (local dev / no config set): look up by token_id
+            let (species, tier, level, hp) = beast::get_beast_stats_by_token(beast_id);
+            assert!(species > 0, "Unknown token_id");
+            (species, beast::get_beast_type(species.into()), tier, level, hp)
         };
+
+        // Validate tier: only T2-T4 beasts are allowed in tactical combat
+        assert!(beast::is_valid_tier(species_id), "Beast tier not allowed: only T2-T4");
 
         let beast_state = BeastState {
             game_id,
             player_index,
             beast_index,
-            beast_id,
+            beast_id: species_id.into(),
+            token_id: beast_id,
             beast_type,
             tier,
             level,

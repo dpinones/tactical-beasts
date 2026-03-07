@@ -64,6 +64,18 @@ pub fn COLLECTION_URL() -> ByteArray {
 pub const TASK_WINNER: felt252 = 'WINNER';
 pub const TASK_FLAWLESS: felt252 = 'FLAWLESS';
 
+// Valid tier range (T1 and T5 are excluded from tactical combat)
+pub const MIN_TIER: u8 = 2;
+pub const MAX_TIER: u8 = 4;
+
+// Subclasses (2 per type)
+pub const SUBCLASS_WARLOCK: u8 = 0; // Magic glass cannon: mov 1, low HP, high dmg, range 3
+pub const SUBCLASS_ENCHANTER: u8 = 1; // Magic balanced: mov 1, med HP, med dmg, range 2
+pub const SUBCLASS_STALKER: u8 = 2; // Hunter assassin: mov 2, low HP, high dmg, melee
+pub const SUBCLASS_RANGER: u8 = 3; // Hunter sniper: mov 1, med HP, med dmg, range 4
+pub const SUBCLASS_JUGGERNAUT: u8 = 4; // Brute tank: mov 1, very high HP, low dmg, melee
+pub const SUBCLASS_BERSERKER: u8 = 5; // Brute bruiser: mov 1, high HP, high dmg, melee
+
 // Combat defaults
 pub const DEFAULT_LEVEL: u16 = 5;
 pub const DEFAULT_TIER: u8 = 3;

@@ -1,6 +1,7 @@
 import { Box, Flex, Text, Badge, Image } from "@chakra-ui/react";
 import { CatalogBeast, BeastType } from "../domain/types";
 import { getTypeColor } from "../domain/combat";
+import { getSubclass, getSubclassName } from "../data/beasts";
 
 interface BeastCardProps {
   beast: CatalogBeast;
@@ -39,6 +40,8 @@ export function BeastCard({ beast, isSelected, onToggle, disabled }: BeastCardPr
       : beast.type === BeastType.Hunter
         ? "hunter"
         : "brute";
+  const subclass = getSubclass(beast.beastId);
+  const subclassName = getSubclassName(subclass);
 
   return (
     <Box
@@ -83,7 +86,7 @@ export function BeastCard({ beast, isSelected, onToggle, disabled }: BeastCardPr
       </Box>
 
       {/* Header */}
-      <Flex justify="space-between" align="center" mb={2}>
+      <Flex justify="space-between" align="center" mb={1}>
         <Text
           fontSize="xs"
           fontWeight="600"
@@ -96,6 +99,16 @@ export function BeastCard({ beast, isSelected, onToggle, disabled }: BeastCardPr
           {beast.beast}
         </Text>
         <Badge variant={badgeVariant}>{beast.typeName}</Badge>
+      </Flex>
+
+      {/* Subclass + Token ID */}
+      <Flex justify="space-between" align="center" mb={2}>
+        <Text fontSize="9px" color="text.secondary" textTransform="uppercase" letterSpacing="0.08em">
+          {subclassName}
+        </Text>
+        <Text fontSize="8px" color="text.muted" fontFamily="mono">
+          #{beast.tokenId}
+        </Text>
       </Flex>
 
       {/* Name with prefix/suffix */}

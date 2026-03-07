@@ -49,9 +49,18 @@ export function hexDistance(a: HexCoord, b: HexCoord): number {
   );
 }
 
+// Max widths per parity — used for centering offset in cube conversion
+const MAX_EVEN_W = Math.max(...ROW_WIDTHS.filter((_, i) => i % 2 === 0));
+const MAX_ODD_W = Math.max(...ROW_WIDTHS.filter((_, i) => i % 2 === 1));
+
 function offsetToCube(row: number, col: number): { q: number; r: number; s: number } {
-  const q = col - Math.floor(row / 2);
-  const r = row;
+  // Adjust row by centering offset so narrower rows align with wider ones
+  const isOddCol = col % 2 === 1;
+  const maxW = isOddCol ? MAX_ODD_W : MAX_EVEN_W;
+  const rowWidth = ROW_WIDTHS[col] ?? 0;
+  const logicalRow = row + (maxW - rowWidth) / 2;
+  const q = logicalRow - Math.floor(col / 2);
+  const r = col;
   const s = -q - r;
   return { q, r, s };
 }

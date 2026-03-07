@@ -139,13 +139,14 @@ export function BattlePage() {
   const moveCells = useMemo((): HexCoord[] => {
     if (!selectedBeast || !selectedBeast.alive) return [];
     const dummyBeast = {
-      beastIndex: 0, beastId: 0, name: "", type: 0, typeName: "",
+      beastIndex: 0, beastId: Number(selectedBeast.beast_id), name: "", type: 0, typeName: "",
       tier: Number(selectedBeast.tier), level: Number(selectedBeast.level),
       hp: 0, hpMax: 0, extraLives: 0,
       position: { row: Number(selectedBeast.position_row), col: Number(selectedBeast.position_col) },
       alive: true, powerBase: 0,
     };
     const moveRange = getMoveRange(dummyBeast);
+    const atkRange = getAttackRange(dummyBeast);
     return getValidMoveTargets(
       { row: Number(selectedBeast.position_row), col: Number(selectedBeast.position_col) },
       moveRange,
@@ -158,7 +159,7 @@ export function BattlePage() {
     if (!selectedBeast || !selectedBeast.alive) return [];
     const pos = { row: Number(selectedBeast.position_row), col: Number(selectedBeast.position_col) };
     const dummyBeast = {
-      beastIndex: 0, beastId: 0, name: "", type: 0, typeName: "",
+      beastIndex: 0, beastId: Number(selectedBeast.beast_id), name: "", type: 0, typeName: "",
       tier: Number(selectedBeast.tier), level: Number(selectedBeast.level),
       hp: 0, hpMax: 0, extraLives: 0, position: pos, alive: true, powerBase: 0,
     };

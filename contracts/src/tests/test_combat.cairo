@@ -136,11 +136,11 @@ fn test_hex_distance_across_board() {
 #[test]
 fn test_valid_cells() {
     assert!(board::is_valid_cell(0, 0));
-    assert!(board::is_valid_cell(0, 5));
-    assert!(!board::is_valid_cell(0, 6)); // row 0 has width 6
-    assert!(board::is_valid_cell(2, 7)); // row 2 has width 8
-    assert!(!board::is_valid_cell(2, 8));
-    assert!(!board::is_valid_cell(7, 0)); // row 7 doesn't exist
+    assert!(board::is_valid_cell(5, 0));
+    assert!(!board::is_valid_cell(6, 0)); // col 0 has width 6
+    assert!(board::is_valid_cell(7, 2)); // col 2 has width 8
+    assert!(!board::is_valid_cell(8, 2));
+    assert!(!board::is_valid_cell(0, 7)); // col 7 doesn't exist
 }
 
 #[test]

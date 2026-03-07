@@ -39,6 +39,7 @@ function parseBeastNode(node: any): BeastStateModel {
     player_index: Number(node.player_index),
     beast_index: Number(node.beast_index),
     beast_id: Number(node.beast_id),
+    token_id: Number(node.token_id),
     beast_type: Number(node.beast_type),
     tier: Number(node.tier),
     level: Number(node.level),

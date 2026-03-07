@@ -23,13 +23,13 @@ fn setup_full_game(systems: Systems) -> u32 {
     set_player(PLAYER2());
     systems.game.join_game(game_id);
 
-    // P1 sets team: beasts 1 (Magical), 26 (Hunter), 51 (Brute)
+    // P1 sets team: token 47101 (Gorgon T2), 15481 (Qilin T2), 52697 (Titan T2)
     set_player(PLAYER1());
-    systems.game.set_team(game_id, 1, 26, 51);
+    systems.game.set_team(game_id, 47101, 15481, 52697);
 
-    // P2 sets team: beasts 10 (Magical), 40 (Hunter), 60 (Brute)
+    // P2 sets team: token 601 (Wendigo T2), 45386 (Pegasus T3), 57684 (Juggernaut T2)
     set_player(PLAYER2());
-    systems.game.set_team(game_id, 10, 40, 60);
+    systems.game.set_team(game_id, 601, 45386, 57684);
 
     game_id
 }
@@ -89,7 +89,7 @@ fn test_set_team_p1() {
     systems.game.join_game(game_id);
 
     set_player(PLAYER1());
-    systems.game.set_team(game_id, 1, 26, 51);
+    systems.game.set_team(game_id, 47101, 15481, 52697);
 
     let game: Game = world.read_model(game_id);
     assert!(game.p1_team_set, "P1 team should be set");
@@ -109,8 +109,8 @@ fn test_cannot_set_team_twice() {
     systems.game.join_game(game_id);
 
     set_player(PLAYER1());
-    systems.game.set_team(game_id, 1, 26, 51);
-    systems.game.set_team(game_id, 2, 27, 52); // Should panic
+    systems.game.set_team(game_id, 47101, 15481, 52697);
+    systems.game.set_team(game_id, 65040, 30268, 37131); // Should panic
 }
 
 // --- Game Start ---
@@ -748,9 +748,9 @@ fn test_profile_accumulates_across_games() {
     set_player(PLAYER2());
     systems.game.join_game(game_id2);
     set_player(PLAYER1());
-    systems.game.set_team(game_id2, 1, 26, 51);
+    systems.game.set_team(game_id2, 47101, 15481, 52697);
     set_player(PLAYER2());
-    systems.game.set_team(game_id2, 10, 40, 60);
+    systems.game.set_team(game_id2, 601, 45386, 57684);
 
     let game2: Game = world.read_model(game_id2);
     let attacker2 = game2.current_attacker;

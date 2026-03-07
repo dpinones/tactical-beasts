@@ -1,7 +1,7 @@
 import { Box, Flex, Text, Badge, Progress, Image } from "@chakra-ui/react";
 import { BeastStateModel, BeastType, ActionType, GameAction } from "../domain/types";
 import { getTypeColor, getTypeName } from "../domain/combat";
-import { getBeastImagePath, getSpeciesNameByTokenId } from "../data/beasts";
+import { getBeastImagePath, getSpeciesNameByTokenId, getSubclass, getSubclassName } from "../data/beasts";
 
 interface BeastHUDProps {
   beast: BeastStateModel;
@@ -55,7 +55,11 @@ export function BeastHUD({
   const bType = Number(beast.beast_type) as BeastType;
   const typeColor = getTypeColor(bType);
   const typeName = getTypeName(bType);
-  const speciesName = getSpeciesNameByTokenId(Number(beast.beast_id));
+  const beastId = Number(beast.beast_id);
+  const tokenId = Number(beast.token_id);
+  const speciesName = getSpeciesNameByTokenId(tokenId) || getSpeciesNameByTokenId(beastId);
+  const subclass = getSubclass(beastId);
+  const subclassName = getSubclassName(subclass);
 
   const badgeVariant =
     bType === BeastType.Magical
@@ -134,6 +138,16 @@ export function BeastHUD({
             <Badge variant={badgeVariant} fontSize="9px">
               {typeName}
             </Badge>
+          </Flex>
+
+          {/* Subclass + Token ID */}
+          <Flex justify="space-between" align="center" mb={1}>
+            <Text fontSize="9px" color="#8BFFC4" fontFamily="mono" opacity={0.7}>
+              {subclassName}
+            </Text>
+            <Text fontSize="8px" color="rgba(255,255,255,0.35)" fontFamily="mono">
+              #{tokenId}
+            </Text>
           </Flex>
 
           {/* HP Bar */}

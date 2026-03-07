@@ -57,8 +57,8 @@
       ]
     },
     {
-      "address": "0x8946d12463aa7babd700d375e1c99c25822be867f008e1c99d6b1c19030d8b",
-      "class_hash": "0x4349631809891fe0565a53531ba06e070284195cfce432d5b38120020af08cb",
+      "address": "0x3dbadbee0b33522488779442b785922c9444335c15fe8d8ebd1e2cd6a9baa8",
+      "class_hash": "0x22d524eda4938fef65b5cc230673daa545cd168b07704242657dc89d45e9bef",
       "init_calldata": [],
       "tag": "TB1-game_system",
       "selector": "0x3687e683c1056316f61e197bb9013734f28aee2e3450dbc720d5b2fbe6ea0e0",
@@ -227,6 +227,11 @@
           "key": false
         },
         {
+          "name": "token_id",
+          "type": "core::integer::u32",
+          "key": false
+        },
+        {
           "name": "beast_type",
           "type": "core::integer::u8",
           "key": false
@@ -272,7 +277,7 @@
           "key": false
         }
       ],
-      "class_hash": "0x6f1b0723528d49ab56bbac8911b6021fe294210a584b82a4e3daf4d094a1e2f",
+      "class_hash": "0x8efd3840e6f62172a6d0dbbd3c5dc45cfa4e672e9377752231abb065c8588a",
       "tag": "TB1-BeastState",
       "selector": "0x3c76b0f094c4046a595bef5d57800a9212e62c958233c558213537521d4d6e6"
     },
@@ -3998,6 +4003,10 @@
           "type": "core::integer::u32"
         },
         {
+          "name": "token_id",
+          "type": "core::integer::u32"
+        },
+        {
           "name": "beast_type",
           "type": "core::integer::u8"
         },
@@ -4041,6 +4050,10 @@
       "members": [
         {
           "name": "beast_id",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "token_id",
           "type": "core::integer::u32"
         },
         {

@@ -50,6 +50,7 @@ export const GET_BEAST_STATES = gql`
           player_index
           beast_index
           beast_id
+          token_id
           beast_type
           tier
           level
@@ -77,6 +78,7 @@ export const GET_ALL_BEAST_STATES = gql`
           player_index
           beast_index
           beast_id
+          token_id
           beast_type
           tier
           level

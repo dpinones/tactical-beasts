@@ -15,9 +15,10 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useOwnedBeasts } from "../hooks/useOwnedBeasts";
 import type { OwnedBeast } from "../api/beastsApi";
+import { getSubclass, getSubclassName } from "../data/beasts";
 
 type TypeFilter = "all" | "Magic" | "Hunter" | "Brute";
-type TierFilter = "all" | 1 | 2 | 3 | 4 | 5;
+type TierFilter = "all" | 2 | 3 | 4;
 type SortKey = "power" | "level" | "health" | "name";
 type ImageMode = "beast" | "nft";
 
@@ -127,7 +128,7 @@ export function MyBeastsPage() {
           </HStack>
 
           <HStack gap={1}>
-            {(["all", 1, 2, 3, 4, 5] as TierFilter[]).map((t) => (
+            {(["all", 2, 3, 4] as TierFilter[]).map((t) => (
               <Button
                 key={String(t)}
                 size="xs"
@@ -310,12 +311,21 @@ function BeastCard({ beast, imageMode }: { beast: OwnedBeast; imageMode: ImageMo
           {fullName(beast)}
         </Text>
 
-        <Flex align="center" gap={2} mb={2}>
+        <Flex align="center" gap={2} mb={1}>
           <Badge variant={badgeVariant(beast.type)}>
             {beast.type === "Magic" ? "Magical" : beast.type}
           </Badge>
           <Text fontSize="xs" color="text.secondary">
             T{beast.tier}
+          </Text>
+        </Flex>
+
+        <Flex justify="space-between" align="center" mb={2}>
+          <Text fontSize="9px" color="text.secondary" textTransform="uppercase" letterSpacing="0.08em">
+            {getSubclassName(getSubclass(beast.id))}
+          </Text>
+          <Text fontSize="8px" color="text.muted" fontFamily="mono">
+            #{beast.token_id}
           </Text>
         </Flex>
 

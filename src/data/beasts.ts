@@ -1,4 +1,4 @@
-import { BeastType, CatalogBeast } from "../domain/types";
+import { BeastType, CatalogBeast, Subclass, MIN_TIER, MAX_TIER } from "../domain/types";
 import beastsData from "../../beasts-all.json";
 
 function parseType(type: string): BeastType {
@@ -97,4 +97,40 @@ export function getBeastImagePath(beastId: number): string {
   // Try tokenId first, then fall back to species beastId
   const species = getSpeciesNameByTokenId(beastId) || getSpeciesNameById(beastId);
   return `/beasts/${species.toLowerCase()}.png`;
+}
+
+// Subclass mapping by beast_id (species)
+const WARLOCK_IDS = new Set([6, 8, 10, 11, 13, 15, 17, 18]);
+const ENCHANTER_IDS = new Set([7, 9, 12, 14, 16, 19, 20]);
+const STALKER_IDS = new Set([34, 35, 36, 39, 42, 43, 45]);
+const RANGER_IDS = new Set([31, 32, 33, 37, 38, 40, 41, 44]);
+const JUGGERNAUT_IDS = new Set([56, 58, 60, 62, 64, 65, 69, 70]);
+const BERSERKER_IDS = new Set([57, 59, 61, 63, 66, 67, 68]);
+
+export function getSubclass(beastId: number): Subclass {
+  if (WARLOCK_IDS.has(beastId)) return Subclass.Warlock;
+  if (ENCHANTER_IDS.has(beastId)) return Subclass.Enchanter;
+  if (STALKER_IDS.has(beastId)) return Subclass.Stalker;
+  if (RANGER_IDS.has(beastId)) return Subclass.Ranger;
+  if (JUGGERNAUT_IDS.has(beastId)) return Subclass.Juggernaut;
+  if (BERSERKER_IDS.has(beastId)) return Subclass.Berserker;
+  // Fallback by type
+  if (beastId <= 25) return Subclass.Enchanter;
+  if (beastId <= 50) return Subclass.Ranger;
+  return Subclass.Juggernaut;
+}
+
+export function getSubclassName(subclass: Subclass): string {
+  switch (subclass) {
+    case Subclass.Warlock: return "Warlock";
+    case Subclass.Enchanter: return "Enchanter";
+    case Subclass.Stalker: return "Stalker";
+    case Subclass.Ranger: return "Ranger";
+    case Subclass.Juggernaut: return "Juggernaut";
+    case Subclass.Berserker: return "Berserker";
+  }
+}
+
+export function isValidTier(tier: number): boolean {
+  return tier >= MIN_TIER && tier <= MAX_TIER;
 }

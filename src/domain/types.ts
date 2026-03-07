@@ -20,6 +20,21 @@ export enum BeastType {
   Brute = 2,
 }
 
+// Subclasses (2 per type)
+export enum Subclass {
+  Warlock = 0, // Magic: low HP, high dmg, range 3
+  Enchanter = 1, // Magic: med HP, med dmg, range 2
+  Stalker = 2, // Hunter: mov 2, low HP, high dmg, melee
+  Ranger = 3, // Hunter: med HP, med dmg, range 4
+  Juggernaut = 4, // Brute: very high HP, low dmg, melee
+  Berserker = 5, // Brute: high HP, high dmg, melee
+}
+
+// Valid tiers for tactical combat
+export const VALID_TIERS = [2, 3, 4] as const;
+export const MIN_TIER = 2;
+export const MAX_TIER = 4;
+
 export interface HexCoord {
   row: number;
   col: number;
@@ -99,6 +114,7 @@ export interface BeastStateModel {
   player_index: number;
   beast_index: number;
   beast_id: number;
+  token_id: number;
   beast_type: number;
   tier: number;
   level: number;

@@ -34,6 +34,7 @@ pub struct BeastState {
     #[key]
     pub beast_index: u8,
     pub beast_id: u32,
+    pub token_id: u32,
     pub beast_type: u8,
     pub tier: u8,
     pub level: u16,

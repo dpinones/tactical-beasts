@@ -9,9 +9,7 @@ import {
 } from "../domain/hexGrid";
 import { BeastStateModel, BeastType, ActionType, GameAction, HexCoord } from "../domain/types";
 import { getTypeColor } from "../domain/combat";
-// Sprite sheet: 2x2 grid (672x1024), left col = face left, right col = face right
-const SPRITE_SRC = "/sprites/example_beast.png";
-const FRAME_RATIO = 336 / 512; // width/height of one frame
+import { getBeastImagePath } from "../data/beasts";
 
 interface HexGridProps {
   hexSize?: number;
@@ -151,15 +149,7 @@ export function HexGrid({
 
     const clipId = `beast-clip-${beast.player_index}-${beast.beast_index}`;
     const imgSize = hexSize * 0.82;
-
-    // Sprite sheet animation: 2 cols (left/right facing) x 2 rows (idle frames)
-    const frameH = imgSize * 2;
-    const frameW = frameH * FRAME_RATIO;
-    const spriteW = frameW * 2;
-    const spriteH = frameH * 2;
-    const spriteCol = 1; // all beasts face right
-    const spriteX = cx - frameW * (spriteCol + 0.5);
-    const spriteY0 = (cy - 2) - frameH * 0.5; // row 0
+    const beastImgSrc = getBeastImagePath(Number(beast.beast_id));
 
     // HP bar dimensions
     const hpBarWidth = hexSize * 0.85;
@@ -205,16 +195,16 @@ export function HexGrid({
           </polygon>
         )}
 
-        {/* Beast sprite sheet */}
+        {/* Beast image */}
         <image
-          href={SPRITE_SRC}
-          x={spriteX}
-          y={spriteY0}
-          width={spriteW}
-          height={spriteH}
+          href={beastImgSrc}
+          x={cx - imgSize * 0.7}
+          y={cy - imgSize * 0.9}
+          width={imgSize * 1.4}
+          height={imgSize * 1.4}
           clipPath={`url(#${clipId})`}
           filter="url(#beastShadow)"
-          preserveAspectRatio="none"
+          preserveAspectRatio="xMidYMid meet"
         />
 
         {/* Team color tint overlay */}

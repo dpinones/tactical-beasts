@@ -340,7 +340,7 @@ export function TeamSelectPage() {
                 {f === "all" ? "All" : f}
               </Button>
             ))}
-            {[1, 2, 3, 4, 5].map((t) => (
+            {[2, 3, 4].map((t) => (
               <Button
                 key={t}
                 size="sm"

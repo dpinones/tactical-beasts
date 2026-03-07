@@ -164,20 +164,37 @@ fn abs_diff(a: u16, b: u16) -> u16 {
     }
 }
 
-/// Computes hex distance between two cells using odd-r offset -> cube coordinate conversion.
+/// Returns the centering offset for a given col.
+/// Narrower rows are centered relative to the widest row of the same parity.
+/// Even cols: max width 8. Odd cols: max width 7.
+/// Only cols 0 and 6 (width 6, even) have offset = 1; all others = 0.
+fn centering_offset(col: u8) -> u16 {
+    if col == 0 || col == 6 {
+        1
+    } else {
+        0
+    }
+}
+
+/// Computes hex distance between two cells using odd-col offset -> cube coordinate conversion.
+/// Adjusts row by centering offset so variable-width rows align correctly.
 /// Uses a positive offset (100) to avoid unsigned underflow.
 pub fn hex_distance(r1: u8, c1: u8, r2: u8, c2: u8) -> u8 {
     let offset: u16 = 100;
 
-    let o1: u16 = ((r1 - (r1 % 2)) / 2).into();
-    let o2: u16 = ((r2 - (r2 % 2)) / 2).into();
+    let o1: u16 = ((c1 - (c1 % 2)) / 2).into();
+    let o2: u16 = ((c2 - (c2 % 2)) / 2).into();
 
-    let x1: u16 = offset + c1.into() - o1;
-    let z1: u16 = offset + r1.into();
+    // Adjust row by centering offset for narrower rows
+    let lr1: u16 = r1.into() + centering_offset(c1);
+    let lr2: u16 = r2.into() + centering_offset(c2);
+
+    let x1: u16 = offset + lr1 - o1;
+    let z1: u16 = offset + c1.into();
     let y1: u16 = 3 * offset - x1 - z1;
 
-    let x2: u16 = offset + c2.into() - o2;
-    let z2: u16 = offset + r2.into();
+    let x2: u16 = offset + lr2 - o2;
+    let z2: u16 = offset + c2.into();
     let y2: u16 = 3 * offset - x2 - z2;
 
     let dx = abs_diff(x1, x2);

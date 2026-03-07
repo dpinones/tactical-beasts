@@ -1,16 +1,23 @@
-import { BeastType, BattleBeast } from "./types";
+import { BeastType, BattleBeast, Subclass } from "./types";
+import { getSubclass } from "../data/beasts";
 
-// --- Configurable functions (MVP defaults) ---
+// --- Range functions based on subclass (mirrors contracts/src/logic/beast.cairo) ---
 
 export function getLuck(_beast: BattleBeast): number {
   return 10;
 }
 
-export function getMoveRange(_beast: BattleBeast): number {
+export function getMoveRange(beast: BattleBeast): number {
+  const subclass = getSubclass(beast.beastId);
+  if (subclass === Subclass.Stalker) return 3;
   return 2;
 }
 
-export function getAttackRange(_beast: BattleBeast): number {
+export function getAttackRange(beast: BattleBeast): number {
+  const subclass = getSubclass(beast.beastId);
+  if (subclass === Subclass.Ranger) return 4;
+  if (subclass === Subclass.Warlock) return 3;
+  if (subclass === Subclass.Enchanter) return 2;
   return 1;
 }
 

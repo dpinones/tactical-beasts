@@ -53,6 +53,7 @@ export interface BeastState {
 	player_index: BigNumberish;
 	beast_index: BigNumberish;
 	beast_id: BigNumberish;
+	token_id: BigNumberish;
 	beast_type: BigNumberish;
 	tier: BigNumberish;
 	level: BigNumberish;
@@ -375,6 +376,7 @@ export const schema: SchemaType = {
 			player_index: 0,
 			beast_index: 0,
 			beast_id: 0,
+			token_id: 0,
 			beast_type: 0,
 			tier: 0,
 			level: 0,

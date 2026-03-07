@@ -27,6 +27,7 @@ pub fn get_beast_type(beast_id: u32) -> u8 {
     }
 }
 
+/// Same formula used in Loot Survivor (death_mountain_beast::ImplBeast::get_tier).
 /// Derives tier from beast ID using Death Mountain rules:
 /// Each type group (25 beasts) has 5 tiers, 5 beasts each
 /// index 0-4 = T1(1), 5-9 = T2(2), 10-14 = T3(3), 15-19 = T4(4), 20-24 = T5(5)

@@ -71,9 +71,9 @@ pub fn generate_obstacles(
                 candidates.append((row, col));
             }
             row += 1;
-        };
+        }
         col += 1;
-    };
+    }
 
     let seed = PoseidonTrait::new()
         .update(game_id.into())
@@ -95,7 +95,7 @@ pub fn generate_obstacles(
         }
         indices.append(idx);
         idx += 1;
-    };
+    }
 
     let mut i: felt252 = 0;
     loop {
@@ -125,11 +125,11 @@ pub fn generate_obstacles(
                 new_indices.append(*indices.span().at(j));
             }
             j += 1;
-        };
+        }
         indices = new_indices;
 
         i += 1;
-    };
+    }
 
     let sel = selected.span();
     let (r1, c1) = *sel.at(0);

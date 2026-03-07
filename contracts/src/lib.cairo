@@ -20,6 +20,10 @@ pub mod logic {
     pub mod combat;
 }
 
+pub mod utils {
+    pub mod death_mountain_combat;
+}
+
 pub mod systems {
     pub mod collection;
     pub mod game_system;

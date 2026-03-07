@@ -584,8 +584,16 @@ fn test_cannot_abandon_finished_game() {
 
     // Finish the game first
     let game: Game = world.read_model(game_id);
-    let defender: u8 = if game.current_attacker == 1 { 2 } else { 1 };
-    let attacker_addr = if game.current_attacker == 1 { PLAYER1() } else { PLAYER2() };
+    let defender: u8 = if game.current_attacker == 1 {
+        2
+    } else {
+        1
+    };
+    let attacker_addr = if game.current_attacker == 1 {
+        PLAYER1()
+    } else {
+        PLAYER2()
+    };
     let mut i: u8 = 0;
     while i < 3 {
         let mut b: BeastState = world.read_model((game_id, defender, i));
@@ -596,14 +604,16 @@ fn test_cannot_abandon_finished_game() {
         i += 1;
     }
     set_player(attacker_addr);
-    systems.game.execute_turn(
-        game_id,
-        array![
-            Action { beast_index: 0, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
-            Action { beast_index: 1, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
-            Action { beast_index: 2, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
-        ],
-    );
+    systems
+        .game
+        .execute_turn(
+            game_id,
+            array![
+                Action { beast_index: 0, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
+                Action { beast_index: 1, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
+                Action { beast_index: 2, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
+            ],
+        );
 
     // Try to abandon finished game — should panic
     set_player(PLAYER1());
@@ -633,9 +643,21 @@ fn test_profile_updated_on_finish() {
 
     let game: Game = world.read_model(game_id);
     let attacker = game.current_attacker;
-    let defender: u8 = if attacker == 1 { 2 } else { 1 };
-    let attacker_addr = if attacker == 1 { PLAYER1() } else { PLAYER2() };
-    let defender_addr = if attacker == 1 { PLAYER2() } else { PLAYER1() };
+    let defender: u8 = if attacker == 1 {
+        2
+    } else {
+        1
+    };
+    let attacker_addr = if attacker == 1 {
+        PLAYER1()
+    } else {
+        PLAYER2()
+    };
+    let defender_addr = if attacker == 1 {
+        PLAYER2()
+    } else {
+        PLAYER1()
+    };
 
     // Kill all defender beasts
     let mut i: u8 = 0;
@@ -687,8 +709,16 @@ fn test_profile_accumulates_across_games() {
     let game_id = setup_full_game(systems);
     let game: Game = world.read_model(game_id);
     let attacker = game.current_attacker;
-    let defender: u8 = if attacker == 1 { 2 } else { 1 };
-    let attacker_addr = if attacker == 1 { PLAYER1() } else { PLAYER2() };
+    let defender: u8 = if attacker == 1 {
+        2
+    } else {
+        1
+    };
+    let attacker_addr = if attacker == 1 {
+        PLAYER1()
+    } else {
+        PLAYER2()
+    };
 
     let mut i: u8 = 0;
     while i < 3 {
@@ -724,8 +754,16 @@ fn test_profile_accumulates_across_games() {
 
     let game2: Game = world.read_model(game_id2);
     let attacker2 = game2.current_attacker;
-    let defender2: u8 = if attacker2 == 1 { 2 } else { 1 };
-    let attacker_addr2 = if attacker2 == 1 { PLAYER1() } else { PLAYER2() };
+    let defender2: u8 = if attacker2 == 1 {
+        2
+    } else {
+        1
+    };
+    let attacker_addr2 = if attacker2 == 1 {
+        PLAYER1()
+    } else {
+        PLAYER2()
+    };
 
     let mut j: u8 = 0;
     while j < 3 {
@@ -771,12 +809,9 @@ fn test_join_game_generates_obstacles() {
 
     // Collect all 6 obstacle positions
     let obstacles: [(u8, u8); 6] = [
-        (map_state.obstacle_1_row, map_state.obstacle_1_col),
-        (map_state.obstacle_2_row, map_state.obstacle_2_col),
-        (map_state.obstacle_3_row, map_state.obstacle_3_col),
-        (map_state.obstacle_4_row, map_state.obstacle_4_col),
-        (map_state.obstacle_5_row, map_state.obstacle_5_col),
-        (map_state.obstacle_6_row, map_state.obstacle_6_col),
+        (map_state.obstacle_1_row, map_state.obstacle_1_col), (map_state.obstacle_2_row, map_state.obstacle_2_col),
+        (map_state.obstacle_3_row, map_state.obstacle_3_col), (map_state.obstacle_4_row, map_state.obstacle_4_col),
+        (map_state.obstacle_5_row, map_state.obstacle_5_col), (map_state.obstacle_6_row, map_state.obstacle_6_col),
     ];
 
     // Verify all obstacles are valid cells and not spawn positions
@@ -805,13 +840,13 @@ fn test_join_game_generates_obstacles() {
                     is_spawn = true;
                 }
                 b += 1;
-            };
+            }
             p += 1;
-        };
+        }
         assert!(!is_spawn, "Obstacle ({},{}) is a spawn position", row, col);
 
         i += 1;
-    };
+    }
 
     // Verify no duplicate obstacles
     let mut j: u32 = 0;
@@ -828,9 +863,9 @@ fn test_join_game_generates_obstacles() {
             let (r2, c2) = *obstacles.span().at(k);
             assert!(r1 != r2 || c1 != c2, "Duplicate obstacle at ({},{})", r1, c1);
             k += 1;
-        };
+        }
         j += 1;
-    };
+    }
 
     // Verify is_obstacle_in_map works
     let mut m: u32 = 0;

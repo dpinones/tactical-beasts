@@ -1,64 +1,49 @@
 use core::hash::HashStateTrait;
 use core::poseidon::PoseidonTrait;
-use crate::constants::{ADVANTAGE, DISADVANTAGE, MIN_DAMAGE, NEUTRAL, TYPE_BRUTE, TYPE_HUNTER, TYPE_MAGICAL};
+use crate::constants::MIN_DAMAGE;
+use crate::utils::death_mountain_combat::{
+    CombatSpec, calculate_damage as dm_calculate_damage, get_attack_hp, tier_from_u8, type_from_beast_type,
+};
 
-/// Returns type advantage: Brute > Hunter > Magical > Brute
-pub fn get_type_advantage(attacker_type: u8, defender_type: u8) -> u8 {
-    if attacker_type == defender_type {
-        NEUTRAL
-    } else if (attacker_type == TYPE_BRUTE && defender_type == TYPE_HUNTER)
-        || (attacker_type == TYPE_HUNTER && defender_type == TYPE_MAGICAL)
-        || (attacker_type == TYPE_MAGICAL && defender_type == TYPE_BRUTE) {
-        ADVANTAGE
-    } else {
-        DISADVANTAGE
-    }
+/// Builds a CombatSpec from beast attributes.
+pub fn build_combat_spec(level: u16, tier: u8, beast_type: u8) -> CombatSpec {
+    CombatSpec { tier: tier_from_u8(tier), item_type: type_from_beast_type(beast_type), level }
 }
 
-/// Calculates damage using the Death Mountain formula:
-/// Base = level * (6 - tier), then apply type advantage, potion, and crit modifiers.
+/// Calculates damage using death_mountain formula, then applies potion (+10%) and crit (×2).
 pub fn calculate_damage(
     attacker_level: u16, attacker_tier: u8, attacker_type: u8, defender_type: u8, use_potion: bool, is_crit: bool,
 ) -> u16 {
-    // Base power
-    let tier_mult: u32 = 6 - attacker_tier.into();
-    let base_power: u32 = attacker_level.into() * tier_mult;
+    let attacker_spec = build_combat_spec(attacker_level, attacker_tier, attacker_type);
+    let defender_spec = build_combat_spec(0, 5, defender_type);
 
-    // Type advantage: +50% / -50%
-    let advantage = get_type_advantage(attacker_type, defender_type);
-    let adjusted: u32 = if advantage == ADVANTAGE {
-        base_power * 150 / 100
-    } else if advantage == DISADVANTAGE {
-        base_power * 50 / 100
-    } else {
-        base_power
-    };
+    let base_damage: u32 = dm_calculate_damage(attacker_spec, defender_spec, MIN_DAMAGE).into();
 
     // Potion: +10%
     let with_potion: u32 = if use_potion {
-        adjusted * 110 / 100
+        base_damage * 110 / 100
     } else {
-        adjusted
+        base_damage
     };
 
-    // Crit: x2
+    // Crit: ×2
     let with_crit: u32 = if is_crit {
         with_potion * 2
     } else {
         with_potion
     };
 
-    // Ensure minimum damage
-    let damage: u16 = if with_crit > 65535 {
+    // Cap at u16 max
+    if with_crit > 65535 {
         65535
     } else {
         with_crit.try_into().unwrap()
-    };
-    if damage < MIN_DAMAGE {
-        MIN_DAMAGE
-    } else {
-        damage
     }
+}
+
+/// Returns the attack power of a beast using death_mountain formula: level × (6 - tier)
+pub fn get_attack_power(level: u16, tier: u8, beast_type: u8) -> u16 {
+    get_attack_hp(build_combat_spec(level, tier, beast_type))
 }
 
 /// Pseudo-random crit roll. Returns true if crit succeeds.

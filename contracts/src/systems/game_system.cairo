@@ -2,7 +2,6 @@
 pub fn NAME() -> ByteArray {
     "game_system"
 }
-
 use starknet::ContractAddress;
 
 #[starknet::interface]
@@ -35,10 +34,9 @@ pub mod game_system {
     use leaderboard::components::rankable::RankableComponent;
     use starknet::ContractAddress;
     use crate::constants::{
-        ACTION_ATTACK, ACTION_CONSUMABLE_ATTACK, ACTION_MOVE, ACTION_WAIT, BEAST_NFT_ADDRESS,
-        BEASTS_PER_PLAYER, DEFAULT_EXTRA_LIVES, GAME_STATUS_FINISHED, GAME_STATUS_PLAYING,
-        GAME_STATUS_WAITING, LEADERBOARD_ID, MAINNET_CHAIN_ID, MAX_ROUNDS, NAMESPACE, TASK_FLAWLESS,
-        TASK_WINNER, WIN_BONUS,
+        ACTION_ATTACK, ACTION_CONSUMABLE_ATTACK, ACTION_MOVE, ACTION_WAIT, BEASTS_PER_PLAYER, BEAST_NFT_ADDRESS,
+        DEFAULT_EXTRA_LIVES, GAME_STATUS_FINISHED, GAME_STATUS_PLAYING, GAME_STATUS_WAITING, LEADERBOARD_ID,
+        MAINNET_CHAIN_ID, MAX_ROUNDS, NAMESPACE, TASK_FLAWLESS, TASK_WINNER, WIN_BONUS,
     };
     use crate::elements::achievements::{ACHIEVEMENT_COUNT, Achievement, AchievementTrait};
     use crate::events::index::{GameCreated, GameFinished, PlayerJoined};
@@ -166,8 +164,7 @@ pub mod game_system {
 
             let mut game: Game = world.read_model(game_id);
             assert!(
-                game.status == GAME_STATUS_WAITING || game.status == GAME_STATUS_PLAYING,
-                "Game is already finished",
+                game.status == GAME_STATUS_WAITING || game.status == GAME_STATUS_PLAYING, "Game is already finished",
             );
             assert!(caller == game.player1 || caller == game.player2, "Not a player in this game");
 
@@ -199,7 +196,11 @@ pub mod game_system {
                     } else {
                         2
                     };
-                    let winner_kills = count_dead_beasts(ref world, game_id, if winner_index == 1 { 2 } else { 1 });
+                    let winner_kills = count_dead_beasts(ref world, game_id, if winner_index == 1 {
+                        2
+                    } else {
+                        1
+                    });
                     let winner_deaths = count_dead_beasts(ref world, game_id, winner_index);
 
                     let mut winner_profile: PlayerProfile = world.read_model(winner);
@@ -209,7 +210,11 @@ pub mod game_system {
                     world.write_model(@winner_profile);
 
                     // Also count kills/deaths for abandoner
-                    let abandoner_index: u8 = if winner_index == 1 { 2 } else { 1 };
+                    let abandoner_index: u8 = if winner_index == 1 {
+                        2
+                    } else {
+                        1
+                    };
                     let abandoner_kills = count_dead_beasts(ref world, game_id, winner_index);
                     let abandoner_deaths = count_dead_beasts(ref world, game_id, abandoner_index);
                     let mut ap: PlayerProfile = world.read_model(caller);
@@ -450,9 +455,7 @@ pub mod game_system {
         world.write_model(@game);
 
         // Generate dynamic obstacles for this match
-        let map_state = board::generate_obstacles(
-            game_id, game.player1, caller, starknet::get_block_timestamp(),
-        );
+        let map_state = board::generate_obstacles(game_id, game.player1, caller, starknet::get_block_timestamp());
         world.write_model(@map_state);
 
         world.emit_event(@PlayerJoined { game_id, player2: caller, time: starknet::get_block_timestamp() });

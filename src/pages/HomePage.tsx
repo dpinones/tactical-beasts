@@ -42,6 +42,7 @@ import {
   PlayerConfig,
 } from "../services/supabase";
 import { getUniqueBeastSpecies } from "../data/beasts";
+import { usePlayerProfile } from "../hooks/useGameQuery";
 
 const CHAIN = import.meta.env.VITE_CHAIN;
 
@@ -72,6 +73,7 @@ export function HomePage() {
   const [statusMsg, setStatusMsg] = useState("");
   const [friendOpen, setFriendOpen] = useState(false);
   const configsModal = useDisclosure();
+  const profileModal = useDisclosure();
 
   // Supabase state
   const [profile, setProfile] = useState<PlayerConfig | null>(null);
@@ -86,6 +88,7 @@ export function HomePage() {
 
   const friendPanelRef = useRef<HTMLDivElement>(null);
   const walletAddress = finalAccount?.address || "";
+  const { profile: playerStats, loading: profileLoading } = usePlayerProfile(walletAddress || null);
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -525,7 +528,7 @@ export function HomePage() {
           <span role="img" aria-label="settings">&#9881;</span>
         </Box>
 
-        {/* Player name + Profile link */}
+        {/* Player name + Profile modal */}
         <Flex
           align="center"
           gap={2}
@@ -537,7 +540,7 @@ export function HomePage() {
           py={2}
           mr={2}
           cursor="pointer"
-          onClick={() => navigate("/profile")}
+          onClick={profileModal.onOpen}
           _hover={{ borderColor: "green.400", color: "green.300" }}
           transition="all 0.2s"
         >
@@ -701,6 +704,59 @@ export function HomePage() {
                 <Text fontSize="sm" color="text.muted">Coming soon</Text>
               </Box>
             </VStack>
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+
+      {/* Profile Modal */}
+      <Modal isOpen={profileModal.isOpen} onClose={profileModal.onClose} isCentered>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Profile</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={6}>
+            {profileLoading ? (
+              <Flex justify="center" py={6}>
+                <Spinner color="green.400" size="lg" />
+              </Flex>
+            ) : (
+              <VStack align="stretch" gap={3}>
+                <Box>
+                  <Text fontSize="xs" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em">Address</Text>
+                  <Text fontSize="sm" fontFamily="mono">{truncateAddr(finalAccount?.address || "")}</Text>
+                </Box>
+                <HStack gap={6}>
+                  <Box>
+                    <Text fontSize="xs" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em">Games</Text>
+                    <Text fontSize="lg" color="text.gold" fontFamily="mono" fontWeight="700">{playerStats?.games_played ?? 0}</Text>
+                  </Box>
+                  <Box>
+                    <Text fontSize="xs" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em">Wins</Text>
+                    <Text fontSize="lg" color="green.300" fontFamily="mono" fontWeight="700">{playerStats?.wins ?? 0}</Text>
+                  </Box>
+                  <Box>
+                    <Text fontSize="xs" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em">Losses</Text>
+                    <Text fontSize="lg" color="danger.300" fontFamily="mono" fontWeight="700">{playerStats?.losses ?? 0}</Text>
+                  </Box>
+                </HStack>
+                <HStack gap={6}>
+                  <Box>
+                    <Text fontSize="xs" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em">Abandons</Text>
+                    <Text fontSize="lg" color="text.muted" fontFamily="mono" fontWeight="700">{playerStats?.abandons ?? 0}</Text>
+                  </Box>
+                  <Box>
+                    <Text fontSize="xs" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em">K/D</Text>
+                    <Text fontSize="lg" fontFamily="mono" fontWeight="700">
+                      {playerStats && playerStats.total_deaths > 0
+                        ? `${playerStats.total_kills}/${playerStats.total_deaths}`
+                        : playerStats && playerStats.total_kills > 0
+                          ? `${playerStats.total_kills}/0`
+                          : "--"}
+                    </Text>
+                  </Box>
+                </HStack>
+              </VStack>
+            )}
           </ModalBody>
         </ModalContent>
       </Modal>

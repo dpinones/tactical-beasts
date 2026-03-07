@@ -2,6 +2,14 @@ use starknet::ContractAddress;
 
 #[derive(Copy, Drop, Serde)]
 #[dojo::model]
+pub struct BeastConfig {
+    #[key]
+    pub id: felt252,
+    pub beast_nft_address: ContractAddress,
+}
+
+#[derive(Copy, Drop, Serde)]
+#[dojo::model]
 pub struct Game {
     #[key]
     pub game_id: u32,

@@ -57,8 +57,8 @@
       ]
     },
     {
-      "address": "0x72c78a1d8175b6e9d950bd13c6dd85ee8b9b86ff899f3aa6cf22aa22f89f570",
-      "class_hash": "0x57ce006d877315ebb1b4b4577b7aeb263a36d65ca993d84da1a2f9f49313581",
+      "address": "0x8946d12463aa7babd700d375e1c99c25822be867f008e1c99d6b1c19030d8b",
+      "class_hash": "0x4349631809891fe0565a53531ba06e070284195cfce432d5b38120020af08cb",
       "init_calldata": [],
       "tag": "TB1-game_system",
       "selector": "0x3687e683c1056316f61e197bb9013734f28aee2e3450dbc720d5b2fbe6ea0e0",
@@ -68,6 +68,7 @@
         "create_friendly_game",
         "join_game",
         "set_team",
+        "set_beast_config",
         "execute_turn",
         "find_match",
         "cancel_matchmaking",
@@ -185,6 +186,23 @@
       "class_hash": "0x6c6a9c45913331fa4e602135926cf9a622b60d2abb04381c37e0ba79861f11d",
       "tag": "TB1-AchievementDefinition",
       "selector": "0x35ebbae0c0d161b3e3c311986810b9894b0cd83cfd0b0dfe57b2002b487e8bc"
+    },
+    {
+      "members": [
+        {
+          "name": "id",
+          "type": "core::felt252",
+          "key": true
+        },
+        {
+          "name": "beast_nft_address",
+          "type": "core::starknet::contract_address::ContractAddress",
+          "key": false
+        }
+      ],
+      "class_hash": "0x5b0677ae244b053e1ba2bd7cdae53ad853a614fd1a6517856f0a1c42bd99759",
+      "tag": "TB1-BeastConfig",
+      "selector": "0x7037b1f0414b9d818ae35bffc5b6073dd763da23354e22d924b1ee94eaeb151"
     },
     {
       "members": [
@@ -3937,6 +3955,30 @@
     },
     {
       "type": "struct",
+      "name": "tactical_beats::models::index::BeastConfig",
+      "members": [
+        {
+          "name": "id",
+          "type": "core::felt252"
+        },
+        {
+          "name": "beast_nft_address",
+          "type": "core::starknet::contract_address::ContractAddress"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "tactical_beats::models::index::BeastConfigValue",
+      "members": [
+        {
+          "name": "beast_nft_address",
+          "type": "core::starknet::contract_address::ContractAddress"
+        }
+      ]
+    },
+    {
+      "type": "struct",
       "name": "tactical_beats::models::index::BeastState",
       "members": [
         {
@@ -4493,6 +4535,12 @@
     },
     {
       "type": "event",
+      "name": "tactical_beats::models::index::m_BeastConfig::Event",
+      "kind": "enum",
+      "variants": []
+    },
+    {
+      "type": "event",
       "name": "tactical_beats::models::index::m_BeastState::Event",
       "kind": "enum",
       "variants": []
@@ -4715,6 +4763,18 @@
             {
               "name": "beast_3",
               "type": "core::integer::u32"
+            }
+          ],
+          "outputs": [],
+          "state_mutability": "external"
+        },
+        {
+          "type": "function",
+          "name": "set_beast_config",
+          "inputs": [
+            {
+              "name": "beast_nft_address",
+              "type": "core::starknet::contract_address::ContractAddress"
             }
           ],
           "outputs": [],

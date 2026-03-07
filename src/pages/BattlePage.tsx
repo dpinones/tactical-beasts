@@ -2,12 +2,10 @@ import {
   Box,
   Button,
   Flex,
-  Heading,
   Text,
   HStack,
   VStack,
   Spinner,
-  Badge,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -15,7 +13,6 @@ import {
   ModalBody,
   ModalCloseButton,
   useDisclosure,
-  Divider,
 } from "@chakra-ui/react";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
@@ -228,7 +225,7 @@ export function BattlePage() {
         }
       }
 
-      // Click outside range → deselect
+      // Click outside range -> deselect
       setSelectedBeastIndex(null);
     },
     [selectedBeastIndex, moveCells, attackCells, enemyBeasts, potionToggle, autoAdvance, actions]
@@ -236,7 +233,7 @@ export function BattlePage() {
 
   const handleBeastClick = useCallback(
     (playerIndex: number, beastIndex: number) => {
-      // Enemy click while beast selected → attack if in range
+      // Enemy click while beast selected -> attack if in range
       if (playerIndex !== myPlayerIndex && selectedBeastIndex !== null) {
         const enemyBeast = enemyBeasts.find((b) => Number(b.beast_index) === beastIndex);
         if (!enemyBeast) return;
@@ -263,7 +260,6 @@ export function BattlePage() {
       // Own beast click
       if (playerIndex === myPlayerIndex) {
         if (selectedBeastIndex === beastIndex) {
-          // Click same beast → deselect
           setSelectedBeastIndex(null);
         } else {
           setSelectedBeastIndex(beastIndex);
@@ -299,7 +295,6 @@ export function BattlePage() {
       return next;
     });
     setActionHistory((prev) => prev.slice(0, -1));
-    // Check if the undone action was a potion attack → re-enable toggle
     const undoneAction = actions.get(lastIdx);
     if (undoneAction?.actionType === ActionType.CONSUMABLE_ATTACK_POTION) {
       setPotionToggle(true);
@@ -308,7 +303,6 @@ export function BattlePage() {
   }, [actionHistory, actions]);
 
   const handleClearAll = useCallback(() => {
-    // Check if any cleared action was a potion attack
     const hadPotion = Array.from(actions.values()).some(
       (a) => a.actionType === ActionType.CONSUMABLE_ATTACK_POTION
     );
@@ -321,7 +315,6 @@ export function BattlePage() {
   const handleConfirmActions = useCallback(async () => {
     if (!gameId) return;
 
-    // Send actions in selection order (actionHistory), then any remaining as WAIT
     const orderedActions: GameAction[] = actionHistory.map((idx) => {
       return (
         actions.get(idx) || {
@@ -333,7 +326,6 @@ export function BattlePage() {
         }
       );
     });
-    // Append any alive beasts not in history as WAIT
     const aliveBeasts = myBeasts.filter((b) => b.alive);
     for (const b of aliveBeasts) {
       const idx = Number(b.beast_index);
@@ -371,123 +363,134 @@ export function BattlePage() {
 
   // Contextual guidance message
   const guidanceMessage = useMemo(() => {
-    if (!isMyTurn) return "Waiting for opponent to play...";
-    if (selectedBeastIndex === null) return "Select one of your beasts to plan an action";
+    if (!isMyTurn) return "Waiting for opponent...";
+    if (selectedBeastIndex === null) return "Select a beast";
     const aliveCount = myBeasts.filter((b) => b.alive).length;
-    if (actions.size >= aliveCount) return "All actions set -- confirm to execute your turn";
-    return "Click green cell to move, red enemy to attack";
+    if (actions.size >= aliveCount) return "All set -- Confirm!";
+    return "Move or Attack";
   }, [isMyTurn, selectedBeastIndex, actions, myBeasts]);
+
+  const potionUsed = false; // TODO: read from PlayerState
 
   // --- Loading state ---
   if (!game || beasts.length === 0) {
     return (
-      <Flex justify="center" align="center" minH="100vh">
+      <Flex justify="center" align="center" minH="100vh" bg="#0a0604">
         <VStack gap={4}>
-          <Spinner size="xl" color="green.400" />
-          <Text color="text.secondary">Loading battle...</Text>
+          <Spinner size="xl" color="teal.400" />
+          <Text color="gray.400">Loading battle...</Text>
         </VStack>
       </Flex>
     );
   }
 
-  const potionUsed = false; // TODO: read from PlayerState
-
   return (
-    <Flex direction="column" h="100vh" p={3} maxW="1500px" mx="auto" overflow="hidden">
-      {/* Top bar */}
-      <Flex
-        justify="space-between"
-        align="center"
-        mb={2}
-        flexShrink={0}
-        bg="surface.panel"
-        border="1px solid"
-        borderColor="surface.border"
-        borderRadius="3px"
-        px={4}
-        py={2.5}
-      >
-        <Flex align="center" gap={3}>
-          <Heading
-            size="sm"
-            fontSize="md"
-            fontFamily="heading"
-            color="green.300"
-            textTransform="uppercase"
-          >
-            Game #{gameId}
-          </Heading>
-          <Divider orientation="vertical" h="20px" borderColor="surface.border" />
-          <Badge variant="magical" px={4} py={1.5}>Round {game.round}</Badge>
+    <Box
+      position="relative"
+      h="100vh"
+      w="100vw"
+      overflow="hidden"
+      className="arena-background"
+    >
+      {/* Decorative banners */}
+      <div className="arena-banner arena-banner--1" />
+      <div className="arena-banner arena-banner--2" />
+      <div className="arena-banner arena-banner--3" />
+      <div className="arena-banner arena-banner--4" />
+
+      {/* === TOP HUD === */}
+      <Box className="battle-hud-top" px={4} pt={0}>
+        <Flex w="100%" maxW="900px" align="flex-start" justify="space-between">
+          {/* Player tag - left */}
+          <Box className="player-tag player-tag--me" mt={2}>
+            <Box
+              w="28px" h="28px" borderRadius="6px"
+              bg="linear-gradient(135deg, #0d4a30, #1a6b4a)"
+              border="2px solid #2dd88a"
+              display="flex" alignItems="center" justifyContent="center"
+            >
+              <Text fontSize="xs" fontWeight="bold" color="#66FFB2">P1</Text>
+            </Box>
+            <Text>You</Text>
+          </Box>
+
+          {/* Round badge - center */}
+          <Box className="round-badge">
+            <Text className="round-badge__label">Round {game.round}</Text>
+            <Text className="round-badge__timer">
+              {isMyTurn ? "YOUR TURN" : "WAITING"}
+            </Text>
+          </Box>
+
+          {/* Enemy tag - right */}
+          <Box className="player-tag player-tag--enemy" mt={2}>
+            <Text>Enemy</Text>
+            <Box
+              w="28px" h="28px" borderRadius="6px"
+              bg="linear-gradient(135deg, #5c1010, #8b1a1a)"
+              border="2px solid #dd4444"
+              display="flex" alignItems="center" justifyContent="center"
+            >
+              <Text fontSize="xs" fontWeight="bold" color="#FF8888">AI</Text>
+            </Box>
+          </Box>
         </Flex>
-
-        <Box
-          border="2px solid"
-          borderColor={isMyTurn ? "green.400" : "danger.300"}
-          borderRadius="3px"
-          px={6}
-          py={2}
-          className={isMyTurn ? "turn-indicator-pulse" : ""}
-        >
-          <Text
-            fontSize="sm"
-            fontFamily="heading"
-            fontWeight="700"
-            color={isMyTurn ? "green.300" : "danger.300"}
-            textTransform="uppercase"
-            letterSpacing="0.1em"
-          >
-            {isMyTurn ? "YOUR TURN" : "OPPONENT'S TURN"}
-          </Text>
-        </Box>
-
-        <Button
-          size="xs"
-          variant="danger"
-          onClick={abandonModal.onOpen}
-        >
-          Abandon
-        </Button>
-      </Flex>
-
-      {/* Guidance bar */}
-      <Box
-        bg={isMyTurn ? "rgba(0,255,68,0.1)" : "rgba(255,51,51,0.1)"}
-        border="1px solid"
-        borderColor={isMyTurn ? "rgba(0,255,68,0.2)" : "rgba(255,51,51,0.2)"}
-        borderLeft="3px solid"
-        borderLeftColor={isMyTurn ? "green.400" : "danger.300"}
-        borderRadius="3px"
-        px={3}
-        py={2}
-        mb={2}
-        flexShrink={0}
-        textAlign="center"
-      >
-        <Text fontSize="sm" color={isMyTurn ? "green.300" : "danger.300"} fontFamily="mono">
-          {guidanceMessage}
-        </Text>
       </Box>
 
-      {/* Main 3-column layout */}
-      <Flex gap={3} flex={1} minH={0}>
-        {/* Left: My beasts + PlannedActions */}
-        <VStack
-          w="240px"
-          gap={2}
-          align="stretch"
-          flexShrink={0}
-          display={{ base: "none", lg: "flex" }}
-        >
-          <Text
-            fontSize="sm"
-            color="green.300"
-            fontFamily="heading"
-            textTransform="uppercase"
-            letterSpacing="0.1em"
+      {/* === MAIN GRID AREA === */}
+      <Box
+        position="absolute"
+        top="70px"
+        left={0}
+        right={0}
+        bottom={0}
+        zIndex={3}
+      >
+        <HexGrid
+          hexSize={50}
+          myBeasts={myBeasts}
+          enemyBeasts={enemyBeasts}
+          selectedBeastIndex={isMyTurn ? selectedBeastIndex : null}
+          onCellClick={handleCellClick}
+          onBeastClick={handleBeastClick}
+          moveCells={moveCells}
+          attackCells={attackCells}
+          myPlayerIndex={myPlayerIndex}
+          actions={actions}
+          obstacles={obstacles}
+        />
+
+        {/* Waiting overlay */}
+        {!isMyTurn && (
+          <Flex
+            position="absolute"
+            top={0} left={0} right={0} bottom={0}
+            bg="rgba(10,6,4,0.5)"
+            backdropFilter="blur(1px)"
+            align="center"
+            justify="center"
+            zIndex={5}
           >
-            Your Beasts
-          </Text>
+            <VStack gap={3}>
+              <Spinner size="lg" color="teal.300" thickness="3px" />
+              <Text fontSize="sm" color="gray.400" fontFamily="mono">
+                Waiting for opponent...
+              </Text>
+            </VStack>
+          </Flex>
+        )}
+      </Box>
+
+      {/* === LEFT PANEL - My beasts === */}
+      <Box
+        position="absolute"
+        top="80px"
+        left="12px"
+        zIndex={10}
+        w="200px"
+        display={{ base: "none", lg: "block" }}
+      >
+        <VStack gap={2} align="stretch">
           {myBeasts.map((beast) => (
             <BeastHUD
               key={Number(beast.beast_index)}
@@ -510,83 +513,19 @@ export function BattlePage() {
               }
             />
           ))}
-
-          {/* PlannedActions section */}
-          {isMyTurn && (
-            <PlannedActions
-              myBeasts={myBeasts}
-              enemyBeasts={enemyBeasts}
-              actions={actions}
-              actionHistory={actionHistory}
-              potionToggle={potionToggle}
-              potionUsed={potionUsed}
-              onTogglePotion={() => setPotionToggle((v) => !v)}
-              onUndoLast={handleUndoLast}
-              onClearAll={handleClearAll}
-              onConfirm={handleConfirmActions}
-              isLoading={isLoading}
-            />
-          )}
         </VStack>
+      </Box>
 
-        {/* Center: HexGrid with waiting overlay */}
-        <VStack flex={1} minW={0} gap={2} align="stretch">
-          <Box flex={1} minH={0} overflow="auto" position="relative">
-            <HexGrid
-              hexSize={46}
-              myBeasts={myBeasts}
-              enemyBeasts={enemyBeasts}
-              selectedBeastIndex={isMyTurn ? selectedBeastIndex : null}
-              onCellClick={handleCellClick}
-              onBeastClick={handleBeastClick}
-              moveCells={moveCells}
-              attackCells={attackCells}
-              myPlayerIndex={myPlayerIndex}
-              actions={actions}
-              obstacles={obstacles}
-            />
-
-            {!isMyTurn && (
-              <Flex
-                position="absolute"
-                top={0}
-                left={0}
-                right={0}
-                bottom={0}
-                bg="rgba(11,26,11,0.6)"
-                backdropFilter="blur(1px)"
-                align="center"
-                justify="center"
-                borderRadius="3px"
-              >
-                <VStack gap={3}>
-                  <Spinner size="lg" color="green.400" thickness="3px" />
-                  <Text fontSize="sm" color="text.secondary" fontFamily="mono">
-                    Waiting for opponent...
-                  </Text>
-                </VStack>
-              </Flex>
-            )}
-          </Box>
-        </VStack>
-
-        {/* Right: Enemy beasts + Battle log */}
-        <VStack
-          w="240px"
-          gap={2}
-          align="stretch"
-          flexShrink={0}
-          display={{ base: "none", lg: "flex" }}
-        >
-          <Text
-            fontSize="sm"
-            color="danger.300"
-            fontFamily="heading"
-            textTransform="uppercase"
-            letterSpacing="0.1em"
-          >
-            Enemy Beasts
-          </Text>
+      {/* === RIGHT PANEL - Enemy beasts + Battle log === */}
+      <Box
+        position="absolute"
+        top="80px"
+        right="12px"
+        zIndex={10}
+        w="200px"
+        display={{ base: "none", lg: "block" }}
+      >
+        <VStack gap={2} align="stretch">
           {enemyBeasts.map((beast) => (
             <BeastHUD
               key={Number(beast.beast_index)}
@@ -594,30 +533,74 @@ export function BattlePage() {
               isMine={false}
             />
           ))}
-
-          <Box flex={1} minH={0}>
+          <Box maxH="200px" overflow="auto">
             <BattleLog events={battleLog} />
           </Box>
         </VStack>
-      </Flex>
+      </Box>
+
+      {/* === BOTTOM-RIGHT ACTION BUTTONS === */}
+      {isMyTurn && (
+        <Box className="action-buttons" zIndex={10}>
+          {/* Guidance */}
+          <Box
+            bg="rgba(0,0,0,0.7)"
+            border="1px solid rgba(0,180,170,0.3)"
+            borderRadius="6px"
+            px={3} py={1.5}
+            mb={1}
+          >
+            <Text fontSize="xs" color="teal.200" fontFamily="mono" textAlign="center">
+              {guidanceMessage}
+            </Text>
+          </Box>
+
+          {/* Planned Actions */}
+          <PlannedActions
+            myBeasts={myBeasts}
+            enemyBeasts={enemyBeasts}
+            actions={actions}
+            actionHistory={actionHistory}
+            potionToggle={potionToggle}
+            potionUsed={potionUsed}
+            onTogglePotion={() => setPotionToggle((v) => !v)}
+            onUndoLast={handleUndoLast}
+            onClearAll={handleClearAll}
+            onConfirm={handleConfirmActions}
+            isLoading={isLoading}
+          />
+
+          {/* Abandon small button */}
+          <Button
+            size="xs"
+            variant="ghost"
+            color="gray.500"
+            _hover={{ color: "red.300" }}
+            onClick={abandonModal.onOpen}
+            fontSize="0.65rem"
+          >
+            Abandon
+          </Button>
+        </Box>
+      )}
 
       {/* Abandon confirmation modal */}
       <Modal isOpen={abandonModal.isOpen} onClose={abandonModal.onClose} isCentered>
         <ModalOverlay />
-        <ModalContent bg="surface.panel" border="1px solid" borderColor="surface.border">
-          <ModalHeader fontSize="md" color="danger.300">Abandon Game</ModalHeader>
+        <ModalContent bg="#1a0e06" border="1px solid" borderColor="rgba(180,40,40,0.4)">
+          <ModalHeader fontSize="md" color="red.300">Abandon Game</ModalHeader>
           <ModalCloseButton />
           <ModalBody pb={6}>
-            <Text fontSize="sm" color="text.secondary" mb={4}>
+            <Text fontSize="sm" color="gray.400" mb={4}>
               Are you sure you want to abandon this game? This will count as a loss.
             </Text>
             <HStack justify="flex-end" gap={3}>
-              <Button size="sm" variant="secondary" onClick={abandonModal.onClose}>
+              <Button size="sm" variant="ghost" color="gray.400" onClick={abandonModal.onClose}>
                 Cancel
               </Button>
               <Button
                 size="sm"
-                variant="danger"
+                colorScheme="red"
                 isLoading={isLoading}
                 onClick={async () => {
                   if (gameId) await abandonGame(gameId);
@@ -631,6 +614,6 @@ export function BattlePage() {
           </ModalBody>
         </ModalContent>
       </Modal>
-    </Flex>
+    </Box>
   );
 }

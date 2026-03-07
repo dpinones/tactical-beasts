@@ -27,6 +27,17 @@ pub fn get_beast_type(beast_id: u32) -> u8 {
     }
 }
 
+/// Derives tier from beast ID using Death Mountain rules:
+/// Each type group (25 beasts) has 5 tiers, 5 beasts each
+/// index 0-4 = T1(1), 5-9 = T2(2), 10-14 = T3(3), 15-19 = T4(4), 20-24 = T5(5)
+pub fn derive_tier(beast_id: u8) -> u8 {
+    if beast_id == 0 {
+        return 5;
+    }
+    let index_in_group = ((beast_id - 1) % 25);
+    (index_in_group / 5) + 1
+}
+
 // All configurable functions below return fixed defaults in MVP.
 // They exist as extension points for future versions.
 

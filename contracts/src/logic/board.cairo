@@ -1,16 +1,17 @@
 use core::hash::HashStateTrait;
 use core::poseidon::PoseidonTrait;
 use starknet::ContractAddress;
+use crate::constants::GRID_NUM_ROWS;
 use crate::models::index::MapState;
 
-/// Returns the number of valid columns for a given row.
-/// Grid shape: 6/7/8/7/8/7/6
-pub fn row_width(row: u8) -> u8 {
-    if row == 0 || row == 6 {
+/// Returns the horizontal width (number of columns) for a given row index.
+/// Row widths: [6, 7, 8, 7, 8, 7, 6]
+pub fn row_width(col: u8) -> u8 {
+    if col == 0 || col == 6 {
         6
-    } else if row == 1 || row == 3 || row == 5 {
+    } else if col == 1 || col == 3 || col == 5 {
         7
-    } else if row == 2 || row == 4 {
+    } else if col == 2 || col == 4 {
         8
     } else {
         0
@@ -19,10 +20,10 @@ pub fn row_width(row: u8) -> u8 {
 
 /// Checks if a cell coordinate is within the grid bounds.
 pub fn is_valid_cell(row: u8, col: u8) -> bool {
-    if row > 6 {
+    if col >= GRID_NUM_ROWS {
         return false;
     }
-    col < row_width(row)
+    row < row_width(col)
 }
 
 /// Checks if a cell is an obstacle using the dynamic MapState.
@@ -37,14 +38,14 @@ pub fn is_obstacle_in_map(map_state: MapState, row: u8, col: u8) -> bool {
 
 /// Returns true if the given cell is a spawn position.
 fn is_spawn(row: u8, col: u8) -> bool {
-    // P1 spawns: (0,1), (0,3), (1,5)
-    // P2 spawns: (6,1), (6,3), (5,1)
+    // P1 spawns (left): (0,1), (0,3), (0,5)
+    // P2 spawns (right): (6,1), (6,3), (6,5)  — rightmost in 7-wide rows
     (row == 0 && col == 1)
         || (row == 0 && col == 3)
-        || (row == 1 && col == 5)
+        || (row == 0 && col == 5)
         || (row == 6 && col == 1)
         || (row == 6 && col == 3)
-        || (row == 5 && col == 1)
+        || (row == 6 && col == 5)
 }
 
 /// Generates 6 random obstacle positions for a game.
@@ -55,23 +56,23 @@ pub fn generate_obstacles(
     // Build list of candidate cells (all valid cells minus spawn positions)
     // Total valid cells: 6+7+8+7+8+7+6 = 49, minus 6 spawns = 43 candidates
     let mut candidates: Array<(u8, u8)> = array![];
-    let mut row: u8 = 0;
+    let mut col: u8 = 0;
     loop {
-        if row > 6 {
+        if col >= GRID_NUM_ROWS {
             break;
         }
-        let width = row_width(row);
-        let mut col: u8 = 0;
+        let width = row_width(col);
+        let mut row: u8 = 0;
         loop {
-            if col >= width {
+            if row >= width {
                 break;
             }
             if !is_spawn(row, col) {
                 candidates.append((row, col));
             }
-            col += 1;
+            row += 1;
         };
-        row += 1;
+        col += 1;
     };
 
     let seed = PoseidonTrait::new()
@@ -84,11 +85,8 @@ pub fn generate_obstacles(
     // Select 6 obstacles using Fisher-Yates-like selection
     let mut remaining = candidates.len();
     let mut selected: Array<(u8, u8)> = array![];
-    // We copy candidates into a mutable structure via spans and rebuilding
-    // Since Cairo arrays are append-only, we use index selection with swap-remove logic
     let candidates_span = candidates.span();
 
-    // Build a mutable index array
     let mut indices: Array<u32> = array![];
     let mut idx: u32 = 0;
     loop {
@@ -105,19 +103,15 @@ pub fn generate_obstacles(
             break;
         }
         let hash = PoseidonTrait::new().update(seed).update(i).finalize();
-        // Convert hash to u256 for modulo
         let hash_u256: u256 = hash.into();
         let remaining_u256: u256 = remaining.into();
         let pick: u32 = (hash_u256 % remaining_u256).try_into().unwrap();
 
-        // Get the index at position `pick`
         let actual_idx = *indices.span().at(pick);
         let (r, c) = *candidates_span.at(actual_idx);
         selected.append((r, c));
 
-        // Swap-remove: replace picked index with last, shrink remaining
         remaining -= 1;
-        // Rebuild indices without the picked element (swap with last)
         let last_idx = *indices.span().at(remaining);
         let mut new_indices: Array<u32> = array![];
         let mut j: u32 = 0;
@@ -170,7 +164,7 @@ fn abs_diff(a: u16, b: u16) -> u16 {
     }
 }
 
-/// Computes hex distance between two cells using odd-r offset → cube coordinate conversion.
+/// Computes hex distance between two cells using odd-r offset -> cube coordinate conversion.
 /// Uses a positive offset (100) to avoid unsigned underflow.
 pub fn hex_distance(r1: u8, c1: u8, r2: u8, c2: u8) -> u8 {
     let offset: u16 = 100;
@@ -201,7 +195,7 @@ pub fn hex_distance(r1: u8, c1: u8, r2: u8, c2: u8) -> u8 {
 }
 
 /// Returns fixed spawn position for a beast.
-/// Player 1 spawns in top rows, Player 2 in bottom rows.
+/// Player 1 spawns on the left (row 0), Player 2 on the right (row 6, rightmost of 7-wide rows).
 pub fn get_spawn_position(player_index: u8, beast_index: u8) -> (u8, u8) {
     if player_index == 1 {
         if beast_index == 0 {
@@ -209,7 +203,7 @@ pub fn get_spawn_position(player_index: u8, beast_index: u8) -> (u8, u8) {
         } else if beast_index == 1 {
             (0, 3)
         } else {
-            (1, 5)
+            (0, 5)
         }
     } else {
         if beast_index == 0 {
@@ -217,7 +211,7 @@ pub fn get_spawn_position(player_index: u8, beast_index: u8) -> (u8, u8) {
         } else if beast_index == 1 {
             (6, 3)
         } else {
-            (5, 1)
+            (6, 5)
         }
     }
 }

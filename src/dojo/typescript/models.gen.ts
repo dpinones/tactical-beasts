@@ -41,6 +41,12 @@ export interface Task {
 	description: string;
 }
 
+// Type definition for `tactical_beats::models::index::BeastConfig` struct
+export interface BeastConfig {
+	id: BigNumberish;
+	beast_nft_address: string;
+}
+
 // Type definition for `tactical_beats::models::index::BeastState` struct
 export interface BeastState {
 	game_id: BigNumberish;
@@ -297,6 +303,7 @@ export interface SchemaType extends ISchemaType {
 		AchievementCompletion: AchievementCompletion,
 		AchievementDefinition: AchievementDefinition,
 		Task: Task,
+		BeastConfig: BeastConfig,
 		BeastState: BeastState,
 		Game: Game,
 		GameConfig: GameConfig,
@@ -358,6 +365,10 @@ export const schema: SchemaType = {
 			id: 0,
 			total: 0,
 		description: "",
+		},
+		BeastConfig: {
+			id: 0,
+			beast_nft_address: "",
 		},
 		BeastState: {
 			game_id: 0,
@@ -558,6 +569,7 @@ export enum ModelsMapping {
 	AchievementCompletion = 'achievement-AchievementCompletion',
 	AchievementDefinition = 'achievement-AchievementDefinition',
 	Task = 'achievement-Task',
+	BeastConfig = 'tactical_beats-BeastConfig',
 	BeastState = 'tactical_beats-BeastState',
 	Game = 'tactical_beats-Game',
 	GameConfig = 'tactical_beats-GameConfig',

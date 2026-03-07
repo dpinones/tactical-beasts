@@ -3,12 +3,15 @@ pub fn NAME() -> ByteArray {
     "game_system"
 }
 
+use starknet::ContractAddress;
+
 #[starknet::interface]
 pub trait IGameSystem<T> {
     fn create_game(ref self: T) -> u32;
     fn create_friendly_game(ref self: T) -> u32;
     fn join_game(ref self: T, game_id: u32);
     fn set_team(ref self: T, game_id: u32, beast_1: u32, beast_2: u32, beast_3: u32);
+    fn set_beast_config(ref self: T, beast_nft_address: ContractAddress);
     fn execute_turn(ref self: T, game_id: u32, actions: Array<crate::types::Action>);
     fn find_match(ref self: T) -> u32;
     fn cancel_matchmaking(ref self: T);
@@ -32,14 +35,19 @@ pub mod game_system {
     use leaderboard::components::rankable::RankableComponent;
     use starknet::ContractAddress;
     use crate::constants::{
-        ACTION_ATTACK, ACTION_CONSUMABLE_ATTACK, ACTION_MOVE, ACTION_WAIT, BEASTS_PER_PLAYER, DEFAULT_EXTRA_LIVES,
-        GAME_STATUS_FINISHED, GAME_STATUS_PLAYING, GAME_STATUS_WAITING, LEADERBOARD_ID, MAX_ROUNDS, NAMESPACE,
-        TASK_FLAWLESS, TASK_WINNER, WIN_BONUS,
+        ACTION_ATTACK, ACTION_CONSUMABLE_ATTACK, ACTION_MOVE, ACTION_WAIT, BEAST_NFT_ADDRESS,
+        BEASTS_PER_PLAYER, DEFAULT_EXTRA_LIVES, GAME_STATUS_FINISHED, GAME_STATUS_PLAYING,
+        GAME_STATUS_WAITING, LEADERBOARD_ID, MAINNET_CHAIN_ID, MAX_ROUNDS, NAMESPACE, TASK_FLAWLESS,
+        TASK_WINNER, WIN_BONUS,
     };
     use crate::elements::achievements::{ACHIEVEMENT_COUNT, Achievement, AchievementTrait};
     use crate::events::index::{GameCreated, GameFinished, PlayerJoined};
+    use crate::interfaces::{IBeastsDispatcher, IBeastsDispatcherTrait, IERC721Dispatcher, IERC721DispatcherTrait};
     use crate::logic::{beast, board, combat};
-    use crate::models::index::{BeastState, Game, GameConfig, GameToken, GameTokens, MapState, MatchmakingQueue, PlayerProfile, PlayerState};
+    use crate::models::index::{
+        BeastConfig, BeastState, Game, GameConfig, GameToken, GameTokens, MapState, MatchmakingQueue, PlayerProfile,
+        PlayerState,
+    };
     use crate::systems::collection::{ICollectionDispatcher, ICollectionDispatcherTrait, NAME as COLLECTION_NAME};
     use crate::types::Action;
     use super::{IGameSystem, IMinigameTokenData};
@@ -212,6 +220,12 @@ pub mod game_system {
             }
         }
 
+        fn set_beast_config(ref self: ContractState, beast_nft_address: ContractAddress) {
+            let mut world = self.world(@NAMESPACE());
+            // TODO: add owner check
+            world.write_model(@BeastConfig { id: 0, beast_nft_address });
+        }
+
         fn set_team(ref self: ContractState, game_id: u32, beast_1: u32, beast_2: u32, beast_3: u32) {
             let mut world = self.world(@NAMESPACE());
             let caller = starknet::get_caller_address();
@@ -238,9 +252,9 @@ pub mod game_system {
                 game_id, player: caller, player_index, beast_1, beast_2, beast_3, potion_used: false,
             };
             world.write_model(@player_state);
-            create_beast(ref world, game_id, player_index, 0, beast_1);
-            create_beast(ref world, game_id, player_index, 1, beast_2);
-            create_beast(ref world, game_id, player_index, 2, beast_3);
+            create_beast(ref world, game_id, player_index, 0, beast_1, caller);
+            create_beast(ref world, game_id, player_index, 1, beast_2, caller);
+            create_beast(ref world, game_id, player_index, 2, beast_3, caller);
 
             try_start_game(ref world, game_id);
         }
@@ -444,16 +458,63 @@ pub mod game_system {
         world.emit_event(@PlayerJoined { game_id, player2: caller, time: starknet::get_block_timestamp() });
     }
 
-    fn create_beast(ref world: WorldStorage, game_id: u32, player_index: u8, beast_index: u8, beast_id: u32) {
-        let hp = beast::get_beast_hp(beast_id);
+    fn create_beast(
+        ref world: WorldStorage,
+        game_id: u32,
+        player_index: u8,
+        beast_index: u8,
+        beast_id: u32,
+        caller: ContractAddress,
+    ) {
+        let config: BeastConfig = world.read_model(0);
+        let beast_nft_addr = if config.beast_nft_address != zero_address() {
+            config.beast_nft_address
+        } else {
+            // Only use the hardcoded NFT address on mainnet; on local/testnet use zero (hardcoded mode)
+            let chain_id = starknet::get_tx_info().unbox().chain_id;
+            if chain_id == MAINNET_CHAIN_ID {
+                let addr: ContractAddress = BEAST_NFT_ADDRESS.try_into().unwrap();
+                addr
+            } else {
+                zero_address()
+            }
+        };
+
+        let (beast_type, tier, level, hp) = if beast_nft_addr != zero_address() {
+            // Real beasts mode: read from NFT contract
+            let beast_dispatcher = IBeastsDispatcher { contract_address: beast_nft_addr };
+            let erc721_dispatcher = IERC721Dispatcher { contract_address: beast_nft_addr };
+
+            // Validate ownership on mainnet only
+            let chain_id = starknet::get_tx_info().unbox().chain_id;
+            if chain_id == MAINNET_CHAIN_ID {
+                let owner = erc721_dispatcher.owner_of(beast_id.into());
+                assert!(owner == caller, "Not beast owner");
+            }
+
+            // Read beast stats from NFT contract
+            let packable = beast_dispatcher.get_beast(beast_id.into());
+            let beast_type = beast::get_beast_type(packable.id.into());
+            let tier = beast::derive_tier(packable.id);
+            (beast_type, tier, packable.level, packable.health)
+        } else {
+            // Hardcoded mode (local dev / no config set)
+            (
+                beast::get_beast_type(beast_id),
+                beast::get_beast_tier(beast_id),
+                beast::get_beast_level(beast_id),
+                beast::get_beast_hp(beast_id),
+            )
+        };
+
         let beast_state = BeastState {
             game_id,
             player_index,
             beast_index,
             beast_id,
-            beast_type: beast::get_beast_type(beast_id),
-            tier: beast::get_beast_tier(beast_id),
-            level: beast::get_beast_level(beast_id),
+            beast_type,
+            tier,
+            level,
             hp,
             hp_max: hp,
             extra_lives: DEFAULT_EXTRA_LIVES,

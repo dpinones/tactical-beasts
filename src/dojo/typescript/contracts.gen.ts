@@ -646,6 +646,27 @@ export function setupWorld(provider: DojoProvider) {
 		}
 	};
 
+	const build_game_system_setBeastConfig_calldata = (beastNftAddress: string): DojoCall => {
+		return {
+			contractName: "game_system",
+			entrypoint: "set_beast_config",
+			calldata: [beastNftAddress],
+		};
+	};
+
+	const game_system_setBeastConfig = async (snAccount: Account | AccountInterface, beastNftAddress: string) => {
+		try {
+			return await provider.execute(
+				snAccount,
+				build_game_system_setBeastConfig_calldata(beastNftAddress),
+				DOJO_NAMESPACE,
+			);
+		} catch (error) {
+			console.error(error);
+			throw error;
+		}
+	};
+
 	const build_game_system_setTeam_calldata = (gameId: BigNumberish, beast1: BigNumberish, beast2: BigNumberish, beast3: BigNumberish): DojoCall => {
 		return {
 			contractName: "game_system",
@@ -739,6 +760,8 @@ export function setupWorld(provider: DojoProvider) {
 			buildJoinGameCalldata: build_game_system_joinGame_calldata,
 			score: game_system_score,
 			buildScoreCalldata: build_game_system_score_calldata,
+			setBeastConfig: game_system_setBeastConfig,
+			buildSetBeastConfigCalldata: build_game_system_setBeastConfig_calldata,
 			setTeam: game_system_setTeam,
 			buildSetTeamCalldata: build_game_system_setTeam_calldata,
 		},

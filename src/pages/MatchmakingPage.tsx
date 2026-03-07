@@ -1,9 +1,10 @@
-import { Box, Flex, Heading, Text, Spinner, Button } from "@chakra-ui/react";
+import { Flex, Heading, Text, Spinner, Button } from "@chakra-ui/react";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useGameActions } from "../hooks/useGameActions";
 import { useGameQuery } from "../hooks/useGameQuery";
 import { updateGameInviteGameId } from "../services/supabase";
+import { BeastClothesline } from "../components/BeastClothesline";
 
 type Phase = "searching" | "waiting" | "waiting-friend" | "matched" | "cancelling" | "error";
 
@@ -86,6 +87,7 @@ export function MatchmakingPage() {
   if (phase === "searching") {
     return (
       <Flex direction="column" align="center" justify="center" minH="100vh" gap={6} p={4}>
+        <BeastClothesline />
         <Heading
           size="lg"
           fontFamily="heading"
@@ -95,19 +97,10 @@ export function MatchmakingPage() {
         >
           Matchmaking
         </Heading>
-        <Box
-          bg="surface.panel"
-          border="1px solid"
-          borderColor="surface.border"
-          borderRadius="5px"
-          p={8}
-          textAlign="center"
-        >
-          <Spinner size="lg" color="green.400" mb={4} />
-          <Text fontSize="sm" color="text.secondary">
-            Buscando partida...
-          </Text>
-        </Box>
+        <Spinner size="lg" color="green.400" />
+        <Text fontSize="sm" color="text.secondary">
+          Buscando partida...
+        </Text>
         <Button variant="secondary" onClick={handleCancel}>
           Cancel
         </Button>
@@ -137,6 +130,7 @@ export function MatchmakingPage() {
   if (phase === "waiting-friend") {
     return (
       <Flex direction="column" align="center" justify="center" minH="100vh" gap={6} p={4}>
+        <BeastClothesline />
         <Heading
           size="lg"
           fontFamily="heading"
@@ -146,24 +140,15 @@ export function MatchmakingPage() {
         >
           Friendly Match
         </Heading>
-        <Box
-          bg="surface.panel"
-          border="1px solid"
-          borderColor="green.700"
-          borderRadius="5px"
-          p={8}
-          textAlign="center"
-        >
-          <Spinner size="lg" color="green.400" mb={4} />
-          <Text fontSize="sm" color="text.secondary">
-            Waiting for {friendName} to accept...
+        <Spinner size="lg" color="green.400" />
+        <Text fontSize="sm" color="text.secondary">
+          Waiting for {friendName} to accept...
+        </Text>
+        {gameId && (
+          <Text fontSize="xs" color="text.muted" mt={2}>
+            Game #{gameId}
           </Text>
-          {gameId && (
-            <Text fontSize="xs" color="text.muted" mt={2}>
-              Game #{gameId}
-            </Text>
-          )}
-        </Box>
+        )}
         <Button variant="secondary" onClick={handleCancel}>
           Cancel
         </Button>
@@ -174,6 +159,7 @@ export function MatchmakingPage() {
   // Phase: waiting
   return (
     <Flex direction="column" align="center" justify="center" minH="100vh" gap={6} p={4}>
+      <BeastClothesline />
       <Heading
         size="lg"
         fontFamily="heading"
@@ -183,24 +169,15 @@ export function MatchmakingPage() {
       >
         Matchmaking
       </Heading>
-      <Box
-        bg="surface.panel"
-        border="1px solid"
-        borderColor="surface.border"
-        borderRadius="5px"
-        p={8}
-        textAlign="center"
-      >
-        <Spinner size="lg" color="green.400" mb={4} />
-        <Text fontSize="sm" color="text.secondary">
-          Esperando oponente...
+      <Spinner size="lg" color="green.400" />
+      <Text fontSize="sm" color="text.secondary">
+        Esperando oponente...
+      </Text>
+      {gameId && (
+        <Text fontSize="xs" color="text.muted" mt={2}>
+          Game #{gameId}
         </Text>
-        {gameId && (
-          <Text fontSize="xs" color="text.muted" mt={2}>
-            Game #{gameId}
-          </Text>
-        )}
-      </Box>
+      )}
       <Button variant="secondary" onClick={handleCancel}>
         Cancel
       </Button>

@@ -290,19 +290,33 @@ body {
   stroke: rgba(255, 255, 255, 0.25);
 }
 
-/* Zone classes — same style */
-.hex-cell--zone-player,
-.hex-cell--zone-neutral,
-.hex-cell--zone-enemy {
-  fill: transparent;
-  stroke: rgba(255, 255, 255, 0.15);
+/* Occupied cells (ally/enemy) */
+.hex-cell--zone-player {
+  fill: rgba(51, 255, 102, 0.16);
+  stroke: rgba(51, 255, 102, 0.72);
   stroke-width: 2.5;
 }
 
-.hex-cell--zone-player:hover,
-.hex-cell--zone-neutral:hover,
+.hex-cell--zone-player:hover {
+  fill: rgba(51, 255, 102, 0.26);
+  stroke: rgba(51, 255, 102, 0.9);
+}
+
+.hex-cell--zone-enemy {
+  fill: rgba(255, 215, 0, 0.18);
+  stroke: rgba(255, 215, 0, 0.78);
+  stroke-width: 2.5;
+}
+
 .hex-cell--zone-enemy:hover {
-  fill: rgba(255, 255, 255, 0.04);
+  fill: rgba(255, 215, 0, 0.3);
+  stroke: rgba(255, 215, 0, 0.95);
+}
+
+.hex-cell--zone-neutral {
+  fill: transparent;
+  stroke: rgba(255, 255, 255, 0.15);
+  stroke-width: 2.5;
 }
 
 /* Terrain variations — no visual difference in idle state */

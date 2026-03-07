@@ -1,6 +1,7 @@
 import { Box, Button, Flex, Text, Switch, VStack, HStack } from "@chakra-ui/react";
 import { BeastStateModel, BeastType, ActionType, GameAction } from "../domain/types";
-import { getTypeName, getTypeColor } from "../domain/combat";
+import { getTypeColor } from "../domain/combat";
+import { getSpeciesNameByTokenId } from "../data/beasts";
 
 interface PlannedActionsProps {
   myBeasts: BeastStateModel[];
@@ -40,12 +41,16 @@ function describeAction(action: GameAction, enemyBeasts: BeastStateModel[]): str
       return `Move -> (${action.targetRow},${action.targetCol})`;
     case ActionType.ATTACK: {
       const target = enemyBeasts.find((b) => Number(b.beast_index) === action.targetIndex);
-      const name = target ? getTypeName(Number(target.beast_type) as BeastType) : `#${action.targetIndex}`;
+      const name = target
+        ? getSpeciesNameByTokenId(Number(target.token_id)) || getSpeciesNameByTokenId(Number(target.beast_id))
+        : `#${action.targetIndex}`;
       return `Atk -> ${name} #${action.targetIndex}`;
     }
     case ActionType.CONSUMABLE_ATTACK_POTION: {
       const target = enemyBeasts.find((b) => Number(b.beast_index) === action.targetIndex);
-      const name = target ? getTypeName(Number(target.beast_type) as BeastType) : `#${action.targetIndex}`;
+      const name = target
+        ? getSpeciesNameByTokenId(Number(target.token_id)) || getSpeciesNameByTokenId(Number(target.beast_id))
+        : `#${action.targetIndex}`;
       return `Potion+Atk -> ${name} #${action.targetIndex}`;
     }
     case ActionType.WAIT:
@@ -70,7 +75,7 @@ export function PlannedActions({
   const allActionsSet = aliveBeasts.every((b) => actions.has(Number(b.beast_index)));
 
   return (
-    <VStack gap={2} align="stretch">
+    <VStack gap={1.5} align="stretch">
       {/* Potion toggle */}
       <Flex
         align="center"
@@ -79,8 +84,8 @@ export function PlannedActions({
         border="1px solid"
         borderColor={potionToggle ? "#2dd88a" : "rgba(45, 216, 138, 0.2)"}
         borderRadius="3px"
-        px={3}
-        py={2}
+        px={2.5}
+        py={1.5}
         boxShadow={potionToggle ? "0 0 8px rgba(45, 216, 138, 0.3)" : "none"}
       >
         <Text fontSize="xs" color={potionUsed ? "rgba(139,255,196,0.4)" : "#8BFFC4"} fontFamily="mono" fontWeight="600" textTransform="uppercase">
@@ -97,7 +102,7 @@ export function PlannedActions({
 
       {/* Planned actions list */}
       <Box p={0}>
-        <VStack gap={1} align="stretch">
+        <VStack gap={0.5} align="stretch">
           {/* Actions in execution order (selection order) */}
           {actionHistory.map((idx, i) => {
             const beast = aliveBeasts.find((b) => Number(b.beast_index) === idx);
@@ -105,16 +110,17 @@ export function PlannedActions({
             const action = actions.get(idx);
             if (!action) return null;
             const bType = Number(beast.beast_type) as BeastType;
-            const typeName = getTypeName(bType);
             const color = getTypeColor(bType);
+            const beastName =
+              getSpeciesNameByTokenId(Number(beast.token_id)) || getSpeciesNameByTokenId(Number(beast.beast_id));
 
             return (
               <Flex
                 key={idx}
                 align="center"
-                gap={1.5}
-                px={2}
-                py={1.5}
+                gap={1}
+                px={1.5}
+                py={1}
                 bg="rgba(45, 216, 138, 0.06)"
                 borderRadius="2px"
                 borderLeft="3px solid"
@@ -123,8 +129,16 @@ export function PlannedActions({
                 <Text fontSize="xs" color="rgba(139,255,196,0.5)" fontFamily="mono" fontWeight="700" w="14px">
                   {i + 1}.
                 </Text>
-                <Text fontSize="xs" color={color} fontFamily="mono" fontWeight="600" minW="40px">
-                  {typeName}
+                <Text
+                  fontSize="xs"
+                  color={color}
+                  fontFamily="mono"
+                  fontWeight="700"
+                  minW="54px"
+                  maxW="72px"
+                  noOfLines={1}
+                >
+                  {beastName}
                 </Text>
                 <Text fontSize="xs" color="rgba(139,255,196,0.5)" fontFamily="mono" fontWeight="700" minW="16px">
                   {actionSymbol(action.actionType)}
@@ -140,23 +154,32 @@ export function PlannedActions({
             .filter((b) => !actions.has(Number(b.beast_index)))
             .map((beast) => {
               const bType = Number(beast.beast_type) as BeastType;
-              const typeName = getTypeName(bType);
               const color = getTypeColor(bType);
+              const beastName =
+                getSpeciesNameByTokenId(Number(beast.token_id)) || getSpeciesNameByTokenId(Number(beast.beast_id));
 
               return (
                 <Flex
                   key={Number(beast.beast_index)}
                   align="center"
-                  gap={1.5}
-                  px={2}
-                  py={1.5}
+                  gap={1}
+                  px={1.5}
+                  py={1}
                   borderRadius="2px"
                 >
                   <Text fontSize="xs" color="rgba(139,255,196,0.4)" fontFamily="mono" fontWeight="700" w="14px">
                     -
                   </Text>
-                  <Text fontSize="xs" color={color} fontFamily="mono" fontWeight="600" minW="40px">
-                    {typeName}
+                  <Text
+                    fontSize="xs"
+                    color={color}
+                    fontFamily="mono"
+                    fontWeight="700"
+                    minW="54px"
+                    maxW="72px"
+                    noOfLines={1}
+                  >
+                    {beastName}
                   </Text>
                   <Box as="span" w="6px" h="6px" borderRadius="50%" bg="#2dd88a" className="pending-dot" />
                 </Flex>
@@ -166,7 +189,7 @@ export function PlannedActions({
       </Box>
 
       {/* Undo / Clear / Confirm buttons */}
-      <HStack gap={1.5}>
+      <HStack gap={1}>
         <Button
           size="xs"
           variant="secondary"

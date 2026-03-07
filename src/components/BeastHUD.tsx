@@ -1,6 +1,6 @@
 import { Box, Flex, Text, Badge, Progress, Image } from "@chakra-ui/react";
 import { BeastStateModel, BeastType, ActionType, GameAction } from "../domain/types";
-import { getTypeColor, getTypeName } from "../domain/combat";
+import { getTypeName } from "../domain/combat";
 import { getBeastImagePath, getSpeciesNameByTokenId, getSubclass, getSubclassName } from "../data/beasts";
 
 interface BeastHUDProps {
@@ -10,7 +10,6 @@ interface BeastHUDProps {
   isSelected?: boolean;
   plannedAction?: GameAction;
   onClick?: () => void;
-  onWait?: () => void;
 }
 
 function actionShortLabel(type: ActionType): string {
@@ -45,22 +44,18 @@ export function BeastHUD({
   isSelected,
   plannedAction,
   onClick,
-  onWait,
 }: BeastHUDProps) {
   const hp = Number(beast.hp);
   const hpMax = Number(beast.hp_max);
   const hpPct = hpMax > 0 ? (hp / hpMax) * 100 : 0;
   const alive = Boolean(beast.alive);
-  const extraLives = Number(beast.extra_lives);
   const bType = Number(beast.beast_type) as BeastType;
-  const typeColor = getTypeColor(bType);
   const typeName = getTypeName(bType);
   const beastId = Number(beast.beast_id);
   const tokenId = Number(beast.token_id);
   const speciesName = getSpeciesNameByTokenId(tokenId) || getSpeciesNameByTokenId(beastId);
   const subclass = getSubclass(beastId);
   const subclassName = getSubclassName(subclass);
-
   const badgeVariant =
     bType === BeastType.Magical
       ? "magical"
@@ -74,7 +69,7 @@ export function BeastHUD({
       border={isSelected ? "2px solid" : "1px solid"}
       borderColor={isSelected ? "#2dd88a" : alive ? "rgba(45,216,138,0.2)" : "rgba(220,60,60,0.4)"}
       borderRadius="3px"
-      p={2}
+      p={1.5}
       opacity={alive ? 1 : 0.35}
       cursor={onClick ? "pointer" : "default"}
       onClick={onClick}
@@ -90,22 +85,22 @@ export function BeastHUD({
       className={isSelected ? "beast-selected-glow" : !alive ? "beast-ko" : undefined}
     >
       {/* Beast portrait - prominent */}
-      <Flex align="center" gap={3}>
+      <Flex align="center" gap={2}>
         <Box position="relative" flexShrink={0}>
           <Image
             src={getBeastImagePath(Number(beast.beast_id))}
             alt={beastName || speciesName}
-            w="64px"
-            h="64px"
+            w="56px"
+            h="56px"
             objectFit="contain"
             borderRadius="6px"
             border="2px solid"
-            borderColor={isSelected ? "#2dd88a" : typeColor}
+            borderColor={isSelected ? "#2dd88a" : "rgba(232, 224, 208, 0.45)"}
             bg="rgba(0,0,0,0.4)"
             filter={alive ? "none" : "grayscale(1)"}
             fallback={
-              <Flex w="64px" h="64px" align="center" justify="center" bg="rgba(0,0,0,0.4)" borderRadius="6px" border="2px solid" borderColor={typeColor} flexShrink={0}>
-                <Text fontSize="xl" color={typeColor} fontWeight="bold">{speciesName[0]}</Text>
+              <Flex w="56px" h="56px" align="center" justify="center" bg="rgba(0,0,0,0.4)" borderRadius="6px" border="2px solid" borderColor="rgba(232, 224, 208, 0.45)" flexShrink={0}>
+                <Text fontSize="xl" color="#E8E0D0" fontWeight="bold">{speciesName[0]}</Text>
               </Flex>
             }
           />
@@ -123,10 +118,10 @@ export function BeastHUD({
         </Box>
 
         <Box flex={1} minW={0}>
-          {/* Name + Badge */}
-          <Flex justify="space-between" align="center" mb={1}>
+          {/* Name + Type */}
+          <Flex justify="space-between" align="center" mb={0.5}>
             <Text
-              fontSize="sm"
+              fontSize="xs"
               fontWeight="700"
               color={alive ? "#fff" : "rgba(255,255,255,0.4)"}
               fontFamily="heading"
@@ -141,18 +136,13 @@ export function BeastHUD({
           </Flex>
 
           {/* Subclass + Token ID */}
-          <Flex justify="space-between" align="center" mb={1}>
-            <Text fontSize="9px" color="#8BFFC4" fontFamily="mono" opacity={0.7}>
-              {subclassName}
-            </Text>
-            <Text fontSize="8px" color="rgba(255,255,255,0.35)" fontFamily="mono">
-              #{tokenId}
-            </Text>
-          </Flex>
+          <Text fontSize="9px" color="#8BFFC4" fontFamily="mono" opacity={0.7} mb={0.5} noOfLines={1}>
+            {subclassName}#{tokenId}
+          </Text>
 
           {/* HP Bar */}
-          <Box mb={1}>
-            <Flex justify="space-between" mb="2px">
+          <Box mb={0.5}>
+            <Flex justify="space-between" mb="1px">
               <Text fontSize="9px" color="#8BFFC4" fontFamily="mono" textTransform="uppercase" opacity={0.7}>
                 HP
               </Text>
@@ -169,8 +159,8 @@ export function BeastHUD({
           </Box>
 
           {/* Stats row */}
-          <Flex justify="space-between" gap={2}>
-            <Flex direction="column" align="center">
+          <Flex justify="flex-start" gap={3}>
+            <Flex direction="column" align="flex-start">
               <Text fontSize="8px" color="#8BFFC4" textTransform="uppercase" opacity={0.6}>
                 LVL
               </Text>
@@ -178,7 +168,7 @@ export function BeastHUD({
                 {Number(beast.level)}
               </Text>
             </Flex>
-            <Flex direction="column" align="center">
+            <Flex direction="column" align="flex-start">
               <Text fontSize="8px" color="#8BFFC4" textTransform="uppercase" opacity={0.6}>
                 TIER
               </Text>
@@ -186,63 +176,39 @@ export function BeastHUD({
                 T{Number(beast.tier)}
               </Text>
             </Flex>
-            <Flex direction="column" align="center">
-              <Text fontSize="8px" color="#8BFFC4" textTransform="uppercase" opacity={0.6}>
-                LIVES
-              </Text>
-              <Text
-                fontSize="xs"
-                fontFamily="mono"
-                fontWeight="700"
-                color={extraLives > 0 ? "#2dd88a" : "rgba(255,255,255,0.3)"}
-              >
-                {extraLives}
-              </Text>
-            </Flex>
           </Flex>
         </Box>
-
-        {/* Wait button */}
-        {onWait && alive && (
-          <Box
-            as="button"
-            bg="rgba(45,216,138,0.15)"
-            border="1px solid rgba(45,216,138,0.3)"
-            borderRadius="3px"
-            px={1.5}
-            py={1}
-            fontSize="9px"
-            fontWeight="700"
-            fontFamily="mono"
-            color="#8BFFC4"
-            cursor="pointer"
-            flexShrink={0}
-            _hover={{ bg: "rgba(45,216,138,0.3)" }}
-            onClick={(e: React.MouseEvent) => {
-              e.stopPropagation();
-              onWait();
-            }}
-          >
-            WAIT
-          </Box>
-        )}
       </Flex>
 
-      {plannedAction && alive && (
+      {alive && (
         <Box
-          mt={1.5}
-          bg="rgba(45,216,138,0.1)"
+          mt={1}
+          minH="18px"
+          bg={plannedAction ? "rgba(45,216,138,0.1)" : "transparent"}
           border="1px solid"
-          borderColor={actionColor(plannedAction.actionType)}
+          borderColor={plannedAction ? actionColor(plannedAction.actionType) : "transparent"}
           borderRadius="2px"
-          px={2}
+          px={1.5}
           py={0.5}
           textAlign="center"
-          boxShadow={plannedAction.actionType === ActionType.CONSUMABLE_ATTACK_POTION ? "glowGold" : "none"}
+          boxShadow={
+            plannedAction?.actionType === ActionType.CONSUMABLE_ATTACK_POTION
+              ? "glowGold"
+              : "none"
+          }
+          visibility={plannedAction ? "visible" : "hidden"}
         >
-          <Text fontSize="xs" color={actionColor(plannedAction.actionType)} fontWeight="700" fontFamily="mono" textTransform="uppercase">
-            {actionShortLabel(plannedAction.actionType)}
-          </Text>
+          {plannedAction && (
+            <Text
+              fontSize="10px"
+              color={actionColor(plannedAction.actionType)}
+              fontWeight="700"
+              fontFamily="mono"
+              textTransform="uppercase"
+            >
+              {actionShortLabel(plannedAction.actionType)}
+            </Text>
+          )}
         </Box>
       )}
     </Box>

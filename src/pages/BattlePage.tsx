@@ -184,6 +184,7 @@ export function BattlePage() {
 
   const handleCellClick = useCallback(
     (row: number, col: number) => {
+      if (!isMyTurn) return;
       if (selectedBeastIndex === null) return;
 
       // Check if cell is in moveCells
@@ -229,11 +230,12 @@ export function BattlePage() {
       // Click outside range -> deselect
       setSelectedBeastIndex(null);
     },
-    [selectedBeastIndex, moveCells, attackCells, enemyBeasts, potionToggle, autoAdvance, actions]
+    [isMyTurn, selectedBeastIndex, moveCells, attackCells, enemyBeasts, potionToggle, autoAdvance, actions]
   );
 
   const handleBeastClick = useCallback(
     (playerIndex: number, beastIndex: number) => {
+      if (!isMyTurn) return;
       // Enemy click while beast selected -> attack if in range
       if (playerIndex !== myPlayerIndex && selectedBeastIndex !== null) {
         const enemyBeast = enemyBeasts.find((b) => Number(b.beast_index) === beastIndex);
@@ -267,24 +269,7 @@ export function BattlePage() {
         }
       }
     },
-    [myPlayerIndex, selectedBeastIndex, enemyBeasts, attackCells, potionToggle, autoAdvance, actions]
-  );
-
-  const handleWait = useCallback(
-    (beastIndex: number) => {
-      const action: GameAction = {
-        beastIndex,
-        actionType: ActionType.WAIT,
-        targetIndex: 0,
-        targetRow: 0,
-        targetCol: 0,
-      };
-      const updated = new Map(actions).set(beastIndex, action);
-      setActions(updated);
-      setActionHistory((prev) => [...prev.filter((i) => i !== beastIndex), beastIndex]);
-      autoAdvance(updated);
-    },
-    [autoAdvance, actions]
+    [isMyTurn, myPlayerIndex, selectedBeastIndex, enemyBeasts, attackCells, potionToggle, autoAdvance, actions]
   );
 
   const handleUndoLast = useCallback(() => {
@@ -401,7 +386,7 @@ export function BattlePage() {
 
       {/* === TOP HUD === */}
       <Box className="battle-hud-top" px={4} pt={0}>
-        <Flex w="100%" maxW="900px" align="flex-start" justify="space-between">
+        <Flex w="100%" maxW="700px" align="flex-start" justify="center" gap={5}>
           {/* Player tag - left */}
           <Box className="player-tag player-tag--me" mt={2}>
             <Box
@@ -417,10 +402,20 @@ export function BattlePage() {
 
           {/* Round badge - center */}
           <Box className="round-badge">
-            <Text className="round-badge__label">Round {game.round}</Text>
-            <Text className="round-badge__timer">
-              {isMyTurn ? "YOUR TURN" : "WAITING"}
-            </Text>
+            {isMyTurn ? (
+              <>
+                <Text className="round-badge__label">Round {game.round}</Text>
+                <Text className="round-badge__timer">YOUR TURN</Text>
+              </>
+            ) : (
+              <>
+                <HStack justify="center" gap={2} mb={1}>
+                  <Spinner size="sm" color="#FFFFFF" thickness="3px" speed="0.75s" />
+                  <Text className="round-badge__label">Turno del rival</Text>
+                </HStack>
+                <Text className="round-badge__timer">WAITING</Text>
+              </>
+            )}
           </Box>
 
           {/* Enemy tag - right */}
@@ -446,6 +441,7 @@ export function BattlePage() {
         right={0}
         bottom={0}
         zIndex={3}
+        transform={{ base: "none", lg: "translateX(44px)" }}
       >
         <HexGrid
           hexSize={50}
@@ -460,26 +456,6 @@ export function BattlePage() {
           actions={actions}
           obstacles={obstacles}
         />
-
-        {/* Waiting overlay */}
-        {!isMyTurn && (
-          <Flex
-            position="absolute"
-            top={0} left={0} right={0} bottom={0}
-            bg="rgba(10,6,4,0.5)"
-            backdropFilter="blur(1px)"
-            align="center"
-            justify="center"
-            zIndex={5}
-          >
-            <VStack gap={3}>
-              <Spinner size="lg" color="teal.300" thickness="3px" />
-              <Text fontSize="sm" color="gray.400" fontFamily="mono">
-                Waiting for opponent...
-              </Text>
-            </VStack>
-          </Flex>
-        )}
       </Box>
 
       {/* === LEFT PANEL - My beasts + Actions === */}
@@ -490,17 +466,18 @@ export function BattlePage() {
         bottom="16px"
         zIndex={10}
         w="220px"
-        gap={3}
+        gap={2}
         align="stretch"
         display={{ base: "none", lg: "flex" }}
-        overflow="auto"
+        overflow="hidden"
+        minH={0}
       >
-        <Box className="battle-panel">
+        <Box className="battle-panel" display="flex" flexDirection="column" flex={1} minH={0}>
           <Box className="battle-panel__header">
             <Text className="battle-panel__title">Your Beasts</Text>
           </Box>
-          <Box className="battle-panel__body">
-            <VStack gap={2} align="stretch">
+          <Box className="battle-panel__body" flex={1} minH={0}>
+            <VStack gap={1.5} align="stretch">
               {myBeasts.map((beast) => (
                 <BeastHUD
                   key={Number(beast.beast_index)}
@@ -516,11 +493,6 @@ export function BattlePage() {
                       ? () => setSelectedBeastIndex(Number(beast.beast_index))
                       : undefined
                   }
-                  onWait={
-                    isMyTurn && beast.alive
-                      ? () => handleWait(Number(beast.beast_index))
-                      : undefined
-                  }
                 />
               ))}
             </VStack>
@@ -530,7 +502,7 @@ export function BattlePage() {
         {/* Planned Actions - below my beasts */}
         {isMyTurn && (
           <>
-            <Box className="battle-panel">
+            <Box className="battle-panel" flexShrink={0}>
               <Box className="battle-panel__header">
                 <Text className="battle-panel__title">
                   {guidanceMessage}

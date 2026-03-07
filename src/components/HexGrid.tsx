@@ -7,8 +7,7 @@ import {
   hexPoints,
   isObstacle,
 } from "../domain/hexGrid";
-import { BeastStateModel, BeastType, ActionType, GameAction, HexCoord } from "../domain/types";
-import { getTypeColor } from "../domain/combat";
+import { BeastStateModel, ActionType, GameAction, HexCoord } from "../domain/types";
 import { getBeastImagePath } from "../data/beasts";
 
 interface HexGridProps {
@@ -110,6 +109,11 @@ export function HexGrid({
     if (isObstacle(row, col, obstacles)) return "hex-cell--obstacle";
     if (isInAttackCells(row, col)) return "hex-cell--attack-range";
     if (isInMoveCells(row, col)) return "hex-cell--move-range";
+    const beast = getBeastAt(row, col);
+    if (beast) {
+      const isMine = Number(beast.player_index) === myPlayerIndex;
+      return isMine ? "hex-cell--zone-player" : "hex-cell--zone-enemy";
+    }
     return `hex-cell ${terrainClass(row, col)}`;
   }
 
@@ -137,8 +141,6 @@ export function HexGrid({
 
   function renderBeast(beast: BeastStateModel, cx: number, cy: number) {
     const isMine = Number(beast.player_index) === myPlayerIndex;
-    const bType = Number(beast.beast_type) as BeastType;
-    const color = getTypeColor(bType);
     const beastIdx = Number(beast.beast_index);
     const isSelected = isMine && beastIdx === selectedBeastIndex;
     const hp = Number(beast.hp);
@@ -211,7 +213,7 @@ export function HexGrid({
         <polygon
           points={hexClipPoints(cx, cy - 2, imgSize)}
           fill={isMine ? "rgba(0,220,150,0.08)" : "rgba(255,51,51,0.08)"}
-          stroke={isSelected ? "#00FFDD" : color}
+          stroke={isSelected ? "#00FFDD" : "rgba(232, 224, 208, 0.7)"}
           strokeWidth={isSelected ? 2.5 : 1.2}
         />
 

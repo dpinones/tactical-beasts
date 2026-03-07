@@ -9,6 +9,8 @@ import {
   Spinner,
   Badge,
   SimpleGrid,
+  Image,
+  Select,
 } from "@chakra-ui/react";
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
@@ -20,8 +22,9 @@ import { useOwnedBeasts } from "../hooks/useOwnedBeasts";
 import { BeastCard } from "../components/BeastCard";
 import { HexGrid } from "../components/HexGrid";
 import { OBSTACLES } from "../domain/hexGrid";
-import { GameStatus, BeastType, CatalogBeast, ZERO_ADDR } from "../domain/types";
+import { GameStatus, BeastType, Subclass, CatalogBeast, ZERO_ADDR } from "../domain/types";
 import { updateRecentBeasts } from "../services/supabase";
+import { getSubclass, getSubclassName } from "../data/beasts";
 
 type Phase = "creating" | "joining" | "lobby" | "select" | "confirming" | "waiting" | "error";
 
@@ -40,6 +43,7 @@ export function TeamSelectPage() {
 
   const [filter, setFilter] = useState<"all" | "Magical" | "Hunter" | "Brute">("all");
   const [tierFilter, setTierFilter] = useState<number | null>(null);
+  const [subclassFilter, setSubclassFilter] = useState<Subclass | null>(null);
   const [search, setSearch] = useState("");
   const [statusMsg, setStatusMsg] = useState("");
   const [phase, setPhase] = useState<Phase>(
@@ -89,6 +93,9 @@ export function TeamSelectPage() {
     if (tierFilter !== null) {
       result = result.filter((b) => b.tier === tierFilter);
     }
+    if (subclassFilter !== null) {
+      result = result.filter((b) => getSubclass(b.beastId) === subclassFilter);
+    }
     if (search) {
       const s = search.toLowerCase();
       result = result.filter(
@@ -100,7 +107,7 @@ export function TeamSelectPage() {
       );
     }
     return result.slice(0, 50);
-  }, [catalog, filter, tierFilter, search]);
+  }, [catalog, filter, tierFilter, subclassFilter, search]);
 
   // Match mode: skip create/join, go directly to team select
   useEffect(() => {
@@ -321,36 +328,74 @@ export function TeamSelectPage() {
         {/* Left panel: Filters + Beast catalog */}
         <Box flex={3}>
           {/* Filters */}
-          <Flex gap={2} mb={3} flexWrap="wrap">
+          <Flex gap={2} mb={3} flexWrap="wrap" align="center">
             <Input
               placeholder="Search beast..."
               size="sm"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              maxW="200px"
+              maxW="180px"
             />
-            {(["all", "Magical", "Hunter", "Brute"] as const).map((f) => (
-              <Button
-                key={f}
-                size="sm"
-                variant={filter === f ? "primary" : "secondary"}
-                onClick={() => setFilter(f)}
-                fontSize="xs"
-              >
-                {f === "all" ? "All" : f}
-              </Button>
-            ))}
-            {[2, 3, 4].map((t) => (
-              <Button
-                key={t}
-                size="sm"
-                variant={tierFilter === t ? "gold" : "secondary"}
-                onClick={() => setTierFilter(tierFilter === t ? null : t)}
-                fontSize="xs"
-              >
-                T{t}
-              </Button>
-            ))}
+            <Select
+              size="sm"
+              maxW="130px"
+              value={filter}
+              onChange={(e) => {
+                setFilter(e.target.value as any);
+                setSubclassFilter(null);
+              }}
+              bg="surface.panel"
+              borderColor="surface.border"
+              fontSize="xs"
+            >
+              <option value="all">All Types</option>
+              <option value="Magical">Magical</option>
+              <option value="Hunter">Hunter</option>
+              <option value="Brute">Brute</option>
+            </Select>
+            <Select
+              size="sm"
+              maxW="140px"
+              value={subclassFilter === null ? "all" : String(subclassFilter)}
+              onChange={(e) => setSubclassFilter(e.target.value === "all" ? null : Number(e.target.value) as Subclass)}
+              bg="surface.panel"
+              borderColor="surface.border"
+              fontSize="xs"
+            >
+              <option value="all">All Subclasses</option>
+              {filter === "all" || filter === "Magical" ? (
+                <>
+                  <option value={String(Subclass.Warlock)}>Warlock</option>
+                  <option value={String(Subclass.Enchanter)}>Enchanter</option>
+                </>
+              ) : null}
+              {filter === "all" || filter === "Hunter" ? (
+                <>
+                  <option value={String(Subclass.Stalker)}>Stalker</option>
+                  <option value={String(Subclass.Ranger)}>Ranger</option>
+                </>
+              ) : null}
+              {filter === "all" || filter === "Brute" ? (
+                <>
+                  <option value={String(Subclass.Juggernaut)}>Juggernaut</option>
+                  <option value={String(Subclass.Berserker)}>Berserker</option>
+                </>
+              ) : null}
+            </Select>
+            <Select
+              size="sm"
+              maxW="100px"
+              value={tierFilter === null ? "all" : String(tierFilter)}
+              onChange={(e) => setTierFilter(e.target.value === "all" ? null : Number(e.target.value))}
+              bg="surface.panel"
+              borderColor="surface.border"
+              fontSize="xs"
+            >
+              <option value="all">All Tiers</option>
+              <option value="2">T2</option>
+              <option value="3">T3</option>
+              <option value="4">T4</option>
+            </Select>
           </Flex>
 
           {/* Beast catalog */}
@@ -436,6 +481,89 @@ export function TeamSelectPage() {
                 <Text>P2 Spawn</Text>
               </HStack>
             </HStack>
+          </Box>
+
+          {/* Selected beasts */}
+          <Box mt={4}>
+            <Text fontSize="9px" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em" mb={2}>
+              Your Team ({selectedBeasts.length}/3)
+            </Text>
+            <Flex direction="column" gap={2}>
+              {selectedBeasts.map((tokenId, i) => {
+                const beast = catalog.find((b) => b.tokenId === tokenId);
+                if (!beast) return null;
+                const subclass = getSubclass(beast.beastId);
+                return (
+                  <Flex
+                    key={tokenId}
+                    bg="rgba(0, 255, 68, 0.08)"
+                    border="1px solid"
+                    borderColor="green.700"
+                    borderRadius="3px"
+                    p={2}
+                    align="center"
+                    gap={3}
+                  >
+                    <Text fontSize="xs" color="green.400" fontWeight="bold" w="16px">
+                      {i + 1}
+                    </Text>
+                    <Image
+                      src={`/beasts/${beast.beast.toLowerCase()}.png`}
+                      alt={beast.beast}
+                      w="40px"
+                      h="40px"
+                      objectFit="contain"
+                      borderRadius="3px"
+                      bg="surface.card"
+                    />
+                    <Box flex={1} minW={0}>
+                      <Text fontSize="xs" fontWeight="600" color="text.primary" noOfLines={1}>
+                        {beast.beast}
+                      </Text>
+                      <HStack gap={2} fontSize="9px" color="text.secondary">
+                        <Badge variant={beast.type === BeastType.Magical ? "magical" : beast.type === BeastType.Hunter ? "hunter" : "brute"} fontSize="8px">
+                          {beast.typeName}
+                        </Badge>
+                        <Text>{getSubclassName(subclass)}</Text>
+                        <Text>T{beast.tier}</Text>
+                      </HStack>
+                    </Box>
+                    <Flex direction="column" align="flex-end" gap={0.5}>
+                      <Text fontSize="9px" color="text.gold" fontFamily="mono">
+                        Lv{beast.level} · HP {beast.health}
+                      </Text>
+                      <Text fontSize="8px" color="text.muted" fontFamily="mono">
+                        #{beast.tokenId}
+                      </Text>
+                    </Flex>
+                    <Button
+                      size="xs"
+                      variant="ghost"
+                      color="danger.300"
+                      onClick={() => toggleBeast(tokenId)}
+                      px={1}
+                    >
+                      ✕
+                    </Button>
+                  </Flex>
+                );
+              })}
+              {selectedBeasts.length < 3 && (
+                <Flex
+                  border="1px dashed"
+                  borderColor="surface.border"
+                  borderRadius="3px"
+                  p={2}
+                  justify="center"
+                  align="center"
+                  h="52px"
+                >
+                  <Text fontSize="xs" color="text.muted">
+                    {selectedBeasts.length === 0 ? "Select 3 beasts" : `Select ${3 - selectedBeasts.length} more`}
+                  </Text>
+                </Flex>
+              )}
+            </Flex>
           </Box>
         </Box>
       </Flex>

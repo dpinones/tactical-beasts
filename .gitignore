@@ -5,3 +5,5 @@ dist/
 contracts/target
 localhost.pem
 localhost-key.pem
+docs
+stark-tycon

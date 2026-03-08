@@ -1,0 +1,9 @@
+world_address = "0x00b8d5253b0645a0d2d979781d3855826f22a216cdf15428287877c3c363f183"
+
+rpc = "https://api.cartridge.gg/x/starknet/sepolia"
+
+[indexing]
+transactions = true
+
+[sql]
+historical = ["jokers_of_neon_core-TrophyProgression"]

@@ -347,14 +347,16 @@ export function BattlePage() {
     refetchBeasts,
   ]);
 
+  const aliveCount = useMemo(() => myBeasts.filter((b) => b.alive).length, [myBeasts]);
+  const allActionsReady = isMyTurn && aliveCount > 0 && actions.size >= aliveCount;
+
   // Contextual guidance message
   const guidanceMessage = useMemo(() => {
     if (!isMyTurn) return "Waiting for opponent...";
+    if (allActionsReady) return "All set -- Confirm!";
     if (selectedBeastIndex === null) return "Select a beast";
-    const aliveCount = myBeasts.filter((b) => b.alive).length;
-    if (actions.size >= aliveCount) return "All set -- Confirm!";
     return "Move or Attack";
-  }, [isMyTurn, selectedBeastIndex, actions, myBeasts]);
+  }, [isMyTurn, selectedBeastIndex, allActionsReady]);
 
   const potionUsed = false; // TODO: read from PlayerState
 
@@ -385,17 +387,17 @@ export function BattlePage() {
           <Box className="player-tag player-tag--me" mt={2}>
             <Box
               w="28px" h="28px" borderRadius="6px"
-              bg="linear-gradient(135deg, #0d4a30, #1a6b4a)"
-              border="2px solid #2dd88a"
+              bg="linear-gradient(135deg, #0f3327, #174836)"
+              border="2px solid #4f8f73"
               display="flex" alignItems="center" justifyContent="center"
             >
-              <Text fontSize="xs" fontWeight="bold" color="#66FFB2">P1</Text>
+              <Text fontSize="xs" fontWeight="bold" color="#b8dcca">P1</Text>
             </Box>
             <Text>You</Text>
           </Box>
 
           {/* Round badge - center */}
-          <Box className="round-badge">
+          <Box className={`round-badge ${!isMyTurn ? "round-badge--waiting" : ""}`}>
             {isMyTurn ? (
               <>
                 <Text className="round-badge__label">Round {game.round}</Text>
@@ -404,7 +406,7 @@ export function BattlePage() {
             ) : (
               <>
                 <HStack justify="center" gap={2} mb={1}>
-                  <Spinner size="sm" color="#FFFFFF" thickness="3px" speed="0.75s" />
+                  <Spinner size="sm" color="#D3C0FF" thickness="3px" speed="0.75s" />
                   <Text className="round-badge__label">Turno del rival</Text>
                 </HStack>
                 <Text className="round-badge__timer">WAITING</Text>
@@ -417,11 +419,11 @@ export function BattlePage() {
             <Text>Enemy</Text>
             <Box
               w="28px" h="28px" borderRadius="6px"
-              bg="linear-gradient(135deg, #5c1010, #8b1a1a)"
-              border="2px solid #dd4444"
+              bg="linear-gradient(135deg, #3d1a1a, #5a2a2a)"
+              border="2px solid #9b6565"
               display="flex" alignItems="center" justifyContent="center"
             >
-              <Text fontSize="xs" fontWeight="bold" color="#FF8888">AI</Text>
+              <Text fontSize="xs" fontWeight="bold" color="#ddb6b6">AI</Text>
             </Box>
           </Box>
         </Flex>
@@ -452,25 +454,39 @@ export function BattlePage() {
         />
       </Box>
 
+      <Button
+        position="absolute"
+        top="14px"
+        left="12px"
+        zIndex={12}
+        size="xs"
+        variant="ghost"
+        color="gray.500"
+        _hover={{ color: "red.300" }}
+        onClick={abandonModal.onOpen}
+        fontSize="0.65rem"
+        px={1}
+        display={{ base: "none", lg: "inline-flex" }}
+      >
+        Abandon
+      </Button>
+
       {/* === LEFT PANEL - My beasts + Actions === */}
       <VStack
         position="absolute"
         top="80px"
         left="12px"
-        bottom="16px"
         zIndex={10}
         w="220px"
         gap={2}
         align="stretch"
         display={{ base: "none", lg: "flex" }}
-        overflow="hidden"
-        minH={0}
       >
-        <Box className="battle-panel" display="flex" flexDirection="column" flex={1} minH={0}>
+        <Box className="battle-panel" flexShrink={0}>
           <Box className="battle-panel__header">
             <Text className="battle-panel__title">Your Beasts</Text>
           </Box>
-          <Box className="battle-panel__body" flex={1} minH={0}>
+          <Box className="battle-panel__body">
             <VStack gap={1.5} align="stretch">
               {myBeasts.map((beast) => (
                 <BeastHUD
@@ -496,7 +512,10 @@ export function BattlePage() {
         {/* Planned Actions - below my beasts */}
         {isMyTurn && (
           <>
-            <Box className="battle-panel" flexShrink={0}>
+            <Box
+              className={`battle-panel ${allActionsReady ? "battle-panel--ready" : ""}`}
+              flexShrink={0}
+            >
               <Box className="battle-panel__header">
                 <Text className="battle-panel__title">
                   {guidanceMessage}
@@ -518,16 +537,6 @@ export function BattlePage() {
                 />
               </Box>
             </Box>
-            <Button
-              size="xs"
-              variant="ghost"
-              color="gray.500"
-              _hover={{ color: "red.300" }}
-              onClick={abandonModal.onOpen}
-              fontSize="0.65rem"
-            >
-              Abandon
-            </Button>
           </>
         )}
       </VStack>

@@ -161,7 +161,7 @@ export function HexGrid({
     const actionBadge = isMine ? getActionBadge(beastIdx) : null;
 
     const imgSize = hexSize * 0.82;
-    const spriteScale = 2.05;
+    const spriteScale = 2.45;
     const beastImgSrc = getBeastImagePath(Number(beast.beast_id));
 
     // HP bar dimensions
@@ -249,23 +249,22 @@ export function HexGrid({
           </g>
         )}
 
+        {/* Team color tint base (behind sprite) */}
+        <polygon
+          points={hexClipPoints(cx, cy - 2, imgSize)}
+          fill={isMine ? "rgba(0,220,150,0.08)" : "rgba(255,51,51,0.08)"}
+          stroke="none"
+        />
+
         {/* Beast image */}
         <image
           href={beastImgSrc}
           x={cx - imgSize * (spriteScale / 2)}
-          y={cy - imgSize * 1.2}
+          y={cy - imgSize * 1.34}
           width={imgSize * spriteScale}
           height={imgSize * spriteScale}
           filter="url(#beastShadow)"
           preserveAspectRatio="xMidYMid meet"
-        />
-
-        {/* Team color tint overlay */}
-        <polygon
-          points={hexClipPoints(cx, cy - 2, imgSize)}
-          fill={isMine ? "rgba(0,220,150,0.08)" : "rgba(255,51,51,0.08)"}
-          stroke={isSelected ? "#00FFDD" : "rgba(232, 224, 208, 0.7)"}
-          strokeWidth={isSelected ? 2.5 : 1.2}
         />
 
         {/* HP bar above beast (floating, like Tactical Monsters) */}
@@ -375,6 +374,23 @@ export function HexGrid({
     );
   }
 
+  function getBeastRenderPositions() {
+    return allBeasts
+      .filter((beast) => beast.alive)
+      .map((beast) => {
+        const pos = getEffectivePosition(beast);
+        const rowWidth = ARENA_ROWS[pos.col];
+        if (rowWidth === undefined) return null;
+        const visualRow = flipBoard ? rowWidth - 1 - pos.row : pos.row;
+        const { x, y } = hexToPixel(visualRow, pos.col, hexSize);
+        return { beast, x, y };
+      })
+      .filter((entry): entry is { beast: BeastStateModel; x: number; y: number } => entry !== null)
+      .sort((a, b) => a.y - b.y); // far (top) first, near (bottom) last
+  }
+
+  const beastRenderPositions = getBeastRenderPositions();
+
   return (
     <Box
       className="arena-perspective"
@@ -414,7 +430,6 @@ export function HexGrid({
             // If flipped, mirror the row (horizontal) position
             const visualRow = flipBoard ? rowWidth - 1 - logicalRow : logicalRow;
             const { x, y } = hexToPixel(visualRow, col, hexSize);
-            const beast = getBeastAt(logicalRow, col);
             const cellClass = getCellClass(logicalRow, col);
             const clickable = isInMoveCells(logicalRow, col) || isInAttackCells(logicalRow, col);
 
@@ -454,13 +469,13 @@ export function HexGrid({
 
                 {/* Attack target flash */}
                 {isAttackTarget(logicalRow, col) && renderAttackFlash(x, y, `atk-flash-${logicalRow}-${col}`)}
-
-                {/* Beast */}
-                {beast && renderBeast(beast, x, y)}
               </g>
             );
           });
         })}
+
+        {/* Beasts are rendered as a top layer so cells/overlays never cover them */}
+        {beastRenderPositions.map(({ beast, x, y }) => renderBeast(beast, x, y))}
       </svg>
     </Box>
   );

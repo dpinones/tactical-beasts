@@ -56,6 +56,16 @@ export function BeastHUD({
   const speciesName = getSpeciesNameByTokenId(tokenId) || getSpeciesNameByTokenId(beastId);
   const subclass = getSubclass(beastId);
   const subclassName = getSubclassName(subclass);
+  const accentSoft = isMine ? "#A7D5BF" : "#D9B1B1";
+  const cardBg = isSelected
+    ? (isMine ? "rgba(55,110,88,0.25)" : "rgba(110,65,65,0.25)")
+    : (isMine ? "rgba(12,30,24,0.64)" : "rgba(28,14,14,0.62)");
+  const selectedBorder = isMine ? "#4C9B7D" : "#A66161";
+  const borderAlive = isMine ? "rgba(82,146,120,0.45)" : "rgba(150,84,84,0.45)";
+  const hoverBorder = isMine ? "rgba(120,180,150,0.8)" : "rgba(185,120,120,0.8)";
+  const portraitBorder = isSelected
+    ? selectedBorder
+    : (isMine ? "rgba(180,210,195,0.45)" : "rgba(215,170,170,0.45)");
   const badgeVariant =
     bType === BeastType.Magical
       ? "magical"
@@ -65,9 +75,9 @@ export function BeastHUD({
 
   return (
     <Box
-      bg={isSelected ? "rgba(45,216,138,0.15)" : "rgba(0,0,0,0.3)"}
+      bg={cardBg}
       border={isSelected ? "2px solid" : "1px solid"}
-      borderColor={isSelected ? "#2dd88a" : alive ? "rgba(45,216,138,0.2)" : "rgba(220,60,60,0.4)"}
+      borderColor={isSelected ? selectedBorder : alive ? borderAlive : "rgba(220,60,60,0.4)"}
       borderRadius="3px"
       p={1.5}
       opacity={alive ? 1 : 0.35}
@@ -76,7 +86,7 @@ export function BeastHUD({
       transition="all 0.15s"
       _hover={
         onClick
-          ? { borderColor: isSelected ? "green.400" : "surface.borderLight" }
+          ? { borderColor: isSelected ? selectedBorder : hoverBorder }
           : undefined
       }
       boxShadow={isSelected ? "glow" : "none"}
@@ -95,7 +105,7 @@ export function BeastHUD({
             objectFit="contain"
             borderRadius="6px"
             border="2px solid"
-            borderColor={isSelected ? "#2dd88a" : "rgba(232, 224, 208, 0.45)"}
+            borderColor={portraitBorder}
             bg="rgba(0,0,0,0.4)"
             filter={alive ? "none" : "grayscale(1)"}
             fallback={
@@ -136,14 +146,14 @@ export function BeastHUD({
           </Flex>
 
           {/* Subclass + Token ID */}
-          <Text fontSize="9px" color="#8BFFC4" fontFamily="mono" opacity={0.7} mb={0.5} noOfLines={1}>
+          <Text fontSize="9px" color={accentSoft} fontFamily="mono" opacity={0.7} mb={0.5} noOfLines={1}>
             {subclassName}#{tokenId}
           </Text>
 
           {/* HP Bar */}
           <Box mb={0.5}>
             <Flex justify="space-between" mb="1px">
-              <Text fontSize="9px" color="#8BFFC4" fontFamily="mono" textTransform="uppercase" opacity={0.7}>
+              <Text fontSize="9px" color={accentSoft} fontFamily="mono" textTransform="uppercase" opacity={0.7}>
                 HP
               </Text>
               <Text fontSize="xs" color="#fff" fontFamily="mono" fontWeight="700">
@@ -161,7 +171,7 @@ export function BeastHUD({
           {/* Stats row */}
           <Flex justify="flex-start" gap={3}>
             <Flex direction="column" align="flex-start">
-              <Text fontSize="8px" color="#8BFFC4" textTransform="uppercase" opacity={0.6}>
+              <Text fontSize="8px" color={accentSoft} textTransform="uppercase" opacity={0.6}>
                 LVL
               </Text>
               <Text fontSize="xs" color="#fff" fontFamily="mono" fontWeight="700">
@@ -169,7 +179,7 @@ export function BeastHUD({
               </Text>
             </Flex>
             <Flex direction="column" align="flex-start">
-              <Text fontSize="8px" color="#8BFFC4" textTransform="uppercase" opacity={0.6}>
+              <Text fontSize="8px" color={accentSoft} textTransform="uppercase" opacity={0.6}>
                 TIER
               </Text>
               <Text fontSize="xs" color="#fff" fontFamily="mono" fontWeight="700">

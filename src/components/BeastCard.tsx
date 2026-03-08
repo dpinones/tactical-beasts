@@ -8,6 +8,7 @@ interface BeastCardProps {
   isSelected: boolean;
   onToggle: (tokenId: number) => void;
   disabled?: boolean;
+  isDefault?: boolean;
 }
 
 function tierLabel(tier: number): string {
@@ -32,7 +33,7 @@ function tierName(tier: number): string {
   return names[tier] || "Unknown";
 }
 
-export function BeastCard({ beast, isSelected, onToggle, disabled }: BeastCardProps) {
+export function BeastCard({ beast, isSelected, onToggle, disabled, isDefault }: BeastCardProps) {
   const typeColor = getTypeColor(beast.type);
   const badgeVariant =
     beast.type === BeastType.Magical
@@ -82,6 +83,23 @@ export function BeastCard({ beast, isSelected, onToggle, disabled }: BeastCardPr
           }
         />
       </Box>
+
+      {/* Default badge */}
+      {isDefault && (
+        <Badge
+          bg="rgba(100,140,255,0.15)"
+          border="1px solid"
+          borderColor="rgba(100,140,255,0.4)"
+          color="#8CB4FF"
+          fontSize="8px"
+          px={1.5}
+          py={0}
+          borderRadius="2px"
+          mb={1}
+        >
+          DEFAULT
+        </Badge>
+      )}
 
       {/* Header */}
       <Flex justify="space-between" align="center" mb={1}>

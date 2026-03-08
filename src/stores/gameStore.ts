@@ -11,6 +11,7 @@ interface TBGameStore {
   selectedBeasts: number[];
   toggleBeast: (tokenId: number) => void;
   clearSelectedBeasts: () => void;
+  setSelectedBeasts: (ids: number[]) => void;
 
   // Actions being planned for current turn
   plannedActions: GameAction[];
@@ -47,6 +48,7 @@ export const useGameStore = create<TBGameStore>()(
         }
       },
       clearSelectedBeasts: () => set({ selectedBeasts: [] }),
+      setSelectedBeasts: (ids: number[]) => set({ selectedBeasts: ids.slice(0, 3) }),
 
       plannedActions: [],
       setPlanedActions: (actions) => set({ plannedActions: actions }),

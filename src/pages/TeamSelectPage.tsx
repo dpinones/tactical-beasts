@@ -19,7 +19,7 @@ import {
   ModalBody,
   useDisclosure,
 } from "@chakra-ui/react";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useDojo } from "../dojo/DojoContext";
 import { useGameActions } from "../hooks/useGameActions";
@@ -32,7 +32,7 @@ import { CoinFlipIntro } from "../components/CoinFlipIntro";
 import { OBSTACLES } from "../domain/hexGrid";
 import { GameStatus, BeastType, Subclass, CatalogBeast, ZERO_ADDR } from "../domain/types";
 import { updateRecentBeasts } from "../services/supabase";
-import { getSubclass, getSubclassName } from "../data/beasts";
+import { getSubclass, getSubclassName, DEFAULT_BEASTS } from "../data/beasts";
 
 type Phase = "creating" | "joining" | "lobby" | "select" | "confirming" | "coin" | "waiting" | "error";
 
@@ -48,9 +48,11 @@ export function TeamSelectPage() {
   const { account: { account } } = useDojo();
   const { createGame, joinGame, setTeam, abandonGame, isLoading } = useGameActions();
   const leaveModal = useDisclosure();
-  const { selectedBeasts, toggleBeast, clearSelectedBeasts, setActiveGameId } = useGameStore();
+  const { selectedBeasts, toggleBeast, clearSelectedBeasts, setSelectedBeasts, setActiveGameId } = useGameStore();
 
-  const [filter, setFilter] = useState<"all" | "Magical" | "Hunter" | "Brute">("all");
+  const [filter, setFilter] = useState<"all" | "Magical" | "Hunter" | "Brute" | "default">("all");
+  const [timer, setTimer] = useState(30);
+  const timerRef = useRef<number | null>(null);
   const [tierFilter, setTierFilter] = useState<number | null>(null);
   const [subclassFilter, setSubclassFilter] = useState<Subclass | null>(null);
   const [search, setSearch] = useState("");
@@ -63,8 +65,8 @@ export function TeamSelectPage() {
 
   const { beasts: ownedBeasts, isLoading: beastsLoading } = useOwnedBeasts();
 
-  // Convert OwnedBeast to CatalogBeast for BeastCard compatibility
-  const catalog = useMemo((): CatalogBeast[] => {
+  // Convert OwnedBeast to CatalogBeast for BeastCard compatibility, merge defaults
+  const ownedCatalog = useMemo((): CatalogBeast[] => {
     return ownedBeasts.map((b) => {
       const typeStr = b.type === "Magic" ? "Magical" : b.type;
       const bType = b.type === "Magic" || b.type === "Magical" ? BeastType.Magical
@@ -90,15 +92,29 @@ export function TeamSelectPage() {
     });
   }, [ownedBeasts]);
 
-  const filteredBeasts = useMemo(() => {
-    let result = catalog;
-    if (filter !== "all") {
-      const typeMap: Record<string, BeastType> = {
-        Magical: BeastType.Magical,
-        Hunter: BeastType.Hunter,
-        Brute: BeastType.Brute,
-      };
-      result = result.filter((b) => b.type === typeMap[filter]);
+  // Merge defaults into catalog (avoid duplicates by tokenId)
+  const catalog = useMemo((): CatalogBeast[] => {
+    const ownedIds = new Set(ownedCatalog.map((b) => b.tokenId));
+    const defaults = DEFAULT_BEASTS.filter((b) => !ownedIds.has(b.tokenId));
+    return [...ownedCatalog, ...defaults];
+  }, [ownedCatalog]);
+
+  const defaultTokenIds = new Set(DEFAULT_BEASTS.map((b) => b.tokenId));
+
+  // Apply filters to a beast list
+  const applyFilters = useCallback((beasts: CatalogBeast[], skipTypeFilter = false): CatalogBeast[] => {
+    let result = beasts;
+    if (!skipTypeFilter) {
+      if (filter === "default") {
+        result = result.filter((b) => defaultTokenIds.has(b.tokenId));
+      } else if (filter !== "all") {
+        const typeMap: Record<string, BeastType> = {
+          Magical: BeastType.Magical,
+          Hunter: BeastType.Hunter,
+          Brute: BeastType.Brute,
+        };
+        result = result.filter((b) => b.type === typeMap[filter]);
+      }
     }
     if (tierFilter !== null) {
       result = result.filter((b) => b.tier === tierFilter);
@@ -109,8 +125,28 @@ export function TeamSelectPage() {
     if (search) {
       result = result.filter((b) => String(b.tokenId).startsWith(search));
     }
-    return result.slice(0, 50);
-  }, [catalog, filter, tierFilter, subclassFilter, search]);
+    return result;
+  }, [filter, tierFilter, subclassFilter, search]);
+
+  // Defaults always shown at top (unless filter hides them)
+  const filteredDefaults = useMemo(() => {
+    if (filter === "default") return applyFilters(DEFAULT_BEASTS, true);
+    if (filter !== "all") {
+      const typeMap: Record<string, BeastType> = {
+        Magical: BeastType.Magical,
+        Hunter: BeastType.Hunter,
+        Brute: BeastType.Brute,
+      };
+      return DEFAULT_BEASTS.filter((b) => b.type === typeMap[filter]);
+    }
+    return DEFAULT_BEASTS;
+  }, [filter, applyFilters]);
+
+  // Owned beasts filtered (exclude defaults from this list)
+  const filteredOwned = useMemo(() => {
+    if (filter === "default") return [];
+    return applyFilters(ownedCatalog).slice(0, 50);
+  }, [ownedCatalog, applyFilters, filter]);
 
   // Match mode: skip create/join, go directly to team select
   useEffect(() => {
@@ -230,17 +266,36 @@ export function TeamSelectPage() {
     };
   }, [phase, gameId, navigate]);
 
+  // Auto-fill empty team slots with default beasts
+  const getAutoFilledTeam = useCallback((current: number[]): number[] => {
+    if (current.length >= 3) return current.slice(0, 3);
+    const team = [...current];
+    for (const def of DEFAULT_BEASTS) {
+      if (team.length >= 3) break;
+      if (!team.includes(def.tokenId)) {
+        team.push(def.tokenId);
+      }
+    }
+    return team;
+  }, []);
+
   // Confirm team: call set_team onchain + save to supabase
-  const handleConfirmTeam = async () => {
-    if (selectedBeasts.length !== 3 || !gameId) return;
+  const handleConfirmTeam = useCallback(async (overrideBeasts?: number[]) => {
+    const team = overrideBeasts || selectedBeasts;
+    if (team.length !== 3 || !gameId) return;
+    // Stop timer
+    if (timerRef.current) {
+      window.clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
     setPhase("confirming");
     setStatusMsg("Setting team...");
-    const res = await setTeam(gameId, selectedBeasts[0], selectedBeasts[1], selectedBeasts[2]);
+    const res = await setTeam(gameId, team[0], team[1], team[2]);
     if (res) {
       // Save recent beasts to Supabase
       const walletAddress = account?.address || "";
       if (walletAddress) {
-        const beastsToSave = selectedBeasts.map((tokenId) => {
+        const beastsToSave = team.map((tokenId) => {
           const beast = catalog.find((b) => b.tokenId === tokenId);
           return { id: tokenId, name: beast?.name || `Beast #${tokenId}` };
         });
@@ -252,7 +307,45 @@ export function TeamSelectPage() {
       setPhase("error");
       setStatusMsg("Failed to set team");
     }
-  };
+  }, [selectedBeasts, gameId, setTeam, account, catalog]);
+
+  // 30-second countdown timer during selection phase
+  useEffect(() => {
+    if (phase !== "select") {
+      if (timerRef.current) {
+        window.clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      return;
+    }
+    setTimer(30);
+    timerRef.current = window.setInterval(() => {
+      setTimer((prev) => {
+        if (prev <= 1) {
+          if (timerRef.current) {
+            window.clearInterval(timerRef.current);
+            timerRef.current = null;
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => {
+      if (timerRef.current) {
+        window.clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [phase]);
+
+  // Auto-confirm when timer expires
+  useEffect(() => {
+    if (timer !== 0 || phase !== "select") return;
+    const team = getAutoFilledTeam(selectedBeasts);
+    setSelectedBeasts(team);
+    handleConfirmTeam(team);
+  }, [timer, phase]);
 
   // --- Creating / Joining ---
   if (phase === "creating" || phase === "joining") {
@@ -388,6 +481,7 @@ export function TeamSelectPage() {
               fontSize="xs"
             >
               <option value="all">All Types</option>
+              <option value="default">Default</option>
               <option value="Magical">Magical</option>
               <option value="Hunter">Hunter</option>
               <option value="Brute">Brute</option>
@@ -443,23 +537,55 @@ export function TeamSelectPage() {
               <Flex justify="center" py={8}>
                 <Spinner color="green.400" size="lg" />
               </Flex>
-            ) : catalog.length === 0 ? (
+            ) : filteredDefaults.length === 0 && filteredOwned.length === 0 ? (
               <Flex direction="column" align="center" py={8} gap={2}>
-                <Text color="text.secondary" fontSize="sm">No beasts found</Text>
-                <Text color="text.muted" fontSize="xs">Play Loot Survivor to earn beast NFTs</Text>
+                <Text color="text.secondary" fontSize="sm">No beasts match filters</Text>
+                <Text color="text.muted" fontSize="xs">Try changing your filters or use Default beasts</Text>
               </Flex>
             ) : (
-            <SimpleGrid columns={{ base: 2, md: 3, lg: 3 }} gap={3}>
-              {filteredBeasts.map((beast) => (
-                <BeastCard
-                  key={beast.tokenId}
-                  beast={beast}
-                  isSelected={selectedBeasts.includes(beast.tokenId)}
-                  onToggle={toggleBeast}
-                  disabled={selectedBeasts.length >= 3 && !selectedBeasts.includes(beast.tokenId)}
-                />
-              ))}
-            </SimpleGrid>
+              <>
+                {/* Default Beasts section */}
+                {filteredDefaults.length > 0 && (
+                  <Box mb={4}>
+                    <Text fontSize="10px" color="text.muted" textTransform="uppercase" letterSpacing="0.1em" mb={2}>
+                      Default Beasts
+                    </Text>
+                    <SimpleGrid columns={{ base: 2, md: 3, lg: 3 }} gap={3}>
+                      {filteredDefaults.map((beast) => (
+                        <BeastCard
+                          key={beast.tokenId}
+                          beast={beast}
+                          isSelected={selectedBeasts.includes(beast.tokenId)}
+                          onToggle={toggleBeast}
+                          disabled={selectedBeasts.length >= 3 && !selectedBeasts.includes(beast.tokenId)}
+                          isDefault={true}
+                        />
+                      ))}
+                    </SimpleGrid>
+                  </Box>
+                )}
+
+                {/* Owned Beasts section */}
+                {filteredOwned.length > 0 && (
+                  <Box>
+                    <Text fontSize="10px" color="text.muted" textTransform="uppercase" letterSpacing="0.1em" mb={2}>
+                      Your Beasts
+                    </Text>
+                    <SimpleGrid columns={{ base: 2, md: 3, lg: 3 }} gap={3}>
+                      {filteredOwned.map((beast) => (
+                        <BeastCard
+                          key={beast.tokenId}
+                          beast={beast}
+                          isSelected={selectedBeasts.includes(beast.tokenId)}
+                          onToggle={toggleBeast}
+                          disabled={selectedBeasts.length >= 3 && !selectedBeasts.includes(beast.tokenId)}
+                          isDefault={false}
+                        />
+                      ))}
+                    </SimpleGrid>
+                  </Box>
+                )}
+              </>
             )}
           </Box>
         </Box>
@@ -510,8 +636,36 @@ export function TeamSelectPage() {
             </Box>
           </Box>
 
+          {/* Timer */}
+          {phase === "select" && (
+            <Box mt={4} mb={2}>
+              <Flex justify="space-between" align="center" mb={1}>
+                <Text fontSize="9px" color={timer <= 10 ? "danger.300" : "text.secondary"} textTransform="uppercase" letterSpacing="0.1em">
+                  Time Remaining
+                </Text>
+                <Text fontSize="sm" fontFamily="mono" fontWeight="bold" color={timer <= 10 ? "danger.300" : "green.300"}>
+                  {timer}s
+                </Text>
+              </Flex>
+              <Box
+                h="4px"
+                bg="rgba(255,255,255,0.1)"
+                borderRadius="2px"
+                overflow="hidden"
+              >
+                <Box
+                  h="100%"
+                  w={`${(timer / 30) * 100}%`}
+                  bg={timer <= 10 ? "danger.400" : "green.400"}
+                  borderRadius="2px"
+                  transition="width 1s linear"
+                />
+              </Box>
+            </Box>
+          )}
+
           {/* Selected beasts */}
-          <Box mt={4} bg="surface.panel" border="1px solid" borderColor="surface.border" borderRadius="3px" p={2}>
+          <Box mt={phase === "select" ? 0 : 4} bg="surface.panel" border="1px solid" borderColor="surface.border" borderRadius="3px" p={2}>
             <Flex align="center" justify="space-between" mb={2}>
               <Text fontSize="9px" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em">
                 Your Team
@@ -619,7 +773,7 @@ export function TeamSelectPage() {
             <Button
               variant="primary"
               size="lg"
-              onClick={handleConfirmTeam}
+              onClick={() => handleConfirmTeam()}
               isDisabled={selectedBeasts.length !== 3}
               isLoading={phase === "confirming"}
               flex={1}

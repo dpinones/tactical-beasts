@@ -224,6 +224,10 @@ pub fn get_beast_stats_by_token(token_id: u32) -> (u8, u8, u16, u16) {
         // Ent (beastId=70, Brute T4)
         38992 => (70, 4, 38, 237),
         18061 => (70, 4, 38, 239),
+        // Default beasts (fictional token IDs for players without owned beasts)
+        100000 => (16, 4, 37, 249),  // Goblin (Magical T4)
+        100001 => (43, 4, 38, 239),  // Jaguar (Hunter T4)
+        100002 => (68, 4, 35, 234),  // Yeti (Brute T4)
         _ => (0, DEFAULT_TIER, DEFAULT_LEVEL, DEFAULT_HP),
     }
 }

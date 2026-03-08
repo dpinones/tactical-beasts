@@ -26,6 +26,62 @@ function typeToName(type: BeastType): string {
   }
 }
 
+// Default beasts: one per type (weakest T4) for players without owned beasts
+// Token IDs 100000-100002 are fictional defaults that work both locally and on mainnet
+export const DEFAULT_BEASTS: CatalogBeast[] = [
+  {
+    tokenId: 100000,
+    name: "Goblin",
+    beastId: 16,
+    beast: "Goblin",
+    type: BeastType.Magical,
+    typeName: "Magical",
+    tier: 4,
+    level: 37,
+    health: 249,
+    power: 74,
+    prefix: "",
+    suffix: "",
+    adventurersKilled: 0,
+    shiny: false,
+    animated: false,
+  },
+  {
+    tokenId: 100001,
+    name: "Jaguar",
+    beastId: 43,
+    beast: "Jaguar",
+    type: BeastType.Hunter,
+    typeName: "Hunter",
+    tier: 4,
+    level: 38,
+    health: 239,
+    power: 76,
+    prefix: "",
+    suffix: "",
+    adventurersKilled: 0,
+    shiny: false,
+    animated: false,
+  },
+  {
+    tokenId: 100002,
+    name: "Yeti",
+    beastId: 68,
+    beast: "Yeti",
+    type: BeastType.Brute,
+    typeName: "Brute",
+    tier: 4,
+    level: 35,
+    health: 234,
+    power: 70,
+    prefix: "",
+    suffix: "",
+    adventurersKilled: 0,
+    shiny: false,
+    animated: false,
+  },
+];
+
 let catalog: CatalogBeast[] | null = null;
 
 export function loadBeastCatalog(): CatalogBeast[] {

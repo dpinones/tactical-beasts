@@ -86,6 +86,9 @@ pub const DEFAULT_MOVE_RANGE: u8 = 2;
 pub const DEFAULT_ATTACK_RANGE: u8 = 1;
 pub const MIN_DAMAGE: u16 = 2;
 
+// Default beast token IDs start at this threshold (fictional, not real NFTs)
+pub const DEFAULT_BEAST_TOKEN_MIN: u32 = 100000;
+
 // Chain IDs
 pub const MAINNET_CHAIN_ID: felt252 = 0x534e5f4d41494e;
 

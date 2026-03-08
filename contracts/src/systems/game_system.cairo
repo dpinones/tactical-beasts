@@ -35,8 +35,9 @@ pub mod game_system {
     use starknet::ContractAddress;
     use crate::constants::{
         ACTION_ATTACK, ACTION_CONSUMABLE_ATTACK, ACTION_MOVE, ACTION_WAIT, BEASTS_PER_PLAYER, BEAST_NFT_ADDRESS,
-        DEFAULT_EXTRA_LIVES, GAME_STATUS_FINISHED, GAME_STATUS_PLAYING, GAME_STATUS_WAITING, LEADERBOARD_ID,
-        MAINNET_CHAIN_ID, MAX_ROUNDS, NAMESPACE, TASK_FLAWLESS, TASK_WINNER, WIN_BONUS,
+        DEFAULT_BEAST_TOKEN_MIN, DEFAULT_EXTRA_LIVES, GAME_STATUS_FINISHED, GAME_STATUS_PLAYING,
+        GAME_STATUS_WAITING, LEADERBOARD_ID, MAINNET_CHAIN_ID, MAX_ROUNDS, NAMESPACE, TASK_FLAWLESS, TASK_WINNER,
+        WIN_BONUS,
     };
     use crate::elements::achievements::{ACHIEVEMENT_COUNT, Achievement, AchievementTrait};
     use crate::events::index::{GameCreated, GameFinished, PlayerJoined};
@@ -484,7 +485,10 @@ pub mod game_system {
         };
 
         // beast_id is always a token_id; resolve species + stats from NFT or hardcoded data
-        let (species_id, beast_type, tier, level, hp) = if beast_nft_addr != zero_address() {
+        // Default beasts (token_id >= 100000) always use hardcoded stats, even on mainnet
+        let is_default_beast = beast_id >= DEFAULT_BEAST_TOKEN_MIN;
+        let (species_id, beast_type, tier, level, hp) = if !is_default_beast
+            && beast_nft_addr != zero_address() {
             // Real beasts mode: read from NFT contract
             let beast_dispatcher = IBeastsDispatcher { contract_address: beast_nft_addr };
             let erc721_dispatcher = IERC721Dispatcher { contract_address: beast_nft_addr };
@@ -502,7 +506,7 @@ pub mod game_system {
             let tier = beast::derive_tier(packable.id);
             (packable.id, beast_type, tier, packable.level, packable.health)
         } else {
-            // Hardcoded mode (local dev / no config set): look up by token_id
+            // Hardcoded mode: default beasts or local dev (no config set)
             let (species, tier, level, hp) = beast::get_beast_stats_by_token(beast_id);
             assert!(species > 0, "Unknown token_id");
             (species, beast::get_beast_type(species.into()), tier, level, hp)

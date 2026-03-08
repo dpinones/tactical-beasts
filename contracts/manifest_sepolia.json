@@ -33,11 +33,11 @@
   },
   "contracts": [
     {
-      "address": "0x755ac75c321fd75aa8b2add7a1aaed524dc8cfe1db6515252b1f971420c88f2",
-      "class_hash": "0x1aa49ec58aa108b25b10ab0f4664f7a018a26767afb9b7a6396859ca9d281a2",
+      "address": "0x6784ba693ac6caa30d17699a6f272c148ba60abdc0bcf5403ab699828ecc638",
+      "class_hash": "0x23b08b20840823a8c354a3ecbef6525ffd3ba8aa4a8d425a0a30b4181889db8",
       "init_calldata": [],
       "tag": "TB2-Collection",
-      "selector": "0x29a59bc944164b21de99d9808fcf318588bb463bfb60516a70b0e2644c309b0",
+      "selector": "0x4ce50df4dbb8bf1b02af3b23565f9463d1f56c1085605f0dae8e3031e355136",
       "systems": [
         "dojo_init",
         "safe_transfer_from",
@@ -57,17 +57,18 @@
       ]
     },
     {
-      "address": "0x748eea3933811ac8dd34770ec4e453762e71cf4a5ec54e6e04ee7eb282524",
-      "class_hash": "0x57ce006d877315ebb1b4b4577b7aeb263a36d65ca993d84da1a2f9f49313581",
+      "address": "0x7a3d5ff5cebd65dd24448712358762f72ab4ce09b9cc4a3291b871a4711d3dc",
+      "class_hash": "0x680549babbce4b9a1afcc322b2e9c1689b7e8a4d196add5955bf6b5c25085f",
       "init_calldata": [],
       "tag": "TB2-game_system",
-      "selector": "0x3687e683c1056316f61e197bb9013734f28aee2e3450dbc720d5b2fbe6ea0e0",
+      "selector": "0x7b548a2c33e71b289ba043a84f0f37e9467bfb8864e17dc42549359cccb8304",
       "systems": [
         "dojo_init",
         "create_game",
         "create_friendly_game",
         "join_game",
         "set_team",
+        "set_beast_config",
         "execute_turn",
         "find_match",
         "cancel_matchmaking",
@@ -108,7 +109,7 @@
       ],
       "class_hash": "0x1b93d2931ce14c6c25c1b4f3d78ff88f1d9d9a867ff8e4b76f697a370425cb3",
       "tag": "TB2-AchievementAdvancement",
-      "selector": "0x346e83fd485c388c3a1ec05594a46dd6f9fc54f784d617bba8a4cf92a505668"
+      "selector": "0xb172b4d60a58707e2121d1508dca15d568c650cadfc4f3ab7d7b7f1a65ae61"
     },
     {
       "members": [
@@ -125,7 +126,7 @@
       ],
       "class_hash": "0x6969588e5989757eb797b61bf2d430d4e6c935bb7023000769576fa49d8d1b1",
       "tag": "TB2-AchievementAssociation",
-      "selector": "0x7729f3beeae83057b4c4be3220bb62785349cf2d318d87efd4962dbf18ece5c"
+      "selector": "0x3ab8882058a210185d0009903e3a486aa511329bd53df2f1e3e9ae87868f3dc"
     },
     {
       "members": [
@@ -152,7 +153,7 @@
       ],
       "class_hash": "0x7b5b83ccc288a92f3ee2bd812c8fb84536a9e26d1742a8648036d19966030a5",
       "tag": "TB2-AchievementCompletion",
-      "selector": "0xe1effcbad76e54bc90d37b24221503388cc921c9ec5891a4539d2a16b5bf87"
+      "selector": "0x1e1fc1c06051b67ecedc9843e498fc967b5f3017e50a41f8096d9b74df0b5b1"
     },
     {
       "members": [
@@ -184,7 +185,24 @@
       ],
       "class_hash": "0x6c6a9c45913331fa4e602135926cf9a622b60d2abb04381c37e0ba79861f11d",
       "tag": "TB2-AchievementDefinition",
-      "selector": "0x35ebbae0c0d161b3e3c311986810b9894b0cd83cfd0b0dfe57b2002b487e8bc"
+      "selector": "0x358618dc98a21d8505b3df0fd7efdeb8a51b1bf81006315c04283d5a9b0bf54"
+    },
+    {
+      "members": [
+        {
+          "name": "id",
+          "type": "core::felt252",
+          "key": true
+        },
+        {
+          "name": "beast_nft_address",
+          "type": "core::starknet::contract_address::ContractAddress",
+          "key": false
+        }
+      ],
+      "class_hash": "0x5b0677ae244b053e1ba2bd7cdae53ad853a614fd1a6517856f0a1c42bd99759",
+      "tag": "TB2-BeastConfig",
+      "selector": "0x65945ffc71b2d0f95d690e61de8a7aa73bafa03b9c9ab7247ab98a66ecc199f"
     },
     {
       "members": [
@@ -205,6 +223,11 @@
         },
         {
           "name": "beast_id",
+          "type": "core::integer::u32",
+          "key": false
+        },
+        {
+          "name": "token_id",
           "type": "core::integer::u32",
           "key": false
         },
@@ -252,11 +275,16 @@
           "name": "alive",
           "type": "core::bool",
           "key": false
+        },
+        {
+          "name": "last_moved",
+          "type": "core::bool",
+          "key": false
         }
       ],
-      "class_hash": "0x6f1b0723528d49ab56bbac8911b6021fe294210a584b82a4e3daf4d094a1e2f",
+      "class_hash": "0x5ce22cc6910e73f3cc40b08af697002aabf4dfaca8bd0a0745c7983a383fa82",
       "tag": "TB2-BeastState",
-      "selector": "0x3c76b0f094c4046a595bef5d57800a9212e62c958233c558213537521d4d6e6"
+      "selector": "0x17d267da5ae21ac1cf797b0fe59f07110508c65977720a38bc95381cd86b364"
     },
     {
       "members": [
@@ -313,7 +341,7 @@
       ],
       "class_hash": "0x5a9ad6b1603f7829dc11740632e428b90cc306d40a0826e7f77f455cfc0828e",
       "tag": "TB2-Game",
-      "selector": "0x2dfb90525a37a0c77574f86cef34f1abb9debbf49a5952ea2ef94f53d06746"
+      "selector": "0x71c768c91a6b843952da49535c3e601004a9ed66fef7d565995f3f7c2bc374"
     },
     {
       "members": [
@@ -335,7 +363,7 @@
       ],
       "class_hash": "0x173af985b1d050827789bc5c374eef0b3c87e52c36b34ec6b80ddc937fb0753",
       "tag": "TB2-GameConfig",
-      "selector": "0x4a339fd8e06d4a8ee1a9855cdaf30caac08b9f82cd8432be5e3b09abd848126"
+      "selector": "0x299d3029d653ae37456f8d45fea473acd6a020a511aec2f104252d85bb97371"
     },
     {
       "members": [
@@ -357,7 +385,7 @@
       ],
       "class_hash": "0x200699d72d5aa2a1bb5b4ae758adae604f53b8c435f755c73b1e81c80fd521e",
       "tag": "TB2-GameToken",
-      "selector": "0x1d09a4b346cf1d90df194bba605094dea6d53a67fbd05d87cbd94be4742672c"
+      "selector": "0x251ca35a6ebdea78c5418e3ab2473c77111bb09d48a69aa70fdc8c4439366f8"
     },
     {
       "members": [
@@ -379,7 +407,7 @@
       ],
       "class_hash": "0x783b7b7ee70ddb574eb52f7e27b123089be059f8f09d6a0f1cee4cbbdb2b550",
       "tag": "TB2-GameTokens",
-      "selector": "0x14e0edefffaaaaad39b90429f25082396177e137645ff950813b0f7054f3fef"
+      "selector": "0x723c9b656a7cdccbddfe691b20015ec2ff5accfc60ecfcf8ba8fd52aa995f5b"
     },
     {
       "members": [
@@ -451,7 +479,7 @@
       ],
       "class_hash": "0x7133bbffad6c1cd949d8a7717fd45c0c0b0e46297a80d4d70202a6c09d12408",
       "tag": "TB2-MapState",
-      "selector": "0x4ddace83f6c870cb5b47869eae32b055e30e0b4a99b635d03fab56b4fe056f9"
+      "selector": "0x50543e1e91f35f1b6f9a9cdf1dda5193102e83ecc0e99301d09f53b8654c6d5"
     },
     {
       "members": [
@@ -473,7 +501,7 @@
       ],
       "class_hash": "0x288e429249d243490bfb4cf56a10d88f8d7ccb737b2e66145e096db9dc177d",
       "tag": "TB2-MatchmakingQueue",
-      "selector": "0x3d149a8837a8e31d0e25b30ec3cd32dba1ce1919faa39dac256a3226126b18e"
+      "selector": "0x51962233745e1e83e8ed9fc4c27effec59c1d4956e0138f3011e22906631f6e"
     },
     {
       "members": [
@@ -515,7 +543,7 @@
       ],
       "class_hash": "0x73093e8f6b1d7d9c3d8ce0370f266cab0462e520db16913f565f1bcf43bb8b5",
       "tag": "TB2-PlayerProfile",
-      "selector": "0x43537a4983a700fca1cd6a06fd5d9263809af295450df7bda85e88040472004"
+      "selector": "0x27360c5c4b738b3bae9006169d4f83b549778fb26a7b5c5bd5cf3bed7f2a666"
     },
     {
       "members": [
@@ -557,7 +585,7 @@
       ],
       "class_hash": "0x77a6c08c70382af22abda1eaeab5d9c4991bc955d51c33cb21fd53c1b5ffe44",
       "tag": "TB2-PlayerState",
-      "selector": "0x38e7e2448f1a18c9a44c0a8b95624a947bc343358609f34870763da22c5a63a"
+      "selector": "0x329351f38547392c6994eb662afecb47787f518b90bee2740c080e0e3531c56"
     }
   ],
   "events": [
@@ -581,7 +609,7 @@
       ],
       "class_hash": "0x3ca9aa05af8ef4c94e5213e7ba413e05fd28a7641b7060f896f06c4c6993e00",
       "tag": "TB2-AchievementClaimed",
-      "selector": "0x14a0f9a8f69dd3b1152389b01d575895c4df936e8e90a1d3396e82db5a89216"
+      "selector": "0x723c4c7b08b1b0526abbe5915671af100c0eed27f2c766d5175440407bb5a4d"
     },
     {
       "members": [
@@ -603,7 +631,7 @@
       ],
       "class_hash": "0x7862bab5e54ec6aa89c4a0ef6f39ca01a6440434b08d4fdd8098ee6e920e9a6",
       "tag": "TB2-AchievementCompleted",
-      "selector": "0x36c20c6b4088a6f03fc7915aad5c5e1e1be659e7bb064ece4df3fa88a25576d"
+      "selector": "0x5eec45980f88250e7e851f0baf77f82c213811bf08a810bcf5bb98751ada3ab"
     },
     {
       "members": [
@@ -625,7 +653,7 @@
       ],
       "class_hash": "0x6b5af9fa605a7648848ee05512ef05bd6c58c36e52201bb4eb69c3b482e0978",
       "tag": "TB2-GameCreated",
-      "selector": "0x79232c708a17b08e21e7e6938ef36b3c1f8c49c59648e6c526ec7f10efc9de4"
+      "selector": "0x19cb342e7d2b08c8c6058566c5cc643a240a4ecf835979f11a2dee950bedce3"
     },
     {
       "members": [
@@ -652,7 +680,7 @@
       ],
       "class_hash": "0x26da02edd40294205b99f8a2a7eb54a726b89494dba6475761635195cbb8806",
       "tag": "TB2-GameFinished",
-      "selector": "0x14bb600e57719daebc5ba4c5d10e7355c3b871ee496402a46b3b32348d7fc3d"
+      "selector": "0x2758a0e9fa248aef4c8497d7ac4f8733e267f4a817e5dd3ae21d006174b2b60"
     },
     {
       "members": [
@@ -684,7 +712,7 @@
       ],
       "class_hash": "0x2c067e1c1069a68aca73f8cf4f0000fb9c584455bb60fadde7ee05fbeb62372",
       "tag": "TB2-LeaderboardScore",
-      "selector": "0xa03d838b62460951ca0550029f6c36cf0da1e4b0cc50c46ad71a10ca5134ae"
+      "selector": "0x79be7ba0b064aad49ae1c45d2d1d4ca44574c1c8d57b2d0828d5b486a0c00d9"
     },
     {
       "members": [
@@ -706,7 +734,7 @@
       ],
       "class_hash": "0xe6fabce39d9706e5c65350610ed04018ffa17871e7d0ce5d6375326ebdbebe",
       "tag": "TB2-PlayerJoined",
-      "selector": "0x5aaed1cc1f41c360bcc738c45ce9a8372e98ad5556214c612dfcbf6415d8a4d"
+      "selector": "0x41c02896448b7a3ebe325d71f39ec23f5630c065e9f4b24c42b891ebb7702bc"
     },
     {
       "members": [
@@ -773,7 +801,7 @@
       ],
       "class_hash": "0x706834e9ed630a715e2727c7ed3706c2f92d46f93568c4082f7030023947cf0",
       "tag": "TB2-TrophyCreation",
-      "selector": "0x4d335e8f7d80985c22797f13723f29cb7355dd3a000b85b9e71368be8b120c4"
+      "selector": "0x8fcc7433a61120d6258214cbf348bd541641ac8e7c5b0f963d3acf9b63ad60"
     },
     {
       "members": [
@@ -800,7 +828,7 @@
       ],
       "class_hash": "0x313c566ceee5bdcaed4accfedc707b6b5a02feb96f9448a18bfa97bf43811e4",
       "tag": "TB2-TrophyProgression",
-      "selector": "0x6c1ac8508f1c75f418b2c865c2551e8ef0ae106b87232c44d351feb7fb8648c"
+      "selector": "0x111b35869b388f74d825bd9f05bcebfc1b84d4de854c95f9c8f14ba384a0cec"
     }
   ],
   "external_contracts": [],
@@ -3937,6 +3965,30 @@
     },
     {
       "type": "struct",
+      "name": "tactical_beats::models::index::BeastConfig",
+      "members": [
+        {
+          "name": "id",
+          "type": "core::felt252"
+        },
+        {
+          "name": "beast_nft_address",
+          "type": "core::starknet::contract_address::ContractAddress"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "tactical_beats::models::index::BeastConfigValue",
+      "members": [
+        {
+          "name": "beast_nft_address",
+          "type": "core::starknet::contract_address::ContractAddress"
+        }
+      ]
+    },
+    {
+      "type": "struct",
       "name": "tactical_beats::models::index::BeastState",
       "members": [
         {
@@ -3953,6 +4005,10 @@
         },
         {
           "name": "beast_id",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "token_id",
           "type": "core::integer::u32"
         },
         {
@@ -3990,6 +4046,10 @@
         {
           "name": "alive",
           "type": "core::bool"
+        },
+        {
+          "name": "last_moved",
+          "type": "core::bool"
         }
       ]
     },
@@ -3999,6 +4059,10 @@
       "members": [
         {
           "name": "beast_id",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "token_id",
           "type": "core::integer::u32"
         },
         {
@@ -4035,6 +4099,10 @@
         },
         {
           "name": "alive",
+          "type": "core::bool"
+        },
+        {
+          "name": "last_moved",
           "type": "core::bool"
         }
       ]
@@ -4493,6 +4561,12 @@
     },
     {
       "type": "event",
+      "name": "tactical_beats::models::index::m_BeastConfig::Event",
+      "kind": "enum",
+      "variants": []
+    },
+    {
+      "type": "event",
       "name": "tactical_beats::models::index::m_BeastState::Event",
       "kind": "enum",
       "variants": []
@@ -4715,6 +4789,18 @@
             {
               "name": "beast_3",
               "type": "core::integer::u32"
+            }
+          ],
+          "outputs": [],
+          "state_mutability": "external"
+        },
+        {
+          "type": "function",
+          "name": "set_beast_config",
+          "inputs": [
+            {
+              "name": "beast_nft_address",
+              "type": "core::starknet::contract_address::ContractAddress"
             }
           ],
           "outputs": [],

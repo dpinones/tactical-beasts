@@ -2,6 +2,7 @@ import { DOJO_NAMESPACE } from "../../config/namespace";
 import { DojoProvider, DojoCall } from "@dojoengine/core";
 import { Account, AccountInterface, BigNumberish, CairoOption, CairoCustomEnum } from "starknet";
 import * as models from "./models.gen";
+import type { Action } from "./models.gen";
 
 export function setupWorld(provider: DojoProvider) {
 

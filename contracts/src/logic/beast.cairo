@@ -132,6 +132,7 @@ pub fn get_beast_stats_by_token(token_id: u32) -> (u8, u8, u16, u16) {
         17841 => (19, 4, 40, 245),
         19167 => (19, 4, 38, 251),
         // Kappa (beastId=20, Magic T4)
+        33398 => (20, 4, 31, 275),
         60490 => (20, 4, 40, 237),
         77926 => (20, 4, 37, 244),
         // Qilin (beastId=31, Hunter T2)
@@ -159,6 +160,7 @@ pub fn get_beast_stats_by_token(token_id: u32) -> (u8, u8, u16, u16) {
         62436 => (38, 3, 39, 270),
         38893 => (38, 3, 38, 266),
         // Harpy (beastId=39, Hunter T3)
+        33365 => (39, 3, 48, 16),
         52786 => (39, 3, 36, 287),
         64047 => (39, 3, 38, 297),
         // Pegasus (beastId=40, Hunter T3)
@@ -177,6 +179,7 @@ pub fn get_beast_stats_by_token(token_id: u32) -> (u8, u8, u16, u16) {
         52065 => (44, 4, 38, 246),
         23994 => (44, 4, 40, 242),
         // Direwolf (beastId=45, Hunter T4)
+        34719 => (45, 4, 19, 89),
         40109 => (45, 4, 39, 247),
         45364 => (45, 4, 39, 257),
         // Titan (beastId=56, Brute T2)

@@ -1,5 +1,5 @@
-import manifestSlot from "../../manifest_slot.json";
-import manifestSepolia from "../../manifest_sepolia.json";
+import manifestDev from "../../contracts/manifest_dev.json";
+import manifestSepolia from "../../contracts/manifest_sepolia.json";
 
 const CHAIN = import.meta.env.VITE_CHAIN?.trim() || "";
 
@@ -29,9 +29,9 @@ const selectManifest = () => {
     case "sepolia":
       return manifestSepolia;
     case "mainnet":
-      return manifestSlot; // TODO: add manifest_mainnet.json when available
+      return manifestDev; // TODO: add manifest_mainnet.json when available
     default:
-      return manifestSlot;
+      return manifestDev;
   }
 };
 

@@ -49,6 +49,7 @@ function parseBeastNode(node: any): BeastStateModel {
     position_row: Number(node.position_row),
     position_col: Number(node.position_col),
     alive: Boolean(node.alive),
+    last_moved: Boolean(node.last_moved),
   };
 }
 

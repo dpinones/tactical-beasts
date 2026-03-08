@@ -11,7 +11,7 @@ all: dev
 katana:
 	katana --dev --dev.no-fee --http.cors_origins "*"
 
-setup: build migrate copy-manifest generate torii
+setup: build migrate generate torii
 
 build:
 	cd $(CONTRACTS_DIR) && sozo build
@@ -21,9 +21,6 @@ test:
 
 migrate:
 	cd $(CONTRACTS_DIR) && sozo migrate
-
-copy-manifest:
-	cp $(CONTRACTS_DIR)/manifest_dev.json manifest_slot.json
 
 torii:
 	@WORLD_ADDR=$$(python3 -c "import json; print(json.load(open('$(CONTRACTS_DIR)/manifest_dev.json'))['world']['address'])" 2>/dev/null); \
@@ -49,9 +46,6 @@ front-build:
 
 migrate-sepolia:
 	cd $(CONTRACTS_DIR) && sozo -P sepolia build && sozo -P sepolia migrate
-
-copy-manifest-sepolia:
-	cp $(CONTRACTS_DIR)/manifest_sepolia.json manifest_sepolia.json
 
 dev-sepolia:
 	npm run dev:sepolia
@@ -79,4 +73,4 @@ fmt:
 fmt-check:
 	cd $(CONTRACTS_DIR) && scarb fmt --check
 
-.PHONY: all katana setup build test migrate copy-manifest torii install dev generate front-build migrate-sepolia copy-manifest-sepolia dev-sepolia build-sepolia torii-sepolia slot-deploy fmt fmt-check
+.PHONY: all katana setup build test migrate torii install dev generate front-build migrate-sepolia dev-sepolia build-sepolia torii-sepolia slot-deploy fmt fmt-check

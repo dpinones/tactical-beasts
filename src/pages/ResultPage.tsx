@@ -113,8 +113,8 @@ export function ResultPage() {
           color={isWinner ? "green.300" : "danger.300"}
           textShadow={
             isWinner
-              ? "0 0 30px rgba(0,255,68,0.4)"
-              : "0 0 30px rgba(255,51,51,0.4)"
+              ? "0 0 30px rgba(135,180,155,0.38)"
+              : "0 0 30px rgba(183,110,110,0.38)"
           }
         >
           {isWinner ? "Victory" : "Defeat"}
@@ -130,7 +130,7 @@ export function ResultPage() {
           bg="surface.panel"
           border="1px solid"
           borderColor="gold.600"
-          borderRadius="3px"
+          borderRadius="12px"
           px={8}
           py={4}
           textAlign="center"
@@ -161,7 +161,7 @@ export function ResultPage() {
         bg="surface.panel"
         border="1px solid"
         borderColor="surface.border"
-        borderRadius="3px"
+        borderRadius="12px"
         p={5}
         w="100%"
         maxW="500px"
@@ -213,7 +213,7 @@ export function ResultPage() {
                     w="24px"
                     h="24px"
                     objectFit="contain"
-                    borderRadius="3px"
+                    borderRadius="8px"
                     fallback={<Box w="24px" h="24px" />}
                   />
                   <Text fontSize="xs" color={getTypeColor(bType)}>

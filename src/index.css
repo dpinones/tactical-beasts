@@ -9,38 +9,45 @@
    CSS Custom Properties (usable outside Chakra)
    --------------------------------------------------------------------------- */
 :root {
-  /* Primary greens */
-  --color-green-neon: #00FF44;
-  --color-green-light: #33FF66;
-  --color-green-mid: #009926;
-  --color-green-border: #3A5A3A;
-  --color-green-border-light: #4A7A4A;
-  --color-green-dark: #1A3A1A;
-  --color-green-panel: #121E12;
-  --color-green-deep: #0A1F0A;
+  /* Primary greens (muted, gameplay-aligned) */
+  --color-green-neon: #87B49B;
+  --color-green-light: #A7D5BF;
+  --color-green-mid: #557A66;
+  --color-green-border: #4D6D5B;
+  --color-green-border-light: #678C78;
+  --color-green-dark: #24372E;
+  --color-green-panel: #15221C;
+  --color-green-deep: #101A16;
 
   /* Accents */
-  --color-gold: #FFD700;
-  --color-gold-dark: #B39700;
-  --color-red: #E84040;
-  --color-red-dark: #CC2222;
+  --color-gold: #CDAE79;
+  --color-gold-dark: #8E6B36;
+  --color-red: #B36E6E;
+  --color-red-dark: #7B4545;
 
   /* Surfaces */
-  --color-bg: #0B1A0B;
-  --color-panel: #121E12;
-  --color-card: #1A2E1A;
-  --color-overlay: #1A2E1A;
+  --color-bg: #0F1714;
+  --color-panel: rgba(21, 34, 28, 0.9);
+  --color-card: rgba(28, 45, 37, 0.82);
+  --color-overlay: #182720;
 
   /* Text */
-  --color-text: #E8E0D0;
-  --color-text-secondary: #7A8A7A;
-  --color-text-muted: #556655;
+  --color-text: #E5DED0;
+  --color-text-secondary: #9AA99B;
+  --color-text-muted: #6F7F72;
 
   /* Shadows */
-  --glow-green: 0 0 12px rgba(0, 255, 68, 0.3);
-  --glow-green-strong: 0 0 20px rgba(0, 255, 68, 0.5);
-  --glow-gold: 0 0 12px rgba(255, 215, 0, 0.3);
-  --glow-red: 0 0 12px rgba(255, 51, 51, 0.3);
+  --glow-green: 0 0 0 1px rgba(135, 180, 155, 0.2), 0 8px 22px rgba(0, 0, 0, 0.36);
+  --glow-green-strong: 0 0 0 1px rgba(167, 213, 191, 0.38), 0 12px 28px rgba(0, 0, 0, 0.42);
+  --glow-gold: 0 0 0 1px rgba(189, 145, 84, 0.24), 0 8px 22px rgba(0, 0, 0, 0.35);
+  --glow-red: 0 0 0 1px rgba(199, 137, 137, 0.24), 0 8px 22px rgba(0, 0, 0, 0.35);
+
+  /* Radius scale */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
 
   /* Typography */
   --font-heading: 'EB Garamond', 'Crimson Text', Georgia, serif;
@@ -84,7 +91,7 @@ body {
 
 ::-webkit-scrollbar-thumb {
   background: var(--color-green-border);
-  border-radius: 3px;
+  border-radius: var(--radius-xs);
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -95,7 +102,7 @@ body {
    Selection
    --------------------------------------------------------------------------- */
 ::selection {
-  background: rgba(0, 255, 68, 0.2);
+  background: rgba(135, 180, 155, 0.24);
   color: var(--color-text);
 }
 
@@ -105,9 +112,9 @@ body {
 
 /* Panel — contenedor principal con fondo semi-transparente */
 .panel {
-  background: rgba(18, 30, 18, 0.85);
+  background: var(--color-panel);
   border: 1px solid var(--color-green-border);
-  border-radius: 3px;
+  border-radius: var(--radius-lg);
   backdrop-filter: blur(8px);
 }
 
@@ -165,58 +172,58 @@ body {
 /* HP bars */
 .hp-bar {
   height: 6px;
-  background: #1A1A1A;
+  background: rgba(8, 12, 10, 0.9);
   border: 1px solid var(--color-green-border);
-  border-radius: 2px;
+  border-radius: var(--radius-xs);
   overflow: hidden;
 }
 
 .hp-bar-fill {
   height: 100%;
-  border-radius: 1px;
+  border-radius: 5px;
   transition: width 0.3s ease;
 }
 
 .hp-bar-fill--ally {
-  background: linear-gradient(90deg, #009926, #33FF66);
+  background: linear-gradient(90deg, #4A7A63, #87B49B);
 }
 
 .hp-bar-fill--enemy {
-  background: linear-gradient(90deg, #AA1111, #E84040);
+  background: linear-gradient(90deg, #8D5555, #B36E6E);
 }
 
 /* Beast type badges */
 .badge-magical {
-  background: rgba(0, 255, 68, 0.15);
-  color: var(--color-green-light);
-  border: 1px solid rgba(0, 255, 68, 0.3);
+  background: rgba(135, 180, 155, 0.18);
+  color: #C6DFD1;
+  border: 1px solid rgba(135, 180, 155, 0.42);
   font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 2px 8px;
-  border-radius: 2px;
+  border-radius: var(--radius-xs);
 }
 
 .badge-hunter {
-  background: rgba(255, 215, 0, 0.15);
+  background: rgba(189, 145, 84, 0.18);
   color: var(--color-gold);
-  border: 1px solid rgba(255, 215, 0, 0.3);
+  border: 1px solid rgba(189, 145, 84, 0.42);
   font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 2px 8px;
-  border-radius: 2px;
+  border-radius: var(--radius-xs);
 }
 
 .badge-brute {
-  background: rgba(255, 51, 51, 0.15);
+  background: rgba(179, 110, 110, 0.18);
   color: var(--color-red);
-  border: 1px solid rgba(255, 51, 51, 0.3);
+  border: 1px solid rgba(179, 110, 110, 0.42);
   font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 2px 8px;
-  border-radius: 2px;
+  border-radius: var(--radius-xs);
 }
 
 /* ---------------------------------------------------------------------------
@@ -246,7 +253,7 @@ body {
   position: relative;
   background: url('/bg_battle.png?v=1') center center / cover no-repeat;
   overflow: hidden;
-  border-radius: 8px;
+  border-radius: var(--radius-xl);
 }
 
 .arena-background::before {
@@ -263,42 +270,42 @@ body {
 /* Hex grid cell base — transparent with thick subtle white outlines */
 .hex-cell {
   fill: transparent;
-  stroke: rgba(255, 255, 255, 0.15);
+  stroke: rgba(197, 214, 204, 0.2);
   stroke-width: 2.5;
   transition: fill 0.15s ease, stroke 0.15s ease;
 }
 
 .hex-cell:hover {
-  fill: rgba(255, 255, 255, 0.04);
-  stroke: rgba(255, 255, 255, 0.25);
+  fill: rgba(163, 192, 176, 0.08);
+  stroke: rgba(197, 214, 204, 0.32);
 }
 
 /* Occupied cells (ally/enemy) */
 .hex-cell--zone-player {
-  fill: rgba(51, 255, 102, 0.16);
-  stroke: rgba(51, 255, 102, 0.72);
+  fill: rgba(135, 180, 155, 0.2);
+  stroke: rgba(167, 213, 191, 0.68);
   stroke-width: 2.5;
 }
 
 .hex-cell--zone-player:hover {
-  fill: rgba(51, 255, 102, 0.26);
-  stroke: rgba(51, 255, 102, 0.9);
+  fill: rgba(135, 180, 155, 0.32);
+  stroke: rgba(191, 225, 206, 0.86);
 }
 
 .hex-cell--zone-enemy {
-  fill: rgba(255, 215, 0, 0.18);
-  stroke: rgba(255, 215, 0, 0.78);
+  fill: rgba(179, 110, 110, 0.22);
+  stroke: rgba(199, 137, 137, 0.72);
   stroke-width: 2.5;
 }
 
 .hex-cell--zone-enemy:hover {
-  fill: rgba(255, 215, 0, 0.3);
-  stroke: rgba(255, 215, 0, 0.95);
+  fill: rgba(179, 110, 110, 0.34);
+  stroke: rgba(216, 171, 171, 0.9);
 }
 
 .hex-cell--zone-neutral {
   fill: transparent;
-  stroke: rgba(255, 255, 255, 0.15);
+  stroke: rgba(197, 214, 204, 0.2);
   stroke-width: 2.5;
 }
 
@@ -310,74 +317,74 @@ body {
 
 .hex-cell--obstacle {
   fill: rgba(0, 0, 0, 0.25);
-  stroke: rgba(255, 255, 255, 0.2);
+  stroke: rgba(204, 214, 207, 0.28);
   stroke-width: 1.2;
 }
 
 .hex-cell--selected {
-  fill: rgba(0, 255, 68, 0.2);
-  stroke: #FFFFFF;
+  fill: rgba(135, 180, 155, 0.26);
+  stroke: #D3E1D8;
   stroke-width: 2;
 }
 
 .hex-cell--selected-beast {
-  fill: rgba(0, 255, 221, 0.28);
-  stroke: rgba(123, 255, 255, 0.95);
+  fill: rgba(151, 187, 168, 0.32);
+  stroke: rgba(196, 223, 208, 0.95);
   stroke-width: 2.8;
   animation: pulse-selected-cell 1.2s ease-in-out infinite;
 }
 
 .hex-cell--selected-beast:hover {
-  fill: rgba(0, 255, 221, 0.36);
-  stroke: #B7FFFF;
+  fill: rgba(170, 205, 186, 0.4);
+  stroke: #D9ECE1;
 }
 
 .hex-cell--move-range {
-  fill: rgba(0, 220, 180, 0.25);
-  stroke: rgba(0, 255, 220, 0.8);
+  fill: rgba(104, 151, 125, 0.24);
+  stroke: rgba(144, 192, 167, 0.84);
   stroke-width: 2;
   cursor: pointer;
   animation: pulse-move 1.5s ease-in-out infinite;
 }
 
 .hex-cell--move-range:hover {
-  fill: rgba(0, 220, 180, 0.4);
-  stroke: #00FFDD;
+  fill: rgba(125, 172, 146, 0.38);
+  stroke: #B1D7C1;
   stroke-width: 2.5;
 }
 
 .hex-cell--attack-range {
-  fill: rgba(255, 51, 51, 0.2);
-  stroke: rgba(255, 80, 60, 0.8);
+  fill: rgba(171, 105, 105, 0.24);
+  stroke: rgba(199, 137, 137, 0.8);
   stroke-width: 2;
   cursor: pointer;
   animation: pulse-attack 1.5s ease-in-out infinite;
 }
 
 .hex-cell--attack-range:hover {
-  fill: rgba(255, 51, 51, 0.35);
-  stroke: #FF4444;
+  fill: rgba(188, 125, 125, 0.36);
+  stroke: #DBA6A6;
   stroke-width: 2.5;
 }
 
 @keyframes pulse-move {
-  0%, 100% { fill: rgba(0, 220, 180, 0.15); }
-  50% { fill: rgba(0, 220, 180, 0.35); }
+  0%, 100% { fill: rgba(104, 151, 125, 0.15); }
+  50% { fill: rgba(125, 172, 146, 0.3); }
 }
 
 @keyframes pulse-attack {
-  0%, 100% { fill: rgba(255, 51, 51, 0.12); }
-  50% { fill: rgba(255, 51, 51, 0.3); }
+  0%, 100% { fill: rgba(171, 105, 105, 0.15); }
+  50% { fill: rgba(188, 125, 125, 0.32); }
 }
 
 @keyframes pulse-selected-cell {
   0%, 100% {
-    fill: rgba(0, 255, 221, 0.18);
-    stroke: rgba(123, 255, 255, 0.78);
+    fill: rgba(151, 187, 168, 0.2);
+    stroke: rgba(196, 223, 208, 0.8);
   }
   50% {
-    fill: rgba(0, 255, 221, 0.36);
-    stroke: rgba(183, 255, 255, 1);
+    fill: rgba(170, 205, 186, 0.36);
+    stroke: rgba(222, 239, 230, 1);
   }
 }
 
@@ -401,33 +408,33 @@ body {
 }
 
 .round-badge {
-  background: linear-gradient(180deg, #103428 0%, #0c2a20 50%, #091e18 100%);
-  border: 2px solid #3f7d66;
-  border-radius: 0 0 12px 12px;
+  background: linear-gradient(180deg, #1e342b 0%, #172a22 52%, #101d18 100%);
+  border: 2px solid #5d816e;
+  border-radius: 0 0 14px 14px;
   padding: 6px 28px 10px;
   text-align: center;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255,255,255,0.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255,255,255,0.06);
 }
 
 .round-badge--waiting {
-  background: linear-gradient(180deg, #3a295f 0%, #2e214d 50%, #231a3c 100%);
-  border-color: #8e6cc9;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255,255,255,0.08);
+  background: linear-gradient(180deg, #362424 0%, #2a1b1b 52%, #1d1212 100%);
+  border-color: #886262;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255,255,255,0.06);
 }
 
 .round-badge--waiting .round-badge__label {
-  color: #d6c5ff;
+  color: #dcb9b9;
 }
 
 .round-badge--waiting .round-badge__timer {
-  color: #f2edff;
-  text-shadow: 0 0 10px rgba(150, 110, 210, 0.38);
+  color: #ecd8d8;
+  text-shadow: 0 0 10px rgba(132, 92, 92, 0.34);
 }
 
 .round-badge__label {
   font-family: var(--font-heading);
   font-size: 0.7rem;
-  color: #b2d8c5;
+  color: #c7d9ce;
   text-transform: uppercase;
   letter-spacing: 0.15em;
 }
@@ -436,8 +443,8 @@ body {
   font-family: var(--font-mono);
   font-size: 1.8rem;
   font-weight: 700;
-  color: #e7f3ed;
-  text-shadow: 0 0 10px rgba(95, 140, 120, 0.28);
+  color: #e9e2d8;
+  text-shadow: 0 0 10px rgba(95, 120, 107, 0.25);
   line-height: 1;
 }
 
@@ -446,61 +453,61 @@ body {
   align-items: center;
   gap: 8px;
   padding: 6px 16px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-family: var(--font-mono);
   font-size: 0.8rem;
   font-weight: 600;
 }
 
 .player-tag--me {
-  background: rgba(55, 110, 88, 0.26);
-  border: 1px solid rgba(94, 150, 124, 0.45);
-  color: #b8dcca;
+  background: rgba(79, 118, 98, 0.28);
+  border: 1px solid rgba(116, 162, 137, 0.48);
+  color: #c7dfd1;
 }
 
 .player-tag--enemy {
-  background: rgba(110, 65, 65, 0.26);
-  border: 1px solid rgba(155, 100, 100, 0.45);
-  color: #ddb6b6;
+  background: rgba(104, 68, 68, 0.28);
+  border: 1px solid rgba(157, 106, 106, 0.48);
+  color: #e1c2c2;
 }
 
 /* ---------------------------------------------------------------------------
    Battle panels (round-badge style)
    --------------------------------------------------------------------------- */
 .battle-panel {
-  background: linear-gradient(180deg, #103428 0%, #0c2a20 60%, #091e18 100%);
-  border: 2px solid #3f7d66;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255,255,255,0.08);
+  background: linear-gradient(180deg, #1e342b 0%, #172a22 60%, #101d18 100%);
+  border: 2px solid #5d816e;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255,255,255,0.06);
   overflow: hidden;
 }
 
 .battle-panel--enemy {
-  background: linear-gradient(180deg, #3b1919 0%, #2a1212 60%, #190d0d 100%);
-  border-color: #8d5656;
+  background: linear-gradient(180deg, #3b2222 0%, #2d1919 60%, #1f1212 100%);
+  border-color: #8f6262;
 }
 
 .battle-panel__header {
   padding: 6px 14px;
-  border-bottom: 1px solid rgba(140, 190, 165, 0.22);
+  border-bottom: 1px solid rgba(159, 195, 175, 0.24);
   text-align: center;
 }
 
 .battle-panel--enemy .battle-panel__header {
-  border-bottom-color: rgba(185, 125, 125, 0.24);
+  border-bottom-color: rgba(185, 134, 134, 0.26);
 }
 
 .battle-panel__title {
   font-family: var(--font-heading);
   font-size: 0.7rem;
-  color: #b2d8c5;
+  color: #c7d9ce;
   text-transform: uppercase;
   letter-spacing: 0.15em;
   font-weight: 600;
 }
 
 .battle-panel--enemy .battle-panel__title {
-  color: #d8a8a8;
+  color: #d7b3b3;
 }
 
 .battle-panel__body {
@@ -508,21 +515,21 @@ body {
 }
 
 .battle-panel--ready {
-  border-color: #8be8b9;
+  border-color: #9fc5ae;
   box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.45),
-    0 0 18px rgba(120, 235, 178, 0.45),
-    0 0 34px rgba(90, 204, 150, 0.32),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    0 8px 24px rgba(0, 0, 0, 0.42),
+    0 0 16px rgba(138, 181, 159, 0.42),
+    0 0 30px rgba(112, 154, 133, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
   animation: ready-panel-breathe 1.5s ease-in-out infinite;
 }
 
 .battle-panel--ready .battle-panel__header {
-  border-bottom-color: rgba(170, 235, 203, 0.52);
+  border-bottom-color: rgba(182, 212, 197, 0.46);
 }
 
 .battle-panel--ready .battle-panel__title {
-  color: #e2ffef;
+  color: #e3eee8;
 }
 
 /* ---------------------------------------------------------------------------
@@ -542,9 +549,9 @@ body {
 .action-btn {
   width: 52px;
   height: 52px;
-  border-radius: 8px;
-  border: 2px solid rgba(0, 180, 170, 0.5);
-  background: linear-gradient(180deg, rgba(30, 50, 45, 0.9) 0%, rgba(15, 30, 25, 0.95) 100%);
+  border-radius: var(--radius-sm);
+  border: 2px solid rgba(118, 157, 136, 0.5);
+  background: linear-gradient(180deg, rgba(41, 62, 53, 0.9) 0%, rgba(23, 37, 31, 0.95) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -554,22 +561,22 @@ body {
 }
 
 .action-btn:hover {
-  border-color: rgba(0, 255, 220, 0.8);
-  box-shadow: 0 0 16px rgba(0, 220, 180, 0.3);
+  border-color: rgba(170, 205, 186, 0.82);
+  box-shadow: 0 0 16px rgba(135, 180, 155, 0.3);
   transform: translateY(-2px);
 }
 
 .action-btn--active {
-  border-color: #FFD700;
-  background: linear-gradient(180deg, rgba(80, 60, 10, 0.9) 0%, rgba(50, 35, 5, 0.95) 100%);
-  box-shadow: 0 0 16px rgba(255, 215, 0, 0.4);
+  border-color: #CDAE79;
+  background: linear-gradient(180deg, rgba(85, 66, 33, 0.9) 0%, rgba(55, 40, 20, 0.95) 100%);
+  box-shadow: 0 0 16px rgba(189, 145, 84, 0.4);
 }
 
 .action-btn__label {
   font-family: var(--font-mono);
   font-size: 0.6rem;
   font-weight: 700;
-  color: #FFD700;
+  color: #D8B880;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -580,39 +587,39 @@ body {
 
 /* Turn indicator pulse */
 @keyframes turn-pulse {
-  0%, 100% { box-shadow: 0 0 8px rgba(0, 255, 68, 0.2); }
-  50% { box-shadow: 0 0 20px rgba(0, 255, 68, 0.5); }
+  0%, 100% { box-shadow: 0 0 8px rgba(135, 180, 155, 0.22); }
+  50% { box-shadow: 0 0 20px rgba(135, 180, 155, 0.46); }
 }
 .turn-indicator-pulse { animation: turn-pulse 2s ease-in-out infinite; }
 
 /* Selected beast glow */
 @keyframes beast-glow {
-  0%, 100% { box-shadow: 0 0 8px rgba(0, 255, 68, 0.2); }
-  50% { box-shadow: 0 0 16px rgba(0, 255, 68, 0.4); }
+  0%, 100% { box-shadow: 0 0 8px rgba(135, 180, 155, 0.2); }
+  50% { box-shadow: 0 0 16px rgba(135, 180, 155, 0.4); }
 }
 .beast-selected-glow { animation: beast-glow 1.5s ease-in-out infinite; }
 
 @keyframes ready-panel-breathe {
   0%, 100% {
     box-shadow:
-      0 4px 20px rgba(0, 0, 0, 0.45),
-      0 0 14px rgba(120, 235, 178, 0.35),
-      0 0 28px rgba(90, 204, 150, 0.24),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      0 8px 24px rgba(0, 0, 0, 0.42),
+      0 0 12px rgba(138, 181, 159, 0.33),
+      0 0 24px rgba(112, 154, 133, 0.24),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
   }
   50% {
     box-shadow:
-      0 4px 20px rgba(0, 0, 0, 0.45),
-      0 0 30px rgba(120, 235, 178, 0.66),
-      0 0 54px rgba(90, 204, 150, 0.42),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      0 8px 24px rgba(0, 0, 0, 0.42),
+      0 0 24px rgba(138, 181, 159, 0.58),
+      0 0 46px rgba(112, 154, 133, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
   }
 }
 
 /* Confirm button ready */
 @keyframes confirm-glow {
-  0%, 100% { box-shadow: 0 0 8px rgba(0, 255, 68, 0.15); }
-  50% { box-shadow: 0 0 16px rgba(0, 255, 68, 0.4); }
+  0%, 100% { box-shadow: 0 0 8px rgba(135, 180, 155, 0.16); }
+  50% { box-shadow: 0 0 16px rgba(135, 180, 155, 0.4); }
 }
 .confirm-ready-glow { animation: confirm-glow 1.5s ease-in-out infinite; }
 
@@ -635,9 +642,9 @@ body {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: linear-gradient(135deg, transparent 45%, rgba(232,64,64,0.15) 45%, rgba(232,64,64,0.15) 55%, transparent 55%);
+  background: linear-gradient(135deg, transparent 45%, rgba(179,110,110,0.15) 45%, rgba(179,110,110,0.15) 55%, transparent 55%);
   pointer-events: none;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
 }
 
 /* ---------------------------------------------------------------------------
@@ -651,7 +658,7 @@ body {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 50% 45%, rgba(150, 110, 220, 0.25), rgba(8, 8, 14, 0.7) 65%);
+  background: radial-gradient(circle at 50% 45%, rgba(129, 160, 144, 0.24), rgba(7, 11, 9, 0.72) 65%);
   pointer-events: none;
 }
 
@@ -688,16 +695,16 @@ body {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  border: 5px solid #c7a85a;
+  border: 5px solid #B08A59;
   box-shadow:
-    inset 0 0 0 2px rgba(255, 235, 180, 0.35),
+    inset 0 0 0 2px rgba(233, 208, 158, 0.3),
     inset 0 8px 18px rgba(0, 0, 0, 0.28),
     0 10px 28px rgba(0, 0, 0, 0.45);
   backface-visibility: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at 35% 25%, #f5dc9a 0%, #d8b96e 55%, #ac8547 100%);
+  background: radial-gradient(circle at 35% 25%, #e7d0a0 0%, #c5a16b 55%, #8c693a 100%);
   overflow: hidden;
 }
 

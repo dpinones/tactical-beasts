@@ -204,17 +204,17 @@ export interface PassiveInfo {
 export function getPassiveInfo(subclass: Subclass): PassiveInfo {
   switch (subclass) {
     case Subclass.Juggernaut:
-      return { name: "Fortify", shortLabel: "FRT", description: "-10% dmg if didn't move", color: "#4A9EFF" };
+      return { name: "Fortify", shortLabel: "FRT", description: "-10% dmg if didn't move", color: "#8BAE9C" };
     case Subclass.Berserker:
-      return { name: "Rage", shortLabel: "RGE", description: "+12% dmg if HP < 50%", color: "#FF4444" };
+      return { name: "Rage", shortLabel: "RGE", description: "+12% dmg if HP < 50%", color: "#C78989" };
     case Subclass.Stalker:
-      return { name: "1st Strike", shortLabel: "1ST", description: "+15% dmg vs full HP", color: "#FFD700" };
+      return { name: "1st Strike", shortLabel: "1ST", description: "+15% dmg vs full HP", color: "#CDAE79" };
     case Subclass.Warlock:
-      return { name: "Siphon", shortLabel: "SPN", description: "Heal 15% of dmg dealt", color: "#B366FF" };
+      return { name: "Siphon", shortLabel: "SPN", description: "Heal 15% of dmg dealt", color: "#9EBCAD" };
     case Subclass.Enchanter:
-      return { name: "Regen", shortLabel: "RGN", description: "+8% max HP", color: "#66FFB2" };
+      return { name: "Regen", shortLabel: "RGN", description: "+8% max HP", color: "#A7D5BF" };
     case Subclass.Ranger:
-      return { name: "Exposed", shortLabel: "EXP", description: "+30% melee dmg received", color: "#FF8C33" };
+      return { name: "Exposed", shortLabel: "EXP", description: "+30% melee dmg received", color: "#D1A071" };
   }
 }
 

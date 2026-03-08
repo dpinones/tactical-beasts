@@ -20,14 +20,14 @@ export function CoinFlipIntro({ revealResult }: CoinFlipIntroProps) {
       <VStack gap={2} mb={8} textAlign="center">
         <Text
           fontSize={{ base: "lg", md: "2xl" }}
-          color="#D8C7FF"
+          color="#C7D9CE"
           fontFamily="heading"
           textTransform="uppercase"
           letterSpacing="0.08em"
         >
           Tossing Coin
         </Text>
-        <Text fontSize={{ base: "sm", md: "md" }} color="rgba(240,230,255,0.9)" fontFamily="mono">
+        <Text fontSize={{ base: "sm", md: "md" }} color="rgba(205, 222, 212, 0.9)" fontFamily="mono">
           Deciding attacker and defender
         </Text>
       </VStack>
@@ -49,14 +49,13 @@ export function CoinFlipIntro({ revealResult }: CoinFlipIntroProps) {
         className={`coin-result ${revealResult ? "coin-result--visible" : ""}`}
         textAlign="center"
       >
-        <Text fontFamily="heading" fontSize={{ base: "md", md: "xl" }} color="#EDE3FF" letterSpacing="0.06em">
+        <Text fontFamily="heading" fontSize={{ base: "md", md: "xl" }} color="#E7E0D3" letterSpacing="0.06em">
           Heads Wins
         </Text>
-        <Text fontSize={{ base: "sm", md: "md" }} color="#DCCBFF" fontFamily="mono">
+        <Text fontSize={{ base: "sm", md: "md" }} color="#D4C6AD" fontFamily="mono">
           Player 1 attacks first · Player 2 defends
         </Text>
       </VStack>
     </Flex>
   );
 }
-

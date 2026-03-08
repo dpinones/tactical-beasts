@@ -56,9 +56,9 @@ export function BeastClothesline() {
         left="-5%"
         right="-5%"
         h="4px"
-        bg="linear-gradient(90deg, transparent 0%, #8B6914 5%, #C4A135 20%, #8B6914 50%, #C4A135 80%, #8B6914 95%, transparent 100%)"
+        bg="linear-gradient(90deg, transparent 0%, #6D4F2E 5%, #A67C49 20%, #6D4F2E 50%, #A67C49 80%, #6D4F2E 95%, transparent 100%)"
         zIndex={1}
-        borderRadius="2px"
+        borderRadius="6px"
         boxShadow="0 2px 4px rgba(0,0,0,0.3)"
       />
 
@@ -89,8 +89,8 @@ export function BeastClothesline() {
             <Box
               w="16px"
               h="24px"
-              bg="linear-gradient(180deg, #C4A135 0%, #8B6914 100%)"
-              borderRadius="2px 2px 0 0"
+              bg="linear-gradient(180deg, #A67C49 0%, #6D4F2E 100%)"
+              borderRadius="6px 6px 0 0"
               zIndex={2}
               position="relative"
               boxShadow="0 2px 4px rgba(0,0,0,0.3)"
@@ -100,10 +100,10 @@ export function BeastClothesline() {
             <Box
               w={`${CARD_WIDTH}px`}
               h="160px"
-              bg="linear-gradient(145deg, #2a2a3e 0%, #1a1a2e 100%)"
+              bg="linear-gradient(145deg, #2A3E36 0%, #1A2A24 100%)"
               border="2px solid"
-              borderColor="rgba(196, 161, 53, 0.4)"
-              borderRadius="8px"
+              borderColor="rgba(166, 124, 73, 0.45)"
+              borderRadius="12px"
               overflow="hidden"
               boxShadow="0 4px 12px rgba(0,0,0,0.5)"
               position="relative"

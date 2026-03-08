@@ -64,10 +64,10 @@ async function init() {
             onClick={() => window.location.reload()}
             style={{
               padding: "8px 24px",
-              borderRadius: "6px",
-              border: "1px solid #555",
-              background: "transparent",
-              color: "white",
+              borderRadius: "10px",
+              border: "1px solid #4D6D5B",
+              background: "rgba(28, 45, 37, 0.82)",
+              color: "#E5DED0",
               cursor: "pointer",
             }}
           >

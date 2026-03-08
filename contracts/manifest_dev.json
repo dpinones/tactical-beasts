@@ -57,8 +57,8 @@
       ]
     },
     {
-      "address": "0x37739e937a1fd177da969c4022215164078e8fbcd78ce31d749331ec0658e43",
-      "class_hash": "0x7a27aa4a5a10c1131baa42e371e699c2dcf82064b2103ddc8653fe12c415a95",
+      "address": "0x4b223612e36329c27826968a27f07b3034ec630664fec31ef0ff35f1853dcb3",
+      "class_hash": "0x680549babbce4b9a1afcc322b2e9c1689b7e8a4d196add5955bf6b5c25085f",
       "init_calldata": [],
       "tag": "TB2-game_system",
       "selector": "0x7b548a2c33e71b289ba043a84f0f37e9467bfb8864e17dc42549359cccb8304",

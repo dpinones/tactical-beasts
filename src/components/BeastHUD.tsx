@@ -23,9 +23,9 @@ function actionShortLabel(type: ActionType): string {
 
 function actionColor(type: ActionType): string {
   switch (type) {
-    case ActionType.MOVE: return "#33FF66";
-    case ActionType.ATTACK: return "#E84040";
-    case ActionType.CONSUMABLE_ATTACK_POTION: return "#FFE033";
+    case ActionType.MOVE: return "#A7D5BF";
+    case ActionType.ATTACK: return "#C78989";
+    case ActionType.CONSUMABLE_ATTACK_POTION: return "#CDAE79";
     default: return "#888";
   }
 }
@@ -78,7 +78,7 @@ export function BeastHUD({
       bg={cardBg}
       border={isSelected ? "2px solid" : "1px solid"}
       borderColor={isSelected ? selectedBorder : alive ? borderAlive : "rgba(220,60,60,0.4)"}
-      borderRadius="3px"
+      borderRadius="10px"
       p={1.5}
       opacity={alive ? 1 : 0.35}
       cursor={onClick ? "pointer" : "default"}
@@ -103,13 +103,13 @@ export function BeastHUD({
             w="56px"
             h="56px"
             objectFit="contain"
-            borderRadius="6px"
+            borderRadius="8px"
             border="2px solid"
             borderColor={portraitBorder}
             bg="rgba(0,0,0,0.4)"
             filter={alive ? "none" : "grayscale(1)"}
             fallback={
-              <Flex w="56px" h="56px" align="center" justify="center" bg="rgba(0,0,0,0.4)" borderRadius="6px" border="2px solid" borderColor="rgba(232, 224, 208, 0.45)" flexShrink={0}>
+              <Flex w="56px" h="56px" align="center" justify="center" bg="rgba(0,0,0,0.4)" borderRadius="8px" border="2px solid" borderColor="rgba(232, 224, 208, 0.45)" flexShrink={0}>
                 <Text fontSize="xl" color="#E8E0D0" fontWeight="bold">{speciesName[0]}</Text>
               </Flex>
             }
@@ -120,9 +120,9 @@ export function BeastHUD({
               top={0} left={0} right={0} bottom={0}
               align="center" justify="center"
               bg="rgba(0,0,0,0.5)"
-              borderRadius="6px"
+              borderRadius="8px"
             >
-              <Text fontSize="xs" color="#FF4444" fontWeight="800" fontFamily="mono">KO</Text>
+              <Text fontSize="xs" color="#D59A9A" fontWeight="800" fontFamily="mono">KO</Text>
             </Flex>
           )}
         </Box>
@@ -164,7 +164,7 @@ export function BeastHUD({
               value={hpPct}
               size="xs"
               variant={hpVariant(hpPct, isMine)}
-              borderRadius="2px"
+              borderRadius="6px"
             />
           </Box>
 
@@ -200,7 +200,7 @@ export function BeastHUD({
                 mt={0.5}
                 px={1.5}
                 py={0.5}
-                borderRadius="2px"
+                borderRadius="6px"
                 border="1px solid"
                 borderColor={passive.color}
                 bg={`${passive.color}11`}
@@ -228,7 +228,7 @@ export function BeastHUD({
           bg={plannedAction ? "rgba(45,216,138,0.1)" : "transparent"}
           border="1px solid"
           borderColor={plannedAction ? actionColor(plannedAction.actionType) : "transparent"}
-          borderRadius="2px"
+          borderRadius="6px"
           px={1.5}
           py={0.5}
           textAlign="center"

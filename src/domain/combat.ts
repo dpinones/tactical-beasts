@@ -101,11 +101,11 @@ export function getTierFromId(beastId: number): number {
 export function getTypeColor(type: BeastType): string {
   switch (type) {
     case BeastType.Magical:
-      return "#33FF66";
+      return "#A7D5BF";
     case BeastType.Hunter:
-      return "#FFD700";
+      return "#CDAE79";
     case BeastType.Brute:
-      return "#FF3333";
+      return "#C78989";
   }
 }
 

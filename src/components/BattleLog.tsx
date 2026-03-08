@@ -10,21 +10,21 @@ function eventColor(type: BattleEvent["type"]): string {
   switch (type) {
     case "attack":
     case "counterattack":
-      return "#E84040";
+      return "#C78989";
     case "ko":
-      return "#E84040";
+      return "#C78989";
     case "extra_life":
-      return "#FFD700";
+      return "#CDAE79";
     case "crit":
-      return "#FFD700";
+      return "#CDAE79";
     case "move":
-      return "#33FF66";
+      return "#A7D5BF";
     case "potion":
-      return "#33FF66";
+      return "#A7D5BF";
     case "passive":
-      return "#B366FF";
+      return "#9EBCAD";
     default:
-      return "#7A8A7A";
+      return "#9AA99B";
   }
 }
 
@@ -53,9 +53,9 @@ function eventSymbol(type: BattleEvent["type"]): string {
 function eventBg(type: BattleEvent["type"]): string | undefined {
   switch (type) {
     case "ko":
-      return "rgba(232,64,64,0.08)";
+      return "rgba(199,137,137,0.12)";
     case "crit":
-      return "rgba(255,215,0,0.08)";
+      return "rgba(205,174,121,0.12)";
     default:
       return undefined;
   }
@@ -71,7 +71,7 @@ export function BattleLog({ events }: BattleLogProps) {
   return (
     <VStack align="stretch" gap={1}>
       {events.length === 0 ? (
-        <Text fontSize="xs" color="#8BFFC4" fontFamily="mono" opacity={0.6}>
+        <Text fontSize="xs" color="#A7D5BF" fontFamily="mono" opacity={0.6}>
           Waiting for actions...
         </Text>
       ) : (
@@ -84,7 +84,7 @@ export function BattleLog({ events }: BattleLogProps) {
             borderLeftColor={eventColor(event.type)}
             px={3}
             py={1.5}
-            borderRadius="2px"
+            borderRadius="8px"
             bg={eventBg(event.type)}
             className="battle-log-entry-appear"
           >

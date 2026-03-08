@@ -89,6 +89,48 @@ export function setupWorld(provider: DojoProvider) {
 		}
 	};
 
+	const build_game_system_createGameWithSettings_calldata = (settingsId: BigNumberish): DojoCall => {
+		return {
+			contractName: "game_system",
+			entrypoint: "create_game_with_settings",
+			calldata: [settingsId],
+		};
+	};
+
+	const game_system_createGameWithSettings = async (snAccount: Account | AccountInterface, settingsId: BigNumberish) => {
+		try {
+			return await provider.execute(
+				snAccount,
+				build_game_system_createGameWithSettings_calldata(settingsId),
+				DOJO_NAMESPACE,
+			);
+		} catch (error) {
+			console.error(error);
+			throw error;
+		}
+	};
+
+	const build_game_system_createSettings_calldata = (name: string, description: string, minTier: BigNumberish, maxTier: BigNumberish, maxT2PerTeam: BigNumberish, maxT3PerTeam: BigNumberish, beastsPerPlayer: BigNumberish): DojoCall => {
+		return {
+			contractName: "game_system",
+			entrypoint: "create_settings",
+			calldata: [name, description, minTier, maxTier, maxT2PerTeam, maxT3PerTeam, beastsPerPlayer],
+		};
+	};
+
+	const game_system_createSettings = async (snAccount: Account | AccountInterface, name: string, description: string, minTier: BigNumberish, maxTier: BigNumberish, maxT2PerTeam: BigNumberish, maxT3PerTeam: BigNumberish, beastsPerPlayer: BigNumberish) => {
+		try {
+			return await provider.execute(
+				snAccount,
+				build_game_system_createSettings_calldata(name, description, minTier, maxTier, maxT2PerTeam, maxT3PerTeam, beastsPerPlayer),
+				DOJO_NAMESPACE,
+			);
+		} catch (error) {
+			console.error(error);
+			throw error;
+		}
+	};
+
 	const build_game_system_executeTurn_calldata = (gameId: BigNumberish, actions: Array<Action>): DojoCall => {
 		return {
 			contractName: "game_system",
@@ -313,6 +355,27 @@ export function setupWorld(provider: DojoProvider) {
 		}
 	};
 
+	const build_game_system_setTeamDynamic_calldata = (gameId: BigNumberish, beasts: Array<BigNumberish>): DojoCall => {
+		return {
+			contractName: "game_system",
+			entrypoint: "set_team_dynamic",
+			calldata: [gameId, beasts],
+		};
+	};
+
+	const game_system_setTeamDynamic = async (snAccount: Account | AccountInterface, gameId: BigNumberish, beasts: Array<BigNumberish>) => {
+		try {
+			return await provider.execute(
+				snAccount,
+				build_game_system_setTeamDynamic_calldata(gameId, beasts),
+				DOJO_NAMESPACE,
+			);
+		} catch (error) {
+			console.error(error);
+			throw error;
+		}
+	};
+
 	const build_game_system_settingsAddress_calldata = (): DojoCall => {
 		return {
 			contractName: "game_system",
@@ -324,6 +387,40 @@ export function setupWorld(provider: DojoProvider) {
 	const game_system_settingsAddress = async () => {
 		try {
 			return await provider.call(DOJO_NAMESPACE, build_game_system_settingsAddress_calldata());
+		} catch (error) {
+			console.error(error);
+			throw error;
+		}
+	};
+
+	const build_game_system_settingsCount_calldata = (): DojoCall => {
+		return {
+			contractName: "game_system",
+			entrypoint: "settings_count",
+			calldata: [],
+		};
+	};
+
+	const game_system_settingsCount = async () => {
+		try {
+			return await provider.call(DOJO_NAMESPACE, build_game_system_settingsCount_calldata());
+		} catch (error) {
+			console.error(error);
+			throw error;
+		}
+	};
+
+	const build_game_system_settingsDetails_calldata = (settingsId: BigNumberish): DojoCall => {
+		return {
+			contractName: "game_system",
+			entrypoint: "settings_details",
+			calldata: [settingsId],
+		};
+	};
+
+	const game_system_settingsDetails = async (settingsId: BigNumberish) => {
+		try {
+			return await provider.call(DOJO_NAMESPACE, build_game_system_settingsDetails_calldata(settingsId));
 		} catch (error) {
 			console.error(error);
 			throw error;
@@ -410,6 +507,10 @@ export function setupWorld(provider: DojoProvider) {
 			buildCreateFriendlyGameCalldata: build_game_system_createFriendlyGame_calldata,
 			createGame: game_system_createGame,
 			buildCreateGameCalldata: build_game_system_createGame_calldata,
+			createGameWithSettings: game_system_createGameWithSettings,
+			buildCreateGameWithSettingsCalldata: build_game_system_createGameWithSettings_calldata,
+			createSettings: game_system_createSettings,
+			buildCreateSettingsCalldata: build_game_system_createSettings_calldata,
 			executeTurn: game_system_executeTurn,
 			buildExecuteTurnCalldata: build_game_system_executeTurn_calldata,
 			findMatch: game_system_findMatch,
@@ -434,8 +535,14 @@ export function setupWorld(provider: DojoProvider) {
 			buildSetBeastConfigCalldata: build_game_system_setBeastConfig_calldata,
 			setTeam: game_system_setTeam,
 			buildSetTeamCalldata: build_game_system_setTeam_calldata,
+			setTeamDynamic: game_system_setTeamDynamic,
+			buildSetTeamDynamicCalldata: build_game_system_setTeamDynamic_calldata,
 			settingsAddress: game_system_settingsAddress,
 			buildSettingsAddressCalldata: build_game_system_settingsAddress_calldata,
+			settingsCount: game_system_settingsCount,
+			buildSettingsCountCalldata: build_game_system_settingsCount_calldata,
+			settingsDetails: game_system_settingsDetails,
+			buildSettingsDetailsCalldata: build_game_system_settingsDetails_calldata,
 			settingsExist: game_system_settingsExist,
 			buildSettingsExistCalldata: build_game_system_settingsExist_calldata,
 			settingsExistBatch: game_system_settingsExistBatch,

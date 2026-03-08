@@ -39,6 +39,7 @@ export interface Game {
 	p1_team_set: boolean;
 	p2_team_set: boolean;
 	is_friendly: boolean;
+	settings_id: BigNumberish;
 }
 
 // Type definition for `tactical_beats::models::index::GameConfig` struct
@@ -46,6 +47,17 @@ export interface GameConfig {
 	id: BigNumberish;
 	game_count: BigNumberish;
 	token_count: BigNumberish;
+	settings_count: BigNumberish;
+}
+
+// Type definition for `tactical_beats::models::index::GameSettings` struct
+export interface GameSettings {
+	settings_id: BigNumberish;
+	min_tier: BigNumberish;
+	max_tier: BigNumberish;
+	max_t2_per_team: BigNumberish;
+	max_t3_per_team: BigNumberish;
+	beasts_per_player: BigNumberish;
 }
 
 // Type definition for `tactical_beats::models::index::GameToken` struct
@@ -53,6 +65,7 @@ export interface GameToken {
 	token_id: BigNumberish;
 	match_id: BigNumberish;
 	player: string;
+	end_time: BigNumberish;
 }
 
 // Type definition for `tactical_beats::models::index::GameTokens` struct
@@ -105,7 +118,19 @@ export interface PlayerState {
 	beast_1: BigNumberish;
 	beast_2: BigNumberish;
 	beast_3: BigNumberish;
+	beast_4: BigNumberish;
 	potion_used: boolean;
+}
+
+// Type definition for `tactical_beats::models::index::TokenScore` struct
+export interface TokenScore {
+	token_id: BigNumberish;
+	wins: BigNumberish;
+	losses: BigNumberish;
+	kills: BigNumberish;
+	deaths: BigNumberish;
+	beasts_alive: BigNumberish;
+	matches_played: BigNumberish;
 }
 
 // Type definition for `tactical_beats::events::index::GameCreated` struct
@@ -177,12 +202,14 @@ export interface SchemaType extends ISchemaType {
 		BeastState: BeastState,
 		Game: Game,
 		GameConfig: GameConfig,
+		GameSettings: GameSettings,
 		GameToken: GameToken,
 		GameTokens: GameTokens,
 		MapState: MapState,
 		MatchmakingQueue: MatchmakingQueue,
 		PlayerProfile: PlayerProfile,
 		PlayerState: PlayerState,
+		TokenScore: TokenScore,
 		GameCreated: GameCreated,
 		GameFinished: GameFinished,
 		PlayerJoined: PlayerJoined,
@@ -226,16 +253,27 @@ export const schema: SchemaType = {
 			p1_team_set: false,
 			p2_team_set: false,
 			is_friendly: false,
+			settings_id: 0,
 		},
 		GameConfig: {
 			id: 0,
 			game_count: 0,
 			token_count: 0,
+			settings_count: 0,
+		},
+		GameSettings: {
+			settings_id: 0,
+			min_tier: 0,
+			max_tier: 0,
+			max_t2_per_team: 0,
+			max_t3_per_team: 0,
+			beasts_per_player: 0,
 		},
 		GameToken: {
 			token_id: 0,
 			match_id: 0,
 			player: "",
+			end_time: 0,
 		},
 		GameTokens: {
 			match_id: 0,
@@ -278,7 +316,17 @@ export const schema: SchemaType = {
 			beast_1: 0,
 			beast_2: 0,
 			beast_3: 0,
+			beast_4: 0,
 			potion_used: false,
+		},
+		TokenScore: {
+			token_id: 0,
+			wins: 0,
+			losses: 0,
+			kills: 0,
+			deaths: 0,
+			beasts_alive: 0,
+			matches_played: 0,
 		},
 		GameCreated: {
 			game_id: 0,
@@ -336,12 +384,14 @@ export enum ModelsMapping {
 	BeastState = 'tactical_beats-BeastState',
 	Game = 'tactical_beats-Game',
 	GameConfig = 'tactical_beats-GameConfig',
+	GameSettings = 'tactical_beats-GameSettings',
 	GameToken = 'tactical_beats-GameToken',
 	GameTokens = 'tactical_beats-GameTokens',
 	MapState = 'tactical_beats-MapState',
 	MatchmakingQueue = 'tactical_beats-MatchmakingQueue',
 	PlayerProfile = 'tactical_beats-PlayerProfile',
 	PlayerState = 'tactical_beats-PlayerState',
+	TokenScore = 'tactical_beats-TokenScore',
 	GameCreated = 'tactical_beats-GameCreated',
 	GameFinished = 'tactical_beats-GameFinished',
 	PlayerJoined = 'tactical_beats-PlayerJoined',

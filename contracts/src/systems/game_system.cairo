@@ -7,14 +7,28 @@ use starknet::ContractAddress;
 #[starknet::interface]
 pub trait IGameSystem<T> {
     fn create_game(ref self: T) -> u32;
+    fn create_game_with_settings(ref self: T, settings_id: u32) -> u32;
     fn create_friendly_game(ref self: T) -> u32;
     fn join_game(ref self: T, game_id: u32);
     fn set_team(ref self: T, game_id: u32, beast_1: u32, beast_2: u32, beast_3: u32);
+    fn set_team_dynamic(ref self: T, game_id: u32, beasts: Array<u32>);
     fn set_beast_config(ref self: T, beast_nft_address: ContractAddress);
     fn execute_turn(ref self: T, game_id: u32, actions: Array<crate::types::Action>);
     fn find_match(ref self: T) -> u32;
     fn cancel_matchmaking(ref self: T);
     fn abandon_game(ref self: T, game_id: u32);
+    fn create_settings(
+        ref self: T,
+        name: ByteArray,
+        description: ByteArray,
+        min_tier: u8,
+        max_tier: u8,
+        max_t2_per_team: u8,
+        max_t3_per_team: u8,
+        beasts_per_player: u8,
+    ) -> u32;
+    fn settings_count(self: @T) -> u32;
+    fn settings_details(self: @T, settings_id: u32) -> crate::models::index::GameSettings;
 }
 
 #[dojo::contract]
@@ -35,25 +49,31 @@ pub mod game_system {
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
     use crate::constants::{
         ACTION_ATTACK, ACTION_CONSUMABLE_ATTACK, ACTION_MOVE, BEASTS_PER_PLAYER, BEAST_NFT_ADDRESS,
-        COUNTER_ATTACK_PCT, DEFAULT_BEAST_TOKEN_MIN, DEFAULT_EXTRA_LIVES, GAME_STATUS_FINISHED,
-        GAME_STATUS_PLAYING, GAME_STATUS_WAITING, MAINNET_CHAIN_ID, MAX_ROUNDS, MAX_T2_PER_TEAM,
-        MAX_T3_PER_TEAM, MIN_DAMAGE, NAMESPACE, PASSIVE_EXPOSED_PENALTY, PASSIVE_FIRST_STRIKE_BONUS,
-        PASSIVE_FORTIFY_REDUCTION, PASSIVE_RAGE_BONUS, PASSIVE_REGEN_BONUS_HP, PASSIVE_SIPHON_HEAL,
-        SUBCLASS_BERSERKER, SUBCLASS_ENCHANTER, SUBCLASS_JUGGERNAUT, SUBCLASS_RANGER, SUBCLASS_STALKER,
-        SUBCLASS_WARLOCK, WIN_BONUS,
+        COUNTER_ATTACK_PCT, DEFAULT_BEAST_TOKEN_MIN, DEFAULT_EXTRA_LIVES, DEFAULT_MAX_T2_PER_TEAM,
+        DEFAULT_MAX_T3_PER_TEAM, GAME_STATUS_FINISHED, GAME_STATUS_PLAYING, GAME_STATUS_WAITING,
+        MAINNET_CHAIN_ID, MAX_BEASTS_PER_PLAYER, MIN_DAMAGE, MIN_TIER, MAX_TIER, NAMESPACE,
+        PASSIVE_EXPOSED_PENALTY, PASSIVE_FIRST_STRIKE_BONUS, PASSIVE_FORTIFY_REDUCTION,
+        PASSIVE_RAGE_BONUS, PASSIVE_REGEN_BONUS_HP, PASSIVE_SIPHON_HEAL, SUBCLASS_BERSERKER,
+        SUBCLASS_ENCHANTER, SUBCLASS_JUGGERNAUT, SUBCLASS_RANGER, SUBCLASS_STALKER, SUBCLASS_WARLOCK,
     };
     use crate::events::index::{GameCreated, GameFinished, PlayerJoined};
     use crate::interfaces::{IBeastsDispatcher, IBeastsDispatcherTrait, IERC721Dispatcher, IERC721DispatcherTrait};
     use crate::logic::{beast, board, combat};
     use crate::models::index::{
-        BeastConfig, BeastState, Game, GameConfig, GameToken, GameTokens, MapState, MatchmakingQueue, PlayerProfile,
-        PlayerState,
+        BeastConfig, BeastState, Game, GameConfig, GameSettings, GameToken, GameTokens, MapState, MatchmakingQueue,
+        PlayerProfile, PlayerState, TokenScore,
     };
     use crate::types::Action;
     use super::IGameSystem;
 
     fn zero_address() -> ContractAddress {
         0.try_into().unwrap()
+    }
+
+    /// Resolves settings_id to GameSettings. settings_id=0 maps to default (1).
+    fn get_settings(ref world: WorldStorage, settings_id: u32) -> GameSettings {
+        let resolved = if settings_id == 0 { 1 } else { settings_id };
+        world.read_model(resolved)
     }
 
     // Components
@@ -117,8 +137,19 @@ pub mod game_system {
         }
 
         let mut world = self.world(@NAMESPACE());
-        let config = GameConfig { id: 0, game_count: 0, token_count: 0 };
+        let config = GameConfig { id: 0, game_count: 0, token_count: 0, settings_count: 1 };
         world.write_model(@config);
+
+        // Write default settings (settings_id=1)
+        let default_settings = GameSettings {
+            settings_id: 1,
+            min_tier: MIN_TIER,
+            max_tier: MAX_TIER,
+            max_t2_per_team: DEFAULT_MAX_T2_PER_TEAM,
+            max_t3_per_team: DEFAULT_MAX_T3_PER_TEAM,
+            beasts_per_player: BEASTS_PER_PLAYER,
+        };
+        world.write_model(@default_settings);
     }
 
     #[abi(embed_v0)]
@@ -127,14 +158,24 @@ pub mod game_system {
             let mut world = self.world(@NAMESPACE());
             let denshokan = self.denshokan_address.read();
             let caller = starknet::get_caller_address();
-            _create_game(ref world, denshokan, caller, false)
+            _create_game(ref world, denshokan, caller, false, 1)
+        }
+
+        fn create_game_with_settings(ref self: ContractState, settings_id: u32) -> u32 {
+            let mut world = self.world(@NAMESPACE());
+            let denshokan = self.denshokan_address.read();
+            let caller = starknet::get_caller_address();
+            let resolved = if settings_id == 0 { 1 } else { settings_id };
+            let config: GameConfig = world.read_model(0);
+            assert!(resolved <= config.settings_count, "Settings do not exist");
+            _create_game(ref world, denshokan, caller, false, resolved)
         }
 
         fn create_friendly_game(ref self: ContractState) -> u32 {
             let mut world = self.world(@NAMESPACE());
             let denshokan = self.denshokan_address.read();
             let caller = starknet::get_caller_address();
-            _create_game(ref world, denshokan, caller, true)
+            _create_game(ref world, denshokan, caller, true, 1)
         }
 
         fn join_game(ref self: ContractState, game_id: u32) {
@@ -152,7 +193,7 @@ pub mod game_system {
             let queue: MatchmakingQueue = world.read_model(0);
 
             if queue.waiting_player == zero_address() {
-                let game_id = _create_game(ref world, denshokan, caller, false);
+                let game_id = _create_game(ref world, denshokan, caller, false, 1);
                 world.write_model(@MatchmakingQueue { id: 0, waiting_player: caller, waiting_game_id: game_id });
                 game_id
             } else {
@@ -209,8 +250,11 @@ pub mod game_system {
                 post_action(denshokan, caller_token);
             }
 
-            // Skip profile updates for friendly matches
+            // Skip profile/score updates for friendly matches
             if !game.is_friendly {
+                let settings = get_settings(ref world, game.settings_id);
+                let bpp = settings.beasts_per_player;
+
                 let mut abandoner_profile: PlayerProfile = world.read_model(caller);
                 abandoner_profile.abandons += 1;
                 abandoner_profile.losses += 1;
@@ -226,8 +270,8 @@ pub mod game_system {
                         2
                     } else {
                         1
-                    });
-                    let winner_deaths = count_dead_beasts(ref world, game_id, winner_index);
+                    }, bpp);
+                    let winner_deaths = count_dead_beasts(ref world, game_id, winner_index, bpp);
 
                     let mut winner_profile: PlayerProfile = world.read_model(winner);
                     winner_profile.wins += 1;
@@ -240,12 +284,22 @@ pub mod game_system {
                     } else {
                         1
                     };
-                    let abandoner_kills = count_dead_beasts(ref world, game_id, winner_index);
-                    let abandoner_deaths = count_dead_beasts(ref world, game_id, abandoner_index);
+                    let abandoner_kills = count_dead_beasts(ref world, game_id, winner_index, bpp);
+                    let abandoner_deaths = count_dead_beasts(ref world, game_id, abandoner_index, bpp);
                     let mut ap: PlayerProfile = world.read_model(caller);
                     ap.total_kills += abandoner_kills;
                     ap.total_deaths += abandoner_deaths;
                     world.write_model(@ap);
+
+                    // Update token scores
+                    let (winner_token, loser_token) = if winner == game.player1 {
+                        (game_tokens.p1_token_id, game_tokens.p2_token_id)
+                    } else {
+                        (game_tokens.p2_token_id, game_tokens.p1_token_id)
+                    };
+                    update_token_scores(
+                        ref world, game_id, winner, caller, winner_index, winner_token, loser_token, bpp,
+                    );
                 }
             }
         }
@@ -255,12 +309,60 @@ pub mod game_system {
             world.write_model(@BeastConfig { id: 0, beast_nft_address });
         }
 
+        fn create_settings(
+            ref self: ContractState,
+            name: ByteArray,
+            description: ByteArray,
+            min_tier: u8,
+            max_tier: u8,
+            max_t2_per_team: u8,
+            max_t3_per_team: u8,
+            beasts_per_player: u8,
+        ) -> u32 {
+            let mut world = self.world(@NAMESPACE());
+            // Validate parameters
+            assert!(min_tier >= 1 && min_tier <= 5, "Invalid min_tier");
+            assert!(max_tier >= min_tier && max_tier <= 5, "Invalid max_tier");
+            assert!(beasts_per_player >= 1 && beasts_per_player <= MAX_BEASTS_PER_PLAYER, "Invalid beasts_per_player");
+
+            let mut config: GameConfig = world.read_model(0);
+            config.settings_count += 1;
+            let settings_id = config.settings_count;
+            world.write_model(@config);
+
+            let settings = GameSettings { settings_id, min_tier, max_tier, max_t2_per_team, max_t3_per_team, beasts_per_player };
+            world.write_model(@settings);
+
+            settings_id
+        }
+
+        fn settings_count(self: @ContractState) -> u32 {
+            let world = self.world(@NAMESPACE());
+            let config: GameConfig = world.read_model(0);
+            config.settings_count
+        }
+
+        fn settings_details(self: @ContractState, settings_id: u32) -> GameSettings {
+            let world = self.world(@NAMESPACE());
+            let config: GameConfig = world.read_model(0);
+            assert!(settings_id >= 1 && settings_id <= config.settings_count, "Settings do not exist");
+            world.read_model(settings_id)
+        }
+
         fn set_team(ref self: ContractState, game_id: u32, beast_1: u32, beast_2: u32, beast_3: u32) {
+            self.set_team_dynamic(game_id, array![beast_1, beast_2, beast_3]);
+        }
+
+        fn set_team_dynamic(ref self: ContractState, game_id: u32, beasts: Array<u32>) {
             let mut world = self.world(@NAMESPACE());
             let caller = starknet::get_caller_address();
 
             let mut game: Game = world.read_model(game_id);
             assert!(game.status == GAME_STATUS_WAITING, "Game is not waiting");
+
+            let settings = get_settings(ref world, game.settings_id);
+
+            assert!(beasts.len() == settings.beasts_per_player.into(), "Wrong number of beasts");
 
             let player_index: u8 = if caller == game.player1 {
                 assert!(!game.p1_team_set, "Team already set");
@@ -277,15 +379,23 @@ pub mod game_system {
 
             world.write_model(@game);
 
+            let beast_1 = if beasts.len() > 0 { *beasts.at(0) } else { 0 };
+            let beast_2 = if beasts.len() > 1 { *beasts.at(1) } else { 0 };
+            let beast_3 = if beasts.len() > 2 { *beasts.at(2) } else { 0 };
+            let beast_4 = if beasts.len() > 3 { *beasts.at(3) } else { 0 };
+
             let player_state = PlayerState {
-                game_id, player: caller, player_index, beast_1, beast_2, beast_3, potion_used: false,
+                game_id, player: caller, player_index, beast_1, beast_2, beast_3, beast_4, potion_used: false,
             };
             world.write_model(@player_state);
-            create_beast(ref world, game_id, player_index, 0, beast_1, caller);
-            create_beast(ref world, game_id, player_index, 1, beast_2, caller);
-            create_beast(ref world, game_id, player_index, 2, beast_3, caller);
 
-            validate_team_tiers(ref world, game_id, player_index);
+            let mut i: u32 = 0;
+            while i < beasts.len() {
+                create_beast(ref world, game_id, player_index, i.try_into().unwrap(), *beasts.at(i), caller, @settings);
+                i += 1;
+            };
+
+            validate_team_tiers(ref world, game_id, player_index, @settings);
 
             try_start_game(ref world, game_id);
         }
@@ -324,20 +434,10 @@ pub mod game_system {
                 1
             };
 
+            let settings = get_settings(ref world, game.settings_id);
+
             // Count alive beasts for attacker
-            let mut alive_count: u32 = 0;
-            let b0: BeastState = world.read_model((game_id, attacker_index, 0_u8));
-            let b1: BeastState = world.read_model((game_id, attacker_index, 1_u8));
-            let b2: BeastState = world.read_model((game_id, attacker_index, 2_u8));
-            if b0.alive {
-                alive_count += 1;
-            }
-            if b1.alive {
-                alive_count += 1;
-            }
-            if b2.alive {
-                alive_count += 1;
-            }
+            let alive_count = count_alive_beasts(ref world, game_id, attacker_index, settings.beasts_per_player);
 
             assert!(actions.len() <= alive_count, "Too many actions");
 
@@ -375,7 +475,7 @@ pub mod game_system {
             // Reset last_moved for beasts that didn't act this turn
             let acted_beasts = @actions;
             let mut bi: u8 = 0;
-            while bi < BEASTS_PER_PLAYER {
+            while bi < settings.beasts_per_player {
                 let mut beast_s: BeastState = world.read_model((game_id, attacker_index, bi));
                 if beast_s.alive {
                     let mut acted = false;
@@ -395,7 +495,7 @@ pub mod game_system {
             };
 
             // Check victory
-            let winner = check_victory(ref world, game_id);
+            let winner = check_victory(ref world, game_id, settings.beasts_per_player);
             if winner != zero_address() {
                 game.status = GAME_STATUS_FINISHED;
                 game.winner = winner;
@@ -415,7 +515,7 @@ pub mod game_system {
                     post_action(denshokan, winner_token);
                 }
 
-                // Update player profiles (skip for friendly matches)
+                // Update player profiles and token scores (skip for friendly matches)
                 if !game.is_friendly {
                     let winner_index: u8 = if winner == game.player1 {
                         1
@@ -427,7 +527,18 @@ pub mod game_system {
                     } else {
                         game.player1
                     };
-                    update_profiles(ref world, game_id, winner, loser, winner_index);
+                    let bpp = settings.beasts_per_player;
+                    update_profiles(ref world, game_id, winner, loser, winner_index, bpp);
+
+                    let game_tokens: GameTokens = world.read_model(game_id);
+                    let (winner_token, loser_token) = if winner == game.player1 {
+                        (game_tokens.p1_token_id, game_tokens.p2_token_id)
+                    } else {
+                        (game_tokens.p2_token_id, game_tokens.p1_token_id)
+                    };
+                    update_token_scores(
+                        ref world, game_id, winner, loser, winner_index, winner_token, loser_token, bpp,
+                    );
                 }
             } else {
                 // Switch turn
@@ -443,25 +554,36 @@ pub mod game_system {
     }
 
     // --- EGS: IMinigameTokenData ---
+    //
+    // A token represents a player's full tournament participation.
+    // score() returns accumulated stats across all non-friendly matches.
+    // game_over() is true when the tournament end_time has passed (or for
+    // non-tournament tokens, when the single match finishes).
 
     #[abi(embed_v0)]
     impl TokenDataImpl of IMinigameTokenData<ContractState> {
         fn score(self: @ContractState, token_id: felt252) -> u64 {
             let world = self.world(@NAMESPACE());
-            let game_token: GameToken = world.read_model(token_id);
-            let game: Game = world.read_model(game_token.match_id);
-            if game.status == GAME_STATUS_FINISHED && game.winner == game_token.player {
-                compute_score(game.round)
-            } else {
-                0
-            }
+            let ts: TokenScore = world.read_model(token_id);
+            compute_score(ts)
         }
 
         fn game_over(self: @ContractState, token_id: felt252) -> bool {
             let world = self.world(@NAMESPACE());
             let game_token: GameToken = world.read_model(token_id);
-            let game: Game = world.read_model(game_token.match_id);
-            game.status == GAME_STATUS_FINISHED
+
+            // Tournament token: game_over when time expires
+            if game_token.end_time > 0 {
+                return starknet::get_block_timestamp() >= game_token.end_time;
+            }
+
+            // Non-tournament token (dev/casual): game_over when match finishes
+            if game_token.match_id > 0 {
+                let game: Game = world.read_model(game_token.match_id);
+                return game.status == GAME_STATUS_FINISHED;
+            }
+
+            false
         }
 
         fn score_batch(self: @ContractState, token_ids: Span<felt252>) -> Array<u64> {
@@ -486,13 +608,18 @@ pub mod game_system {
     #[abi(embed_v0)]
     impl SettingsImpl of IMinigameSettings<ContractState> {
         fn settings_exist(self: @ContractState, settings_id: u32) -> bool {
-            settings_id == 0
+            if settings_id == 0 {
+                return true; // 0 means "use default"
+            }
+            let world = self.world(@NAMESPACE());
+            let config: GameConfig = world.read_model(0);
+            settings_id <= config.settings_count
         }
 
         fn settings_exist_batch(self: @ContractState, settings_ids: Span<u32>) -> Array<bool> {
             let mut results = array![];
             for settings_id in settings_ids {
-                results.append(*settings_id == 0);
+                results.append(self.settings_exist(*settings_id));
             };
             results
         }
@@ -501,7 +628,7 @@ pub mod game_system {
     // --- Internal helpers ---
 
     fn _create_game(
-        ref world: WorldStorage, denshokan: ContractAddress, caller: ContractAddress, is_friendly: bool,
+        ref world: WorldStorage, denshokan: ContractAddress, caller: ContractAddress, is_friendly: bool, settings_id: u32,
     ) -> u32 {
         let mut config: GameConfig = world.read_model(0);
         config.game_count += 1;
@@ -536,7 +663,7 @@ pub mod game_system {
         world.write_model(@config);
 
         // Map token to match/player (PvP: 2 tokens per battle)
-        world.write_model(@GameToken { token_id, match_id: game_id, player: caller });
+        world.write_model(@GameToken { token_id, match_id: game_id, player: caller, end_time: 0 });
         world.write_model(@GameTokens { match_id: game_id, p1_token_id: token_id, p2_token_id: 0 });
 
         let game = Game {
@@ -550,6 +677,7 @@ pub mod game_system {
             p1_team_set: false,
             p2_team_set: false,
             is_friendly,
+            settings_id,
         };
         world.write_model(@game);
 
@@ -595,7 +723,7 @@ pub mod game_system {
         world.write_model(@config);
 
         // Map token to match/player
-        world.write_model(@GameToken { token_id, match_id: game_id, player: caller });
+        world.write_model(@GameToken { token_id, match_id: game_id, player: caller, end_time: 0 });
         let mut game_tokens: GameTokens = world.read_model(game_id);
         game_tokens.p2_token_id = token_id;
         world.write_model(@game_tokens);
@@ -617,6 +745,7 @@ pub mod game_system {
         beast_index: u8,
         beast_id: u32,
         caller: ContractAddress,
+        settings: @GameSettings,
     ) {
         let config: BeastConfig = world.read_model(0);
         let beast_nft_addr = if config.beast_nft_address != zero_address() {
@@ -653,7 +782,8 @@ pub mod game_system {
             (species, beast::get_beast_type(species.into()), tier, level, hp)
         };
 
-        assert!(beast::is_valid_tier(species_id), "Beast tier not allowed: only T2-T4");
+        let tier_val = beast::derive_tier(species_id);
+        assert!(tier_val >= *settings.min_tier && tier_val <= *settings.max_tier, "Beast tier not allowed");
 
         let subclass = beast::get_subclass(species_id.into());
         let (final_hp, final_hp_max) = if subclass == SUBCLASS_ENCHANTER {
@@ -684,11 +814,11 @@ pub mod game_system {
         world.write_model(@beast_state);
     }
 
-    fn validate_team_tiers(ref world: WorldStorage, game_id: u32, player_index: u8) {
+    fn validate_team_tiers(ref world: WorldStorage, game_id: u32, player_index: u8, settings: @GameSettings) {
         let mut t2_count: u8 = 0;
         let mut t3_count: u8 = 0;
         let mut i: u8 = 0;
-        while i < BEASTS_PER_PLAYER {
+        while i < *settings.beasts_per_player {
             let bs: BeastState = world.read_model((game_id, player_index, i));
             if bs.tier == 2 {
                 t2_count += 1;
@@ -697,8 +827,8 @@ pub mod game_system {
             }
             i += 1;
         };
-        assert!(t2_count <= MAX_T2_PER_TEAM, "Max 1 T2 beast per team");
-        assert!(t3_count <= MAX_T3_PER_TEAM, "Max 2 T3 beasts per team");
+        assert!(t2_count <= *settings.max_t2_per_team, "Too many T2 beasts per team");
+        assert!(t3_count <= *settings.max_t3_per_team, "Too many T3 beasts per team");
     }
 
     fn resolve_action(
@@ -852,7 +982,7 @@ pub mod game_system {
             }
             let mut i: u8 = 0;
             let result = loop {
-                if i >= BEASTS_PER_PLAYER {
+                if i >= MAX_BEASTS_PER_PLAYER {
                     break false;
                 }
                 let b: BeastState = world.read_model((game_id, player, i));
@@ -868,11 +998,11 @@ pub mod game_system {
         }
     }
 
-    fn check_victory(ref world: WorldStorage, game_id: u32) -> ContractAddress {
+    fn check_victory(ref world: WorldStorage, game_id: u32, beasts_per_player: u8) -> ContractAddress {
         let game: Game = world.read_model(game_id);
 
-        let p1_alive = has_alive_beasts(ref world, game_id, 1);
-        let p2_alive = has_alive_beasts(ref world, game_id, 2);
+        let p1_alive = has_alive_beasts(ref world, game_id, 1, beasts_per_player);
+        let p2_alive = has_alive_beasts(ref world, game_id, 2, beasts_per_player);
 
         if !p1_alive {
             game.player2
@@ -883,36 +1013,94 @@ pub mod game_system {
         }
     }
 
-    fn has_alive_beasts(ref world: WorldStorage, game_id: u32, player_index: u8) -> bool {
-        let b0: BeastState = world.read_model((game_id, player_index, 0_u8));
-        if b0.alive {
-            return true;
+    fn has_alive_beasts(ref world: WorldStorage, game_id: u32, player_index: u8, beasts_per_player: u8) -> bool {
+        let mut i: u8 = 0;
+        loop {
+            if i >= beasts_per_player {
+                break false;
+            }
+            let b: BeastState = world.read_model((game_id, player_index, i));
+            if b.alive {
+                break true;
+            }
+            i += 1;
         }
-        let b1: BeastState = world.read_model((game_id, player_index, 1_u8));
-        if b1.alive {
-            return true;
-        }
-        let b2: BeastState = world.read_model((game_id, player_index, 2_u8));
-        b2.alive
     }
 
-    fn compute_score(round: u16) -> u64 {
-        let rounds_used: u64 = round.into();
-        let max: u64 = MAX_ROUNDS.into();
-        let bonus: u64 = WIN_BONUS.into();
-        let round_score = if rounds_used < max {
-            (max - rounds_used) * 10
-        } else {
-            0
+    // Score formula: accumulated across all non-friendly matches for this token.
+    // win: +500, kill: +50, beast_alive at end: +30
+    const SCORE_WIN: u64 = 500;
+    const SCORE_PER_KILL: u64 = 50;
+    const SCORE_PER_BEAST_ALIVE: u64 = 30;
+
+    fn compute_score(ts: TokenScore) -> u64 {
+        let wins: u64 = ts.wins.into();
+        let kills: u64 = ts.kills.into();
+        let alive: u64 = ts.beasts_alive.into();
+        wins * SCORE_WIN + kills * SCORE_PER_KILL + alive * SCORE_PER_BEAST_ALIVE
+    }
+
+    fn count_alive_beasts(ref world: WorldStorage, game_id: u32, player_index: u8, beasts_per_player: u8) -> u32 {
+        let mut alive: u32 = 0;
+        let mut i: u8 = 0;
+        while i < beasts_per_player {
+            let b: BeastState = world.read_model((game_id, player_index, i));
+            if b.alive {
+                alive += 1;
+            }
+            i += 1;
         };
-        round_score + bonus
+        alive
     }
 
-    fn all_beasts_alive(ref world: WorldStorage, game_id: u32, player_index: u8) -> bool {
-        let b0: BeastState = world.read_model((game_id, player_index, 0_u8));
-        let b1: BeastState = world.read_model((game_id, player_index, 1_u8));
-        let b2: BeastState = world.read_model((game_id, player_index, 2_u8));
-        b0.alive && b1.alive && b2.alive
+    fn update_token_scores(
+        ref world: WorldStorage,
+        game_id: u32,
+        winner: ContractAddress,
+        loser: ContractAddress,
+        winner_index: u8,
+        winner_token: felt252,
+        loser_token: felt252,
+        beasts_per_player: u8,
+    ) {
+        let loser_index: u8 = if winner_index == 1 { 2 } else { 1 };
+
+        let winner_kills = count_dead_beasts(ref world, game_id, loser_index, beasts_per_player);
+        let winner_deaths = count_dead_beasts(ref world, game_id, winner_index, beasts_per_player);
+        let winner_alive = count_alive_beasts(ref world, game_id, winner_index, beasts_per_player);
+        let loser_kills = count_dead_beasts(ref world, game_id, winner_index, beasts_per_player);
+        let loser_deaths = count_dead_beasts(ref world, game_id, loser_index, beasts_per_player);
+        let loser_alive = count_alive_beasts(ref world, game_id, loser_index, beasts_per_player);
+
+        let mut wts: TokenScore = world.read_model(winner_token);
+        wts.wins += 1;
+        wts.kills += winner_kills;
+        wts.deaths += winner_deaths;
+        wts.beasts_alive += winner_alive;
+        wts.matches_played += 1;
+        world.write_model(@wts);
+
+        let mut lts: TokenScore = world.read_model(loser_token);
+        lts.losses += 1;
+        lts.kills += loser_kills;
+        lts.deaths += loser_deaths;
+        lts.beasts_alive += loser_alive;
+        lts.matches_played += 1;
+        world.write_model(@lts);
+    }
+
+    fn all_beasts_alive(ref world: WorldStorage, game_id: u32, player_index: u8, beasts_per_player: u8) -> bool {
+        let mut i: u8 = 0;
+        loop {
+            if i >= beasts_per_player {
+                break true;
+            }
+            let b: BeastState = world.read_model((game_id, player_index, i));
+            if !b.alive {
+                break false;
+            }
+            i += 1;
+        }
     }
 
     fn try_start_game(ref world: WorldStorage, game_id: u32) {
@@ -922,7 +1110,8 @@ pub mod game_system {
             game.round = 1;
             game.current_attacker = 1;
 
-            assign_spawn_positions(ref world, game_id);
+            let settings = get_settings(ref world, game.settings_id);
+            assign_spawn_positions(ref world, game_id, settings.beasts_per_player);
 
             if !game.is_friendly {
                 let mut p1_profile: PlayerProfile = world.read_model(game.player1);
@@ -938,25 +1127,21 @@ pub mod game_system {
         }
     }
 
-    fn count_dead_beasts(ref world: WorldStorage, game_id: u32, player_index: u8) -> u32 {
+    fn count_dead_beasts(ref world: WorldStorage, game_id: u32, player_index: u8, beasts_per_player: u8) -> u32 {
         let mut dead: u32 = 0;
-        let b0: BeastState = world.read_model((game_id, player_index, 0_u8));
-        let b1: BeastState = world.read_model((game_id, player_index, 1_u8));
-        let b2: BeastState = world.read_model((game_id, player_index, 2_u8));
-        if !b0.alive {
-            dead += 1;
-        }
-        if !b1.alive {
-            dead += 1;
-        }
-        if !b2.alive {
-            dead += 1;
-        }
+        let mut i: u8 = 0;
+        while i < beasts_per_player {
+            let b: BeastState = world.read_model((game_id, player_index, i));
+            if !b.alive {
+                dead += 1;
+            }
+            i += 1;
+        };
         dead
     }
 
     fn update_profiles(
-        ref world: WorldStorage, game_id: u32, winner: ContractAddress, loser: ContractAddress, winner_index: u8,
+        ref world: WorldStorage, game_id: u32, winner: ContractAddress, loser: ContractAddress, winner_index: u8, beasts_per_player: u8,
     ) {
         let loser_index: u8 = if winner_index == 1 {
             2
@@ -964,10 +1149,10 @@ pub mod game_system {
             1
         };
 
-        let winner_kills = count_dead_beasts(ref world, game_id, loser_index);
-        let winner_deaths = count_dead_beasts(ref world, game_id, winner_index);
-        let loser_kills = count_dead_beasts(ref world, game_id, winner_index);
-        let loser_deaths = count_dead_beasts(ref world, game_id, loser_index);
+        let winner_kills = count_dead_beasts(ref world, game_id, loser_index, beasts_per_player);
+        let winner_deaths = count_dead_beasts(ref world, game_id, winner_index, beasts_per_player);
+        let loser_kills = count_dead_beasts(ref world, game_id, winner_index, beasts_per_player);
+        let loser_deaths = count_dead_beasts(ref world, game_id, loser_index, beasts_per_player);
 
         let mut wp: PlayerProfile = world.read_model(winner);
         wp.wins += 1;
@@ -982,7 +1167,7 @@ pub mod game_system {
         world.write_model(@lp);
     }
 
-    fn assign_spawn_positions(ref world: WorldStorage, game_id: u32) {
+    fn assign_spawn_positions(ref world: WorldStorage, game_id: u32, beasts_per_player: u8) {
         let mut player: u8 = 1;
         loop {
             if player > 2 {
@@ -990,7 +1175,7 @@ pub mod game_system {
             }
             let mut i: u8 = 0;
             loop {
-                if i >= BEASTS_PER_PLAYER {
+                if i >= beasts_per_player {
                     break;
                 }
                 let mut beast_state: BeastState = world.read_model((game_id, player, i));

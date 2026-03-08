@@ -23,10 +23,6 @@ pub const TYPE_BRUTE: u8 = 2;
 pub const GRID_NUM_ROWS: u8 = 7;
 pub const BEASTS_PER_PLAYER: u8 = 3;
 
-// EGS scoring
-pub const MAX_ROUNDS: u16 = 50;
-pub const WIN_BONUS: u64 = 100;
-
 // Valid tier range (T1 and T5 are excluded from tactical combat)
 pub const MIN_TIER: u8 = 2;
 pub const MAX_TIER: u8 = 4;
@@ -58,9 +54,10 @@ pub const DEFAULT_ATTACK_RANGE: u8 = 1;
 pub const MIN_DAMAGE: u16 = 2;
 pub const COUNTER_ATTACK_PCT: u32 = 20;
 
-// Team composition limits per tier
-pub const MAX_T2_PER_TEAM: u8 = 1;
-pub const MAX_T3_PER_TEAM: u8 = 2;
+// Team composition defaults (used for settings_id=1)
+pub const DEFAULT_MAX_T2_PER_TEAM: u8 = 1;
+pub const DEFAULT_MAX_T3_PER_TEAM: u8 = 2;
+pub const MAX_BEASTS_PER_PLAYER: u8 = 4;
 
 // Default beast token IDs start at this threshold (fictional, not real NFTs)
 pub const DEFAULT_BEAST_TOKEN_MIN: u32 = 100000;

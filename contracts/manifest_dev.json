@@ -33,8 +33,8 @@
   },
   "contracts": [
     {
-      "address": "0x1c5c931cb9cd685d8c9e4130ba38389149302bda7ac98b9ed73f48866abdb9f",
-      "class_hash": "0x38b1873801066b8c89d9d5233d800d1b2239b34d4e807f187c025e424400867",
+      "address": "0x6fc249628fb6e6bcde28338fe1ebc56252d4a9ea02dcde302d88f0832787fe0",
+      "class_hash": "0x63c8580fe004800b79b7c9595c9c46af8ff465c71348fe8fc9cfe2969a6efa7",
       "init_calldata": [
         "0x6677fe62ee39c7b07401f754138502bab7fac99d2d3c5d37df7d1c6fab10819",
         "0x0"
@@ -44,14 +44,17 @@
       "systems": [
         "dojo_init",
         "create_game",
+        "create_game_with_settings",
         "create_friendly_game",
         "join_game",
         "set_team",
+        "set_team_dynamic",
         "set_beast_config",
         "execute_turn",
         "find_match",
         "cancel_matchmaking",
         "abandon_game",
+        "create_settings",
         "upgrade"
       ]
     }
@@ -208,9 +211,14 @@
           "name": "is_friendly",
           "type": "core::bool",
           "key": false
+        },
+        {
+          "name": "settings_id",
+          "type": "core::integer::u32",
+          "key": false
         }
       ],
-      "class_hash": "0x601ca13e0e736398ef1ebe4fc9d09a25f05edd7fca07cdf5302f79f063078db",
+      "class_hash": "0x169079f72b7d25422f12bc2b4c7fab96529b5c9903c94992e1f98d7c4d2f886",
       "tag": "TB2-Game",
       "selector": "0x71c768c91a6b843952da49535c3e601004a9ed66fef7d565995f3f7c2bc374"
     },
@@ -230,11 +238,53 @@
           "name": "token_count",
           "type": "core::integer::u64",
           "key": false
+        },
+        {
+          "name": "settings_count",
+          "type": "core::integer::u32",
+          "key": false
         }
       ],
-      "class_hash": "0x3c6fc92f8d57631308b2d88d57d1f95f75868ab8d8590d6abca257aa8d6b75e",
+      "class_hash": "0x68556d7f73d3a951fd331cbb17b439ab558636b9b86cd71aaeb34aafbe327d2",
       "tag": "TB2-GameConfig",
       "selector": "0x299d3029d653ae37456f8d45fea473acd6a020a511aec2f104252d85bb97371"
+    },
+    {
+      "members": [
+        {
+          "name": "settings_id",
+          "type": "core::integer::u32",
+          "key": true
+        },
+        {
+          "name": "min_tier",
+          "type": "core::integer::u8",
+          "key": false
+        },
+        {
+          "name": "max_tier",
+          "type": "core::integer::u8",
+          "key": false
+        },
+        {
+          "name": "max_t2_per_team",
+          "type": "core::integer::u8",
+          "key": false
+        },
+        {
+          "name": "max_t3_per_team",
+          "type": "core::integer::u8",
+          "key": false
+        },
+        {
+          "name": "beasts_per_player",
+          "type": "core::integer::u8",
+          "key": false
+        }
+      ],
+      "class_hash": "0x577d9db790689d8638fd2f4489730a8cb1823adfd92704368d14e4c4228d3b9",
+      "tag": "TB2-GameSettings",
+      "selector": "0x2d75aed04df64ac09a64075756b11c812c09a297f22d23474708591e8dc9921"
     },
     {
       "members": [
@@ -252,9 +302,14 @@
           "name": "player",
           "type": "core::starknet::contract_address::ContractAddress",
           "key": false
+        },
+        {
+          "name": "end_time",
+          "type": "core::integer::u64",
+          "key": false
         }
       ],
-      "class_hash": "0x5e17f196c328ca42677d09a5d98066e03d1a1e099daeea4e6f69d140e72f4fc",
+      "class_hash": "0x3528f7fcee65794a7540afce3c015ea7334c1b7887b9296abb76b1b8548f02c",
       "tag": "TB2-GameToken",
       "selector": "0x251ca35a6ebdea78c5418e3ab2473c77111bb09d48a69aa70fdc8c4439366f8"
     },
@@ -449,14 +504,61 @@
           "key": false
         },
         {
+          "name": "beast_4",
+          "type": "core::integer::u32",
+          "key": false
+        },
+        {
           "name": "potion_used",
           "type": "core::bool",
           "key": false
         }
       ],
-      "class_hash": "0x617a81e709e1bf1d827bd95cf9901b61a97f4a7906b77196b51b1331a1ee57d",
+      "class_hash": "0x520cea37b6e609dfb01e6efc8f15b081a1416cac55b390a583d0eafb9e05b8f",
       "tag": "TB2-PlayerState",
       "selector": "0x329351f38547392c6994eb662afecb47787f518b90bee2740c080e0e3531c56"
+    },
+    {
+      "members": [
+        {
+          "name": "token_id",
+          "type": "core::felt252",
+          "key": true
+        },
+        {
+          "name": "wins",
+          "type": "core::integer::u32",
+          "key": false
+        },
+        {
+          "name": "losses",
+          "type": "core::integer::u32",
+          "key": false
+        },
+        {
+          "name": "kills",
+          "type": "core::integer::u32",
+          "key": false
+        },
+        {
+          "name": "deaths",
+          "type": "core::integer::u32",
+          "key": false
+        },
+        {
+          "name": "beasts_alive",
+          "type": "core::integer::u32",
+          "key": false
+        },
+        {
+          "name": "matches_played",
+          "type": "core::integer::u32",
+          "key": false
+        }
+      ],
+      "class_hash": "0xb0c0d6e495a34bb0929fa973352d0339a76edcd071e3011db10b3681f81655",
+      "tag": "TB2-TokenScore",
+      "selector": "0x188335a8add29c5ccd069dcdddeaa35f346ada5fd3f9fa1085f807701d63dcc"
     }
   ],
   "events": [
@@ -3151,6 +3253,10 @@
         {
           "name": "is_friendly",
           "type": "core::bool"
+        },
+        {
+          "name": "settings_id",
+          "type": "core::integer::u32"
         }
       ]
     },
@@ -3169,6 +3275,10 @@
         {
           "name": "token_count",
           "type": "core::integer::u64"
+        },
+        {
+          "name": "settings_count",
+          "type": "core::integer::u32"
         }
       ]
     },
@@ -3183,6 +3293,66 @@
         {
           "name": "token_count",
           "type": "core::integer::u64"
+        },
+        {
+          "name": "settings_count",
+          "type": "core::integer::u32"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "tactical_beats::models::index::GameSettings",
+      "members": [
+        {
+          "name": "settings_id",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "min_tier",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "max_tier",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "max_t2_per_team",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "max_t3_per_team",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "beasts_per_player",
+          "type": "core::integer::u8"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "tactical_beats::models::index::GameSettingsValue",
+      "members": [
+        {
+          "name": "min_tier",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "max_tier",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "max_t2_per_team",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "max_t3_per_team",
+          "type": "core::integer::u8"
+        },
+        {
+          "name": "beasts_per_player",
+          "type": "core::integer::u8"
         }
       ]
     },
@@ -3201,6 +3371,10 @@
         {
           "name": "player",
           "type": "core::starknet::contract_address::ContractAddress"
+        },
+        {
+          "name": "end_time",
+          "type": "core::integer::u64"
         }
       ]
     },
@@ -3215,6 +3389,10 @@
         {
           "name": "player",
           "type": "core::starknet::contract_address::ContractAddress"
+        },
+        {
+          "name": "end_time",
+          "type": "core::integer::u64"
         }
       ]
     },
@@ -3289,6 +3467,10 @@
         {
           "name": "is_friendly",
           "type": "core::bool"
+        },
+        {
+          "name": "settings_id",
+          "type": "core::integer::u32"
         }
       ]
     },
@@ -3529,6 +3711,10 @@
           "type": "core::integer::u32"
         },
         {
+          "name": "beast_4",
+          "type": "core::integer::u32"
+        },
+        {
           "name": "potion_used",
           "type": "core::bool"
         }
@@ -3555,8 +3741,76 @@
           "type": "core::integer::u32"
         },
         {
+          "name": "beast_4",
+          "type": "core::integer::u32"
+        },
+        {
           "name": "potion_used",
           "type": "core::bool"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "tactical_beats::models::index::TokenScore",
+      "members": [
+        {
+          "name": "token_id",
+          "type": "core::felt252"
+        },
+        {
+          "name": "wins",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "losses",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "kills",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "deaths",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "beasts_alive",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "matches_played",
+          "type": "core::integer::u32"
+        }
+      ]
+    },
+    {
+      "type": "struct",
+      "name": "tactical_beats::models::index::TokenScoreValue",
+      "members": [
+        {
+          "name": "wins",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "losses",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "kills",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "deaths",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "beasts_alive",
+          "type": "core::integer::u32"
+        },
+        {
+          "name": "matches_played",
+          "type": "core::integer::u32"
         }
       ]
     },
@@ -3581,6 +3835,12 @@
     {
       "type": "event",
       "name": "tactical_beats::models::index::m_GameConfig::Event",
+      "kind": "enum",
+      "variants": []
+    },
+    {
+      "type": "event",
+      "name": "tactical_beats::models::index::m_GameSettings::Event",
       "kind": "enum",
       "variants": []
     },
@@ -3621,6 +3881,12 @@
       "variants": []
     },
     {
+      "type": "event",
+      "name": "tactical_beats::models::index::m_TokenScore::Event",
+      "kind": "enum",
+      "variants": []
+    },
+    {
       "type": "interface",
       "name": "tactical_beats::systems::game_system::IGameSystem",
       "items": [
@@ -3628,6 +3894,22 @@
           "type": "function",
           "name": "create_game",
           "inputs": [],
+          "outputs": [
+            {
+              "type": "core::integer::u32"
+            }
+          ],
+          "state_mutability": "external"
+        },
+        {
+          "type": "function",
+          "name": "create_game_with_settings",
+          "inputs": [
+            {
+              "name": "settings_id",
+              "type": "core::integer::u32"
+            }
+          ],
           "outputs": [
             {
               "type": "core::integer::u32"
@@ -3677,6 +3959,22 @@
             {
               "name": "beast_3",
               "type": "core::integer::u32"
+            }
+          ],
+          "outputs": [],
+          "state_mutability": "external"
+        },
+        {
+          "type": "function",
+          "name": "set_team_dynamic",
+          "inputs": [
+            {
+              "name": "game_id",
+              "type": "core::integer::u32"
+            },
+            {
+              "name": "beasts",
+              "type": "core::array::Array::<core::integer::u32>"
             }
           ],
           "outputs": [],
@@ -3739,6 +4037,73 @@
           ],
           "outputs": [],
           "state_mutability": "external"
+        },
+        {
+          "type": "function",
+          "name": "create_settings",
+          "inputs": [
+            {
+              "name": "name",
+              "type": "core::byte_array::ByteArray"
+            },
+            {
+              "name": "description",
+              "type": "core::byte_array::ByteArray"
+            },
+            {
+              "name": "min_tier",
+              "type": "core::integer::u8"
+            },
+            {
+              "name": "max_tier",
+              "type": "core::integer::u8"
+            },
+            {
+              "name": "max_t2_per_team",
+              "type": "core::integer::u8"
+            },
+            {
+              "name": "max_t3_per_team",
+              "type": "core::integer::u8"
+            },
+            {
+              "name": "beasts_per_player",
+              "type": "core::integer::u8"
+            }
+          ],
+          "outputs": [
+            {
+              "type": "core::integer::u32"
+            }
+          ],
+          "state_mutability": "external"
+        },
+        {
+          "type": "function",
+          "name": "settings_count",
+          "inputs": [],
+          "outputs": [
+            {
+              "type": "core::integer::u32"
+            }
+          ],
+          "state_mutability": "view"
+        },
+        {
+          "type": "function",
+          "name": "settings_details",
+          "inputs": [
+            {
+              "name": "settings_id",
+              "type": "core::integer::u32"
+            }
+          ],
+          "outputs": [
+            {
+              "type": "tactical_beats::models::index::GameSettings"
+            }
+          ],
+          "state_mutability": "view"
         }
       ]
     },

@@ -45,7 +45,7 @@ export function ProfilePage() {
           bg="surface.panel"
           border="1px solid"
           borderColor="surface.border"
-          borderRadius="5px"
+          borderRadius="12px"
           p={5}
         >
           <VStack align="stretch" gap={4}>

@@ -49,7 +49,7 @@ export function BeastCard({ beast, isSelected, onToggle, disabled, isDefault }: 
       bg={isSelected ? "surface.card" : "surface.panel"}
       border="1px solid"
       borderColor={isSelected ? "green.400" : "surface.border"}
-      borderRadius="3px"
+      borderRadius="12px"
       p={3}
       cursor={disabled ? "not-allowed" : "pointer"}
       opacity={disabled ? 0.5 : 1}
@@ -68,7 +68,7 @@ export function BeastCard({ beast, isSelected, onToggle, disabled, isDefault }: 
       maxW="240px"
     >
       {/* Beast image */}
-      <Box mb={2} borderRadius="3px" overflow="hidden" bg="surface.card">
+      <Box mb={2} borderRadius="10px" overflow="hidden" bg="surface.card">
         <Image
           src={`/beasts/${beast.beast.toLowerCase()}.png`}
           alt={beast.beast}
@@ -87,14 +87,14 @@ export function BeastCard({ beast, isSelected, onToggle, disabled, isDefault }: 
       {/* Default badge */}
       {isDefault && (
         <Badge
-          bg="rgba(100,140,255,0.15)"
+          bg="rgba(189,145,84,0.18)"
           border="1px solid"
-          borderColor="rgba(100,140,255,0.4)"
-          color="#8CB4FF"
+          borderColor="rgba(189,145,84,0.45)"
+          color="#DEC398"
           fontSize="8px"
           px={1.5}
           py={0}
-          borderRadius="2px"
+          borderRadius="6px"
           mb={1}
         >
           DEFAULT
@@ -171,7 +171,7 @@ export function BeastCard({ beast, isSelected, onToggle, disabled, isDefault }: 
           borderTop="1px solid"
           borderColor="green.700"
         >
-          <Text fontSize="xs" color="green.300" fontWeight="600" textTransform="uppercase">
+          <Text fontSize="xs" color="green.200" fontWeight="600" textTransform="uppercase">
             Selected
           </Text>
         </Flex>

@@ -342,10 +342,10 @@ export function BattlePage() {
   // --- Loading state ---
   if (!game || beasts.length === 0) {
     return (
-      <Flex justify="center" align="center" minH="100vh" bg="#0a0604">
+      <Flex justify="center" align="center" minH="100vh" bg="bg.base">
         <VStack gap={4}>
-          <Spinner size="xl" color="teal.400" />
-          <Text color="gray.400">Loading battle...</Text>
+          <Spinner size="xl" color="green.300" />
+          <Text color="text.secondary">Loading battle...</Text>
         </VStack>
       </Flex>
     );
@@ -366,11 +366,11 @@ export function BattlePage() {
           <Box className="player-tag player-tag--me" mt={2}>
             <Box
               w="28px" h="28px" borderRadius="6px"
-              bg="linear-gradient(135deg, #0f3327, #174836)"
-              border="2px solid #4f8f73"
+              bg="linear-gradient(135deg, #1d3128, #2a4337)"
+              border="2px solid #6A8F7C"
               display="flex" alignItems="center" justifyContent="center"
             >
-              <Text fontSize="xs" fontWeight="bold" color="#b8dcca">P1</Text>
+              <Text fontSize="xs" fontWeight="bold" color="#CCE0D5">P1</Text>
             </Box>
             <Text>You</Text>
           </Box>
@@ -385,7 +385,7 @@ export function BattlePage() {
             ) : (
               <>
                 <HStack justify="center" gap={2} mb={1}>
-                  <Spinner size="sm" color="#D3C0FF" thickness="3px" speed="0.75s" />
+                  <Spinner size="sm" color="#D8B4B4" thickness="3px" speed="0.75s" />
                   <Text className="round-badge__label">Turno del rival</Text>
                 </HStack>
                 <Text className="round-badge__timer">WAITING</Text>
@@ -398,11 +398,11 @@ export function BattlePage() {
             <Text>Enemy</Text>
             <Box
               w="28px" h="28px" borderRadius="6px"
-              bg="linear-gradient(135deg, #3d1a1a, #5a2a2a)"
-              border="2px solid #9b6565"
+              bg="linear-gradient(135deg, #3a2424, #4f3131)"
+              border="2px solid #9B7171"
               display="flex" alignItems="center" justifyContent="center"
             >
-              <Text fontSize="xs" fontWeight="bold" color="#ddb6b6">AI</Text>
+              <Text fontSize="xs" fontWeight="bold" color="#E2C7C7">AI</Text>
             </Box>
           </Box>
         </Flex>
@@ -440,8 +440,8 @@ export function BattlePage() {
         zIndex={12}
         size="xs"
         variant="ghost"
-        color="gray.500"
-        _hover={{ color: "red.300" }}
+        color="text.muted"
+        _hover={{ color: "danger.300" }}
         onClick={abandonModal.onOpen}
         fontSize="0.65rem"
         px={1}
@@ -561,20 +561,20 @@ export function BattlePage() {
       {/* Abandon confirmation modal */}
       <Modal isOpen={abandonModal.isOpen} onClose={abandonModal.onClose} isCentered>
         <ModalOverlay />
-        <ModalContent bg="#1a0e06" border="1px solid" borderColor="rgba(180,40,40,0.4)">
-          <ModalHeader fontSize="md" color="red.300">Abandon Game</ModalHeader>
+        <ModalContent bg="surface.overlay" border="1px solid" borderColor="danger.500">
+          <ModalHeader fontSize="md" color="danger.200">Abandon Game</ModalHeader>
           <ModalCloseButton />
           <ModalBody pb={6}>
-            <Text fontSize="sm" color="gray.400" mb={4}>
+            <Text fontSize="sm" color="text.secondary" mb={4}>
               Are you sure you want to abandon this game? This will count as a loss.
             </Text>
             <HStack justify="flex-end" gap={3}>
-              <Button size="sm" variant="ghost" color="gray.400" onClick={abandonModal.onClose}>
+              <Button size="sm" variant="ghost" color="text.secondary" onClick={abandonModal.onClose}>
                 Cancel
               </Button>
               <Button
                 size="sm"
-                colorScheme="red"
+                variant="danger"
                 isLoading={isLoading}
                 onClick={async () => {
                   if (gameId) await abandonGame(gameId);

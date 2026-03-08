@@ -195,7 +195,7 @@ export function HexGrid({
             <polygon
               points={hexClipPoints(cx, cy - 2, hexSize * 0.63)}
               fill="none"
-              stroke="#7BFFFF"
+              stroke="#BBD6C7"
               strokeWidth={2.8}
               opacity={0.72}
               filter="url(#glowFilter)"
@@ -205,7 +205,7 @@ export function HexGrid({
             <polygon
               points={hexClipPoints(cx, cy - 2, hexSize * 0.72)}
               fill="none"
-              stroke="rgba(123, 255, 255, 0.9)"
+              stroke="rgba(196, 223, 208, 0.9)"
               strokeWidth={1.3}
               strokeDasharray="5 4"
               opacity={0.85}
@@ -229,7 +229,7 @@ export function HexGrid({
                   cx={px}
                   cy={py}
                   r={2.1}
-                  fill="#B7FFFF"
+                  fill="#D6E9DF"
                   opacity={0.9}
                 >
                   <animate
@@ -253,7 +253,7 @@ export function HexGrid({
         {/* Team color tint base (behind sprite) */}
         <polygon
           points={hexClipPoints(cx, cy - 2, imgSize)}
-          fill={isMine ? "rgba(0,220,150,0.08)" : "rgba(255,51,51,0.08)"}
+          fill={isMine ? "rgba(135,180,155,0.1)" : "rgba(183,110,110,0.1)"}
           stroke="none"
         />
 
@@ -291,11 +291,11 @@ export function HexGrid({
             fill={
               isMine
                 ? hpPct > 0.5
-                  ? "#33DD66"
+                  ? "#87B49B"
                   : hpPct > 0.25
-                    ? "#DDAA00"
-                    : "#DD3333"
-                : "#DD3333"
+                    ? "#CDAE79"
+                    : "#C78989"
+                : "#C78989"
             }
           />
           {/* HP text */}
@@ -318,7 +318,7 @@ export function HexGrid({
           <text
             x={cx + hexSize * 0.38}
             y={cy - imgSize + 6}
-            fill="#FFD700"
+            fill="#CDAE79"
             fontSize={8}
             fontWeight="bold"
             fontFamily="'JetBrains Mono', monospace"
@@ -379,15 +379,15 @@ export function HexGrid({
               width={28}
               height={13}
               rx={4}
-              fill="rgba(255,215,0,0.9)"
-              stroke="rgba(180,150,0,0.6)"
+              fill="rgba(189,145,84,0.9)"
+              stroke="rgba(113,79,46,0.65)"
               strokeWidth={0.5}
             />
             <text
               x={cx}
               y={cy + imgSize + 11}
               textAnchor="middle"
-              fill="#1A0A00"
+              fill="#22170C"
               fontSize={7.5}
               fontWeight="bold"
               fontFamily="'JetBrains Mono', monospace"
@@ -407,8 +407,8 @@ export function HexGrid({
       <polygon
         key={key}
         points={hexPoints(cx, cy, hexSize * 0.92)}
-        fill="rgba(255,51,51,0.3)"
-        stroke="#FF4444"
+        fill="rgba(183,110,110,0.34)"
+        stroke="#D59A9A"
         strokeWidth={2}
         style={{ pointerEvents: "none" }}
       >

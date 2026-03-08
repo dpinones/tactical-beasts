@@ -416,7 +416,7 @@ export function TeamSelectPage() {
           bg="surface.panel"
           border="1px solid"
           borderColor="green.700"
-          borderRadius="3px"
+          borderRadius="12px"
           p={8}
           textAlign="center"
         >
@@ -631,7 +631,7 @@ export function TeamSelectPage() {
         <Box flex={2} minH={0} overflow="hidden">
           {/* Opponent profile */}
           {opponentProfile && (
-            <Box bg="surface.panel" border="1px solid" borderColor="danger.700" borderRadius="3px" p={3} mb={4}>
+            <Box bg="surface.panel" border="1px solid" borderColor="danger.700" borderRadius="12px" p={3} mb={4}>
               <Flex justify="space-between" align="center" mb={2}>
                 <Text fontSize="9px" color="danger.300" textTransform="uppercase" letterSpacing="0.1em">
                   Opponent
@@ -655,7 +655,7 @@ export function TeamSelectPage() {
           )}
 
           {/* Map preview */}
-          <Box bg="surface.panel" border="1px solid" borderColor="surface.border" borderRadius="3px" p={2}>
+          <Box bg="surface.panel" border="1px solid" borderColor="surface.border" borderRadius="12px" p={2}>
             <Text fontSize="9px" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em" mb={2}>
               Arena Map
             </Text>
@@ -687,14 +687,14 @@ export function TeamSelectPage() {
               <Box
                 h="4px"
                 bg="rgba(255,255,255,0.1)"
-                borderRadius="2px"
+                borderRadius="6px"
                 overflow="hidden"
               >
                 <Box
                   h="100%"
                   w={`${(timer / 30) * 100}%`}
                   bg={timer <= 10 ? "danger.400" : "green.400"}
-                  borderRadius="2px"
+                  borderRadius="6px"
                   transition="width 1s linear"
                 />
               </Box>
@@ -702,20 +702,20 @@ export function TeamSelectPage() {
           )}
 
           {/* Selected beasts */}
-          <Box mt={phase === "select" ? 0 : 4} bg="surface.panel" border="1px solid" borderColor="surface.border" borderRadius="3px" p={2}>
+          <Box mt={phase === "select" ? 0 : 4} bg="surface.panel" border="1px solid" borderColor="surface.border" borderRadius="12px" p={2}>
             <Flex align="center" justify="space-between" mb={2}>
               <Text fontSize="9px" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em">
                 Your Team
               </Text>
               <Badge
-                bg="rgba(255,215,0,0.2)"
+                bg="rgba(189,145,84,0.2)"
                 border="1px solid"
-                borderColor="rgba(255,215,0,0.55)"
-                color="#FFD94A"
+                borderColor="rgba(189,145,84,0.55)"
+                color="#DEC398"
                 fontSize="10px"
                 px={2}
                 py={0.5}
-                borderRadius="3px"
+                borderRadius="8px"
               >
                 {selectedBeasts.length}/3
               </Badge>
@@ -730,7 +730,7 @@ export function TeamSelectPage() {
                       key={`empty-slot-${i}`}
                       border="1px dashed"
                       borderColor="surface.border"
-                      borderRadius="3px"
+                      borderRadius="10px"
                       p={1.5}
                       align="center"
                       gap={3}
@@ -750,10 +750,10 @@ export function TeamSelectPage() {
                 return (
                   <Flex
                     key={tokenId}
-                    bg="rgba(0, 255, 68, 0.08)"
+                    bg="rgba(135, 180, 155, 0.16)"
                     border="1px solid"
-                    borderColor="green.700"
-                    borderRadius="3px"
+                    borderColor="green.600"
+                    borderRadius="10px"
                     p={1.5}
                     align="center"
                     gap={3}
@@ -767,7 +767,7 @@ export function TeamSelectPage() {
                       w="34px"
                       h="34px"
                       objectFit="contain"
-                      borderRadius="3px"
+                      borderRadius="8px"
                       bg="surface.card"
                     />
                     <Box flex={1} minW={0}>
@@ -829,20 +829,20 @@ export function TeamSelectPage() {
       {/* Leave confirmation modal */}
       <Modal isOpen={leaveModal.isOpen} onClose={leaveModal.onClose} isCentered>
         <ModalOverlay />
-        <ModalContent bg="#1a0e06" border="1px solid" borderColor="rgba(180,40,40,0.4)">
-          <ModalHeader fontSize="md" color="red.300">Leave Game</ModalHeader>
+        <ModalContent bg="surface.overlay" border="1px solid" borderColor="danger.500">
+          <ModalHeader fontSize="md" color="danger.200">Leave Game</ModalHeader>
           <ModalCloseButton />
           <ModalBody pb={6}>
-            <Text fontSize="sm" color="gray.400" mb={4}>
+            <Text fontSize="sm" color="text.secondary" mb={4}>
               Are you sure you want to leave? This will count as a loss and your opponent wins.
             </Text>
             <HStack justify="flex-end" gap={3}>
-              <Button size="sm" variant="ghost" color="gray.400" onClick={leaveModal.onClose}>
+              <Button size="sm" variant="ghost" color="text.secondary" onClick={leaveModal.onClose}>
                 Cancel
               </Button>
               <Button
                 size="sm"
-                colorScheme="red"
+                variant="danger"
                 isLoading={isLoading}
                 onClick={async () => {
                   if (gameId) await abandonGame(gameId);

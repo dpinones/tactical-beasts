@@ -29,9 +29,9 @@ function actionSymbol(type: ActionType): string {
 
 function actionBorderColor(type: ActionType): string {
   switch (type) {
-    case ActionType.MOVE: return "#33FF66";
-    case ActionType.ATTACK: return "#E84040";
-    case ActionType.CONSUMABLE_ATTACK_POTION: return "#FFE033";
+    case ActionType.MOVE: return "#A7D5BF";
+    case ActionType.ATTACK: return "#C78989";
+    case ActionType.CONSUMABLE_ATTACK_POTION: return "#CDAE79";
     default: return "#888";
   }
 }
@@ -95,15 +95,15 @@ export function PlannedActions({
       <Flex
         align="center"
         justify="space-between"
-        bg="rgba(45, 216, 138, 0.08)"
+        bg="rgba(122, 163, 142, 0.12)"
         border="1px solid"
-        borderColor={potionToggle ? "#2dd88a" : "rgba(45, 216, 138, 0.2)"}
-        borderRadius="3px"
+        borderColor={potionToggle ? "#8BB8A0" : "rgba(122, 163, 142, 0.32)"}
+        borderRadius="10px"
         px={2.5}
         py={1.5}
-        boxShadow={potionToggle ? "0 0 8px rgba(45, 216, 138, 0.3)" : "none"}
+        boxShadow={potionToggle ? "0 0 0 1px rgba(139, 184, 160, 0.24), 0 8px 16px rgba(0, 0, 0, 0.28)" : "none"}
       >
-        <Text fontSize="xs" color={potionUsed ? "rgba(139,255,196,0.4)" : "#8BFFC4"} fontFamily="mono" fontWeight="600" textTransform="uppercase">
+        <Text fontSize="xs" color={potionUsed ? "rgba(167,213,191,0.45)" : "#A7D5BF"} fontFamily="mono" fontWeight="600" textTransform="uppercase">
           Use Potion
         </Text>
         <Switch
@@ -136,12 +136,12 @@ export function PlannedActions({
                 gap={1}
                 px={1.5}
                 py={1}
-                bg="rgba(45, 216, 138, 0.06)"
-                borderRadius="2px"
+                bg="rgba(122, 163, 142, 0.1)"
+                borderRadius="8px"
                 borderLeft="3px solid"
                 borderLeftColor={actionBorderColor(action.actionType)}
               >
-                <Text fontSize="xs" color="rgba(139,255,196,0.5)" fontFamily="mono" fontWeight="700" w="14px">
+                <Text fontSize="xs" color="rgba(167,213,191,0.6)" fontFamily="mono" fontWeight="700" w="14px">
                   {i + 1}.
                 </Text>
                 <Text
@@ -155,10 +155,10 @@ export function PlannedActions({
                 >
                   {beastName}
                 </Text>
-                <Text fontSize="xs" color="rgba(139,255,196,0.5)" fontFamily="mono" fontWeight="700" minW="16px">
+                <Text fontSize="xs" color="rgba(167,213,191,0.6)" fontFamily="mono" fontWeight="700" minW="16px">
                   {actionSymbol(action.actionType)}
                 </Text>
-                <Text fontSize="xs" color="#8BFFC4" fontFamily="mono" flex={1} noOfLines={1}>
+                <Text fontSize="xs" color="#BFDCCB" fontFamily="mono" flex={1} noOfLines={1}>
                   {describeAction(action, aliveBeasts, enemyBeasts)}
                 </Text>
               </Flex>
@@ -180,9 +180,9 @@ export function PlannedActions({
                   gap={1}
                   px={1.5}
                   py={1}
-                  borderRadius="2px"
+                  borderRadius="8px"
                 >
-                  <Text fontSize="xs" color="rgba(139,255,196,0.4)" fontFamily="mono" fontWeight="700" w="14px">
+                  <Text fontSize="xs" color="rgba(167,213,191,0.45)" fontFamily="mono" fontWeight="700" w="14px">
                     -
                   </Text>
                   <Text
@@ -196,7 +196,7 @@ export function PlannedActions({
                   >
                     {beastName}
                   </Text>
-                  <Box as="span" w="6px" h="6px" borderRadius="50%" bg="#2dd88a" className="pending-dot" />
+                  <Box as="span" w="6px" h="6px" borderRadius="50%" bg="#8BB8A0" className="pending-dot" />
                 </Flex>
               );
             })}

@@ -190,7 +190,7 @@ export function MyBeastsPage() {
             <Skeleton
               key={i}
               height="260px"
-              borderRadius="5px"
+              borderRadius="12px"
               startColor="surface.panel"
               endColor="surface.overlay"
             />
@@ -249,12 +249,12 @@ function BeastCard({ beast, imageMode }: { beast: OwnedBeast; imageMode: ImageMo
       bg="surface.card"
       border="1px solid"
       borderColor="surface.border"
-      borderRadius="5px"
+      borderRadius="12px"
       overflow="hidden"
       transition="border-color 0.2s, box-shadow 0.2s"
       _hover={{
         borderColor: "surface.borderLight",
-        boxShadow: "0 0 12px rgba(0, 255, 68, 0.1)",
+        boxShadow: "0 8px 18px rgba(0, 0, 0, 0.32), 0 0 0 1px rgba(135, 180, 155, 0.2)",
       }}
     >
       {/* Image */}

@@ -284,7 +284,7 @@ export function HomePage() {
             textTransform="uppercase"
             letterSpacing="0.12em"
             color="green.300"
-            textShadow="0 0 30px rgba(0,255,68,0.3)"
+            textShadow="0 0 30px rgba(135,180,155,0.3)"
           >
             Tactical Beasts
           </Heading>
@@ -360,7 +360,7 @@ export function HomePage() {
             bg="rgba(18,30,18,0.85)"
             border="1px solid"
             borderColor="surface.border"
-            borderRadius="6px"
+            borderRadius="10px"
             color="text.secondary"
             fontSize="18px"
             cursor="pointer"
@@ -400,7 +400,7 @@ export function HomePage() {
               bg="surface.panel"
               border="1px solid"
               borderColor="surface.border"
-              borderRadius="6px"
+              borderRadius="10px"
               p={4}
               w="320px"
               zIndex={10}
@@ -427,7 +427,7 @@ export function HomePage() {
                 {searchResults.length > 0 && (
                   <VStack align="stretch" gap={1}>
                     {searchResults.map((p) => (
-                      <Flex key={p.wallet_address} justify="space-between" align="center" p={2} bg="surface.card" borderRadius="3px">
+                      <Flex key={p.wallet_address} justify="space-between" align="center" p={2} bg="surface.card" borderRadius="10px">
                         <VStack align="start" gap={0}>
                           <Text fontSize="xs" color="text.primary">{p.display_name}</Text>
                           <Text fontSize="9px" color="text.muted">{truncateAddr(p.wallet_address)}</Text>
@@ -445,7 +445,7 @@ export function HomePage() {
                       Invites ({gameInvites.length})
                     </Text>
                     {gameInvites.map((inv) => (
-                      <Flex key={inv.id} justify="space-between" align="center" p={2} bg="surface.card" borderRadius="3px" border="1px solid" borderColor="green.800">
+                      <Flex key={inv.id} justify="space-between" align="center" p={2} bg="surface.card" borderRadius="10px" border="1px solid" borderColor="danger.600">
                         <Text fontSize="xs" color="text.primary">
                           {friendProfiles[inv.host]?.display_name || truncateAddr(inv.host)} wants to play
                         </Text>
@@ -463,7 +463,7 @@ export function HomePage() {
                       Pending Requests ({pendingRequests.length})
                     </Text>
                     {pendingRequests.map((req) => (
-                      <Flex key={req.id} justify="space-between" align="center" p={2} bg="surface.card" borderRadius="3px">
+                      <Flex key={req.id} justify="space-between" align="center" p={2} bg="surface.card" borderRadius="10px">
                         <Text fontSize="xs" color="text.primary">{friendProfiles[req.sender]?.display_name || truncateAddr(req.sender)}</Text>
                         <HStack gap={1}>
                           <Button size="xs" variant="primary" onClick={() => handleRespondFriend(req.id, true)}>Accept</Button>
@@ -479,7 +479,7 @@ export function HomePage() {
                       Sent ({sentRequests.length})
                     </Text>
                     {sentRequests.map((req) => (
-                      <Flex key={req.id} justify="space-between" align="center" p={2} bg="surface.card" borderRadius="3px">
+                      <Flex key={req.id} justify="space-between" align="center" p={2} bg="surface.card" borderRadius="10px">
                         <Text fontSize="xs" color="text.muted">{friendProfiles[req.receiver]?.display_name || truncateAddr(req.receiver)}</Text>
                         <Text fontSize="9px" color="text.muted">Pending...</Text>
                       </Flex>
@@ -493,7 +493,7 @@ export function HomePage() {
                   <Text fontSize="xs" color="text.muted">No friends yet. Search to add one.</Text>
                 ) : (
                   friends.map((f) => (
-                    <Flex key={f.id} justify="space-between" align="center" p={2} bg="surface.card" borderRadius="3px">
+                    <Flex key={f.id} justify="space-between" align="center" p={2} bg="surface.card" borderRadius="10px">
                       <Text fontSize="xs" color="text.primary">{getFriendName(f)}</Text>
                       <Button size="xs" variant="secondary" onClick={() => handleInviteFriend(getFriendWallet(f))}>Invite</Button>
                     </Flex>
@@ -517,7 +517,7 @@ export function HomePage() {
           bg="rgba(18,30,18,0.85)"
           border="1px solid"
           borderColor="surface.border"
-          borderRadius="6px"
+          borderRadius="10px"
           color="text.secondary"
           fontSize="18px"
           cursor="pointer"
@@ -535,7 +535,7 @@ export function HomePage() {
           bg="rgba(18,30,18,0.85)"
           border="1px solid"
           borderColor="surface.border"
-          borderRadius="6px"
+          borderRadius="10px"
           px={3}
           py={2}
           mr={2}
@@ -561,7 +561,7 @@ export function HomePage() {
           bg="rgba(18,30,18,0.85)"
           border="1px solid"
           borderColor="surface.border"
-          borderRadius="6px"
+          borderRadius="10px"
           color="text.secondary"
           fontSize="16px"
           cursor="pointer"
@@ -590,7 +590,7 @@ export function HomePage() {
               color="green.300"
               textTransform="uppercase"
               letterSpacing="0.12em"
-              textShadow="0 0 40px rgba(0,255,68,0.4), 0 2px 8px rgba(0,0,0,0.8)"
+              textShadow="0 0 40px rgba(135,180,155,0.36), 0 2px 8px rgba(0,0,0,0.8)"
             >
               Tactical Beasts
             </Heading>
@@ -608,10 +608,10 @@ export function HomePage() {
             title="Battle"
             subtitle="Find an opponent"
             beastName={heroBeasts[0]}
-            accentColor="#00FF44"
-            gradientFrom="#0a2e0a"
-            gradientTo="#1a4a1a"
-            borderColor="green.500"
+            accentColor="#A7D5BF"
+            gradientFrom="#1A2D24"
+            gradientTo="#2B4538"
+            borderColor="green.400"
             onClick={() => navigate("/matchmaking")}
             isFullWidth
           />
@@ -621,10 +621,10 @@ export function HomePage() {
             title="Tutorial"
             subtitle="Learn the basics"
             beastName={heroBeasts[1]}
-            accentColor="#FFD700"
-            gradientFrom="#2e2a0a"
-            gradientTo="#4a3a1a"
-            borderColor="gold.500"
+            accentColor="#CDAE79"
+            gradientFrom="#2E271A"
+            gradientTo="#4A3A25"
+            borderColor="gold.400"
             onClick={() => {}}
           />
 
@@ -633,10 +633,10 @@ export function HomePage() {
             title="My Beasts"
             subtitle="View your collection"
             beastName={heroBeasts[2]}
-            accentColor="#33FF66"
-            gradientFrom="#0a1f1a"
-            gradientTo="#1a3a2a"
-            borderColor="green.700"
+            accentColor="#9FC6B2"
+            gradientFrom="#172822"
+            gradientTo="#284238"
+            borderColor="green.500"
             onClick={() => navigate("/my-beasts")}
           />
         </Flex>
@@ -644,7 +644,7 @@ export function HomePage() {
         {statusMsg && (
           <Code
             p={3}
-            borderRadius="3px"
+            borderRadius="10px"
             fontSize="xs"
             bg="surface.card"
             color="text.secondary"
@@ -806,7 +806,7 @@ function MenuCard({
       bg={`linear-gradient(160deg, ${gradientFrom} 0%, ${gradientTo} 100%)`}
       border="2px solid"
       borderColor={borderColor}
-      borderRadius="10px"
+      borderRadius="12px"
       overflow="hidden"
       cursor="pointer"
       transition="all 0.25s ease"
@@ -897,7 +897,7 @@ function MenuCard({
           fontSize="10px"
           fontWeight="bold"
           color="white"
-          boxShadow="0 0 8px rgba(232,64,64,0.5)"
+          boxShadow="0 0 8px rgba(179,110,110,0.5)"
         >
           {badge}
         </Box>
@@ -915,4 +915,3 @@ function MenuCard({
     </Box>
   );
 }
-

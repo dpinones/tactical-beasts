@@ -21,12 +21,13 @@ import { useGameStore } from "../stores/gameStore";
 import { useOwnedBeasts } from "../hooks/useOwnedBeasts";
 import { BeastCard } from "../components/BeastCard";
 import { HexGrid } from "../components/HexGrid";
+import { CoinFlipIntro } from "../components/CoinFlipIntro";
 import { OBSTACLES } from "../domain/hexGrid";
 import { GameStatus, BeastType, Subclass, CatalogBeast, ZERO_ADDR } from "../domain/types";
 import { updateRecentBeasts } from "../services/supabase";
 import { getSubclass, getSubclassName } from "../data/beasts";
 
-type Phase = "creating" | "joining" | "lobby" | "select" | "confirming" | "waiting" | "error";
+type Phase = "creating" | "joining" | "lobby" | "select" | "confirming" | "coin" | "waiting" | "error";
 
 export function TeamSelectPage() {
   const { gameId: gameIdParam } = useParams<{ gameId: string }>();
@@ -46,6 +47,7 @@ export function TeamSelectPage() {
   const [subclassFilter, setSubclassFilter] = useState<Subclass | null>(null);
   const [search, setSearch] = useState("");
   const [statusMsg, setStatusMsg] = useState("");
+  const [coinResultVisible, setCoinResultVisible] = useState(false);
   const [phase, setPhase] = useState<Phase>(
     isMatchMode ? "select" : isCreateMode ? "creating" : "joining"
   );
@@ -190,12 +192,35 @@ export function TeamSelectPage() {
     }
   }, [phase, polledGame]);
 
-  // After confirming team: poll until game starts (both teams set)
+  // After confirming team: wait until both teams are set, then show coin toss
   useEffect(() => {
     if (phase === "waiting" && polledGame && polledGame.status === GameStatus.PLAYING && gameId) {
-      navigate(`/battle/${gameId}`);
+      setPhase("coin");
     }
-  }, [phase, polledGame, gameId, navigate]);
+  }, [phase, polledGame, gameId]);
+
+  // Coin toss intro before entering waiting/battle
+  useEffect(() => {
+    if (phase !== "coin") return;
+    setCoinResultVisible(false);
+
+    const revealTimer = window.setTimeout(() => {
+      setCoinResultVisible(true);
+    }, 2400);
+
+    const finishTimer = window.setTimeout(() => {
+      if (gameId) {
+        navigate(`/battle/${gameId}`);
+      } else {
+        setPhase("waiting");
+      }
+    }, 4200);
+
+    return () => {
+      window.clearTimeout(revealTimer);
+      window.clearTimeout(finishTimer);
+    };
+  }, [phase, gameId, navigate]);
 
   // Confirm team: call set_team onchain + save to supabase
   const handleConfirmTeam = async () => {
@@ -282,6 +307,11 @@ export function TeamSelectPage() {
         <Button variant="ghost" size="sm" onClick={() => navigate("/")}>Cancel</Button>
       </Flex>
     );
+  }
+
+  // --- Coin toss intro ---
+  if (phase === "coin") {
+    return <CoinFlipIntro revealResult={coinResultVisible} />;
   }
 
   // --- Waiting for opponent's team ---

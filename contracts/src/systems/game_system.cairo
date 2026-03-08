@@ -34,7 +34,7 @@ pub mod game_system {
     use leaderboard::components::rankable::RankableComponent;
     use starknet::ContractAddress;
     use crate::constants::{
-        ACTION_ATTACK, ACTION_CONSUMABLE_ATTACK, ACTION_MOVE, ACTION_WAIT, BEASTS_PER_PLAYER, BEAST_NFT_ADDRESS,
+        ACTION_ATTACK, ACTION_CONSUMABLE_ATTACK, ACTION_MOVE, BEASTS_PER_PLAYER, BEAST_NFT_ADDRESS,
         DEFAULT_BEAST_TOKEN_MIN, DEFAULT_EXTRA_LIVES, GAME_STATUS_FINISHED, GAME_STATUS_PLAYING,
         GAME_STATUS_WAITING, LEADERBOARD_ID, MAINNET_CHAIN_ID, MAX_ROUNDS, NAMESPACE, TASK_FLAWLESS, TASK_WINNER,
         WIN_BONUS,
@@ -301,7 +301,27 @@ pub mod game_system {
                 alive_count += 1;
             }
 
-            assert!(actions.len() == alive_count, "Must provide action for each alive beast");
+            assert!(actions.len() <= alive_count, "Too many actions");
+
+            // Validate no duplicate beast_index
+            let mut j: u32 = 0;
+            loop {
+                if j >= actions.len() {
+                    break;
+                }
+                let mut k: u32 = j + 1;
+                loop {
+                    if k >= actions.len() {
+                        break;
+                    }
+                    assert!(
+                        (*actions.at(j)).beast_index != (*actions.at(k)).beast_index,
+                        "Duplicate beast action",
+                    );
+                    k += 1;
+                };
+                j += 1;
+            };
 
             // Resolve actions in order
             let mut i: u32 = 0;
@@ -545,11 +565,6 @@ pub mod game_system {
     ) {
         let mut attacker_beast: BeastState = world.read_model((game_id, attacker_index, action.beast_index));
         assert!(attacker_beast.alive, "Beast is not alive");
-
-        if action.action_type == ACTION_WAIT {
-            // Do nothing
-            return;
-        }
 
         if action.action_type == ACTION_MOVE {
             assert!(board::is_valid_cell(action.target_row, action.target_col), "Invalid cell");

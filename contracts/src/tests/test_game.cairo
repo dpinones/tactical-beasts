@@ -158,18 +158,9 @@ fn test_move_beast() {
         PLAYER2()
     };
 
-    // Use WAIT for all beasts to test turn switching
+    // Empty turn (no actions) to test turn switching
     set_player(attacker_addr);
-    systems
-        .game
-        .execute_turn(
-            game_id,
-            array![
-                Action { beast_index: 0, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
-                Action { beast_index: 1, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
-                Action { beast_index: 2, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
-            ],
-        );
+    systems.game.execute_turn(game_id, array![]);
 
     // Turn should switch
     let game_after: Game = world.read_model(game_id);
@@ -191,16 +182,7 @@ fn test_wrong_player_cannot_execute() {
     };
 
     set_player(non_attacker);
-    systems
-        .game
-        .execute_turn(
-            game_id,
-            array![
-                Action { beast_index: 0, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
-                Action { beast_index: 1, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
-                Action { beast_index: 2, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
-            ],
-        );
+    systems.game.execute_turn(game_id, array![]);
 }
 
 #[test]
@@ -217,15 +199,17 @@ fn test_wrong_action_count_panics() {
         PLAYER2()
     };
 
-    // Only 2 actions when 3 beasts alive
+    // 4 actions when only 3 beasts alive — should panic (too many)
     set_player(attacker_addr);
     systems
         .game
         .execute_turn(
             game_id,
             array![
-                Action { beast_index: 0, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
-                Action { beast_index: 1, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
+                Action { beast_index: 0, action_type: 1, target_index: 0, target_row: 1, target_col: 0 },
+                Action { beast_index: 1, action_type: 1, target_index: 0, target_row: 1, target_col: 1 },
+                Action { beast_index: 2, action_type: 1, target_index: 0, target_row: 1, target_col: 2 },
+                Action { beast_index: 0, action_type: 1, target_index: 0, target_row: 2, target_col: 0 },
             ],
         );
 }
@@ -308,16 +292,7 @@ fn test_finish_submits_score() {
 
     // Execute WAIT turn — victory check triggers
     set_player(attacker_addr);
-    systems
-        .game
-        .execute_turn(
-            game_id,
-            array![
-                Action { beast_index: 0, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
-                Action { beast_index: 1, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
-                Action { beast_index: 2, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
-            ],
-        );
+    systems.game.execute_turn(game_id, array![]);
 
     // Verify game finished
     let game_after: Game = world.read_model(game_id);
@@ -382,16 +357,7 @@ fn test_game_over_token() {
     }
 
     set_player(attacker_addr);
-    systems
-        .game
-        .execute_turn(
-            game_id,
-            array![
-                Action { beast_index: 0, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
-                Action { beast_index: 1, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
-                Action { beast_index: 2, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
-            ],
-        );
+    systems.game.execute_turn(game_id, array![]);
 
     // After finish, game_over should be true for both tokens
     assert!(egs.game_over(game_tokens.p1_token_id), "P1 token should be game_over");
@@ -604,16 +570,7 @@ fn test_cannot_abandon_finished_game() {
         i += 1;
     }
     set_player(attacker_addr);
-    systems
-        .game
-        .execute_turn(
-            game_id,
-            array![
-                Action { beast_index: 0, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
-                Action { beast_index: 1, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
-                Action { beast_index: 2, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
-            ],
-        );
+    systems.game.execute_turn(game_id, array![]);
 
     // Try to abandon finished game — should panic
     set_player(PLAYER1());
@@ -672,16 +629,7 @@ fn test_profile_updated_on_finish() {
 
     // Trigger victory
     set_player(attacker_addr);
-    systems
-        .game
-        .execute_turn(
-            game_id,
-            array![
-                Action { beast_index: 0, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
-                Action { beast_index: 1, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
-                Action { beast_index: 2, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
-            ],
-        );
+    systems.game.execute_turn(game_id, array![]);
 
     // Check winner profile
     let winner_profile: PlayerProfile = world.read_model(attacker_addr);
@@ -731,16 +679,7 @@ fn test_profile_accumulates_across_games() {
     }
 
     set_player(attacker_addr);
-    systems
-        .game
-        .execute_turn(
-            game_id,
-            array![
-                Action { beast_index: 0, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
-                Action { beast_index: 1, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
-                Action { beast_index: 2, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
-            ],
-        );
+    systems.game.execute_turn(game_id, array![]);
 
     // Game 2: same players, attacker wins again
     set_player(PLAYER1());
@@ -776,16 +715,7 @@ fn test_profile_accumulates_across_games() {
     }
 
     set_player(attacker_addr2);
-    systems
-        .game
-        .execute_turn(
-            game_id2,
-            array![
-                Action { beast_index: 0, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
-                Action { beast_index: 1, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
-                Action { beast_index: 2, action_type: 0, target_index: 0, target_row: 0, target_col: 0 },
-            ],
-        );
+    systems.game.execute_turn(game_id2, array![]);
 
     // attacker_addr should have 2 wins (both games, attacker is always player1 with current_attacker=1)
     let profile: PlayerProfile = world.read_model(attacker_addr);

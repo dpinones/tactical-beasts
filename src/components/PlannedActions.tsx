@@ -21,8 +21,8 @@ function actionSymbol(type: ActionType): string {
   switch (type) {
     case ActionType.MOVE: return "->";
     case ActionType.ATTACK: return "x";
-    case ActionType.WAIT: return "||";
     case ActionType.CONSUMABLE_ATTACK_POTION: return "+x";
+    default: return "?";
   }
 }
 
@@ -30,8 +30,8 @@ function actionBorderColor(type: ActionType): string {
   switch (type) {
     case ActionType.MOVE: return "#33FF66";
     case ActionType.ATTACK: return "#E84040";
-    case ActionType.WAIT: return "#FFD700";
     case ActionType.CONSUMABLE_ATTACK_POTION: return "#FFE033";
+    default: return "#888";
   }
 }
 
@@ -53,8 +53,8 @@ function describeAction(action: GameAction, enemyBeasts: BeastStateModel[]): str
         : `#${action.targetIndex}`;
       return `Potion+Atk -> ${name} #${action.targetIndex}`;
     }
-    case ActionType.WAIT:
-      return "Wait";
+    default:
+      return "?";
   }
 }
 
@@ -72,8 +72,6 @@ export function PlannedActions({
   isLoading,
 }: PlannedActionsProps) {
   const aliveBeasts = myBeasts.filter((b) => b.alive);
-  const allActionsSet = aliveBeasts.every((b) => actions.has(Number(b.beast_index)));
-
   return (
     <VStack gap={1.5} align="stretch">
       {/* Potion toggle */}
@@ -216,10 +214,10 @@ export function PlannedActions({
         size="sm"
         fontSize="sm"
         onClick={onConfirm}
-        isDisabled={!allActionsSet}
+        isDisabled={false}
         isLoading={isLoading}
         w="100%"
-        className={allActionsSet ? "confirm-ready-glow" : undefined}
+        className={actions.size > 0 ? "confirm-ready-glow" : undefined}
       >
         Confirm ({actions.size}/{aliveBeasts.length})
       </Button>

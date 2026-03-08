@@ -135,7 +135,6 @@ export function HexGrid({
       case ActionType.MOVE: return "GO";
       case ActionType.ATTACK: return "ATK";
       case ActionType.CONSUMABLE_ATTACK_POTION: return "ATK+";
-      case ActionType.WAIT: return "ZZ";
       default: return null;
     }
   }

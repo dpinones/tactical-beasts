@@ -148,24 +148,21 @@ Si ambos equipos seteados (try_start_game):
 **Cuándo:** Cada turno, después de planificar acciones en el cliente
 
 ```
-Entrada: game_id, array de acciones (1 por bestia viva)
+Entrada: game_id, array de acciones (0 a N bestias vivas, parcial permitido)
 Salida:  (ninguna)
 
 Validaciones:
   - Game.status == PLAYING
   - caller == jugador del current_attacker
-  - actions.len() == cantidad de bestias vivas del atacante
+  - actions.len() <= cantidad de bestias vivas del atacante
+  - No hay beast_index duplicados en el array
 
 Tipos de acción:
-  0 = WAIT                  → no hace nada
   1 = MOVE                  → mueve bestia a celda válida
   2 = ATTACK                → ataca bestia enemiga en rango
   3 = CONSUMABLE_ATTACK     → ataca con +10% daño (1 poción por partida por jugador)
 
 Resolución por acción (en orden del array):
-
-  WAIT:
-    → Nada
 
   MOVE:
     → Valida celda válida, no obstáculo, no ocupada, en rango (≤ 2 hexes)
@@ -253,8 +250,7 @@ Alice                                     Bob
 
 5. execute_turn(1, [                      (observa)
      ATTACK beast_0 → target_1,
-     MOVE beast_1 → (3,3),
-     WAIT beast_2
+     MOVE beast_1 → (3,3)
    ])
    → Daño, contraataque, etc.
    → current_attacker = 2 (Bob)
@@ -269,7 +265,7 @@ Alice                                     Bob
 
 ... (varios turnos más) ...
 
-N. execute_turn(1, [ATTACK, ATTACK, WAIT])
+N. execute_turn(1, [ATTACK, ATTACK])
    → Última bestia de Bob muere
    → check_victory() → Alice gana
    → Score = (50 - 8) * 10 + 100 = 520

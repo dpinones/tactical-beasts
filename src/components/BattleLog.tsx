@@ -21,8 +21,6 @@ function eventColor(type: BattleEvent["type"]): string {
       return "#33FF66";
     case "potion":
       return "#33FF66";
-    case "wait":
-      return "#556655";
     default:
       return "#7A8A7A";
   }
@@ -43,8 +41,6 @@ function eventSymbol(type: BattleEvent["type"]): string {
       return "[+HP]";
     case "potion":
       return "[POT]";
-    case "wait":
-      return "[---]";
     default:
       return "";
   }

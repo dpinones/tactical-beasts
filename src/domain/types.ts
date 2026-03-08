@@ -7,7 +7,6 @@ export enum GameStatus {
 
 // Action types matching Cairo Action struct
 export enum ActionType {
-  WAIT = 0,
   MOVE = 1,
   ATTACK = 2,
   CONSUMABLE_ATTACK_POTION = 3,
@@ -85,7 +84,7 @@ export interface GameAction {
 }
 
 export interface BattleEvent {
-  type: "attack" | "counterattack" | "move" | "ko" | "extra_life" | "crit" | "potion" | "wait";
+  type: "attack" | "counterattack" | "move" | "ko" | "extra_life" | "crit" | "potion";
   attackerIndex?: number;
   defenderIndex?: number;
   damage?: number;

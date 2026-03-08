@@ -14,10 +14,10 @@ interface BeastHUDProps {
 
 function actionShortLabel(type: ActionType): string {
   switch (type) {
-    case ActionType.WAIT: return "|| Wait";
     case ActionType.MOVE: return "-> Move";
     case ActionType.ATTACK: return "x Attack";
     case ActionType.CONSUMABLE_ATTACK_POTION: return "+x Potion+Atk";
+    default: return "?";
   }
 }
 
@@ -25,8 +25,8 @@ function actionColor(type: ActionType): string {
   switch (type) {
     case ActionType.MOVE: return "#33FF66";
     case ActionType.ATTACK: return "#E84040";
-    case ActionType.WAIT: return "#FFD700";
     case ActionType.CONSUMABLE_ATTACK_POTION: return "#FFE033";
+    default: return "#888";
   }
 }
 

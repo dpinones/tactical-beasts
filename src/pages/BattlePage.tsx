@@ -301,30 +301,9 @@ export function BattlePage() {
   const handleConfirmActions = useCallback(async () => {
     if (!gameId) return;
 
-    const orderedActions: GameAction[] = actionHistory.map((idx) => {
-      return (
-        actions.get(idx) || {
-          beastIndex: idx,
-          actionType: ActionType.WAIT,
-          targetIndex: 0,
-          targetRow: 0,
-          targetCol: 0,
-        }
-      );
-    });
-    const aliveBeasts = myBeasts.filter((b) => b.alive);
-    for (const b of aliveBeasts) {
-      const idx = Number(b.beast_index);
-      if (!actionHistory.includes(idx)) {
-        orderedActions.push({
-          beastIndex: idx,
-          actionType: ActionType.WAIT,
-          targetIndex: 0,
-          targetRow: 0,
-          targetCol: 0,
-        });
-      }
-    }
+    const orderedActions: GameAction[] = actionHistory
+      .map((idx) => actions.get(idx))
+      .filter((a): a is GameAction => a !== undefined);
 
     const res = await executeTurn(gameId, orderedActions);
     if (res) {
@@ -348,15 +327,15 @@ export function BattlePage() {
   ]);
 
   const aliveCount = useMemo(() => myBeasts.filter((b) => b.alive).length, [myBeasts]);
-  const allActionsReady = isMyTurn && aliveCount > 0 && actions.size >= aliveCount;
+  const canConfirm = isMyTurn && aliveCount > 0;
 
   // Contextual guidance message
   const guidanceMessage = useMemo(() => {
     if (!isMyTurn) return "Waiting for opponent...";
-    if (allActionsReady) return "All set -- Confirm!";
+    if (actions.size > 0) return `${actions.size} action(s) planned -- Confirm!`;
     if (selectedBeastIndex === null) return "Select a beast";
     return "Move or Attack";
-  }, [isMyTurn, selectedBeastIndex, allActionsReady]);
+  }, [isMyTurn, selectedBeastIndex, actions.size]);
 
   const potionUsed = false; // TODO: read from PlayerState
 
@@ -513,7 +492,7 @@ export function BattlePage() {
         {isMyTurn && (
           <>
             <Box
-              className={`battle-panel ${allActionsReady ? "battle-panel--ready" : ""}`}
+              className={`battle-panel ${canConfirm ? "battle-panel--ready" : ""}`}
               flexShrink={0}
             >
               <Box className="battle-panel__header">

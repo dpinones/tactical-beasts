@@ -9,7 +9,6 @@ pub const GAME_STATUS_PLAYING: u8 = 1;
 pub const GAME_STATUS_FINISHED: u8 = 2;
 
 // Action types
-pub const ACTION_WAIT: u8 = 0;
 pub const ACTION_MOVE: u8 = 1;
 pub const ACTION_ATTACK: u8 = 2;
 pub const ACTION_CONSUMABLE_ATTACK: u8 = 3;

@@ -84,7 +84,7 @@ export interface GameAction {
 }
 
 export interface BattleEvent {
-  type: "attack" | "counterattack" | "move" | "ko" | "extra_life" | "crit" | "potion";
+  type: "attack" | "counterattack" | "move" | "ko" | "extra_life" | "crit" | "potion" | "passive";
   attackerIndex?: number;
   defenderIndex?: number;
   damage?: number;
@@ -123,6 +123,7 @@ export interface BeastStateModel {
   position_row: number;
   position_col: number;
   alive: boolean;
+  last_moved: boolean;
 }
 
 export interface PlayerStateModel {

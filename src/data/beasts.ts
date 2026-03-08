@@ -191,3 +191,52 @@ export function getSubclassName(subclass: Subclass): string {
 export function isValidTier(tier: number): boolean {
   return tier >= MIN_TIER && tier <= MAX_TIER;
 }
+
+// --- Passive ability helpers ---
+
+export interface PassiveInfo {
+  name: string;
+  shortLabel: string;
+  description: string;
+  color: string;
+}
+
+export function getPassiveInfo(subclass: Subclass): PassiveInfo {
+  switch (subclass) {
+    case Subclass.Juggernaut:
+      return { name: "Fortify", shortLabel: "FRT", description: "-10% dmg if didn't move", color: "#4A9EFF" };
+    case Subclass.Berserker:
+      return { name: "Rage", shortLabel: "RGE", description: "+12% dmg if HP < 50%", color: "#FF4444" };
+    case Subclass.Stalker:
+      return { name: "1st Strike", shortLabel: "1ST", description: "+15% dmg vs full HP", color: "#FFD700" };
+    case Subclass.Warlock:
+      return { name: "Siphon", shortLabel: "SPN", description: "Heal 15% of dmg dealt", color: "#B366FF" };
+    case Subclass.Enchanter:
+      return { name: "Regen", shortLabel: "RGN", description: "+8% max HP", color: "#66FFB2" };
+    case Subclass.Ranger:
+      return { name: "Exposed", shortLabel: "EXP", description: "+30% melee dmg received", color: "#FF8C33" };
+  }
+}
+
+export function isPassiveActive(
+  subclass: Subclass,
+  beast: { hp: number; hp_max: number; last_moved: boolean; alive: boolean },
+  target?: { hp: number; hp_max: number },
+  isAdjacentToEnemy?: boolean,
+): boolean {
+  if (!beast.alive) return false;
+  switch (subclass) {
+    case Subclass.Juggernaut:
+      return !beast.last_moved;
+    case Subclass.Berserker:
+      return beast.hp * 2 < beast.hp_max;
+    case Subclass.Stalker:
+      return target ? target.hp === target.hp_max : false;
+    case Subclass.Warlock:
+      return true; // always active on attack
+    case Subclass.Enchanter:
+      return true; // already applied at creation
+    case Subclass.Ranger:
+      return isAdjacentToEnemy ?? false;
+  }
+}

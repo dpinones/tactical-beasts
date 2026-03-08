@@ -54,3 +54,25 @@ pub fn roll_crit(luck: u8, seed: felt252) -> bool {
     let roll: u256 = hash_u256 % 100;
     roll < luck.into()
 }
+
+/// Applies offensive passive bonus to damage (percentage increase).
+pub fn apply_passive_bonus(damage: u16, bonus_pct: u32) -> u16 {
+    let d: u32 = damage.into();
+    let result = d * (100 + bonus_pct) / 100;
+    if result > 65535 {
+        65535
+    } else {
+        result.try_into().unwrap()
+    }
+}
+
+/// Applies defensive passive reduction to damage (percentage decrease).
+pub fn apply_passive_reduction(damage: u16, reduction_pct: u32) -> u16 {
+    let d: u32 = damage.into();
+    let result = d * (100 - reduction_pct) / 100;
+    if result < MIN_DAMAGE.into() {
+        MIN_DAMAGE
+    } else {
+        result.try_into().unwrap()
+    }
+}

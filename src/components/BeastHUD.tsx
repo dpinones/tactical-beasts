@@ -1,7 +1,7 @@
 import { Box, Flex, Text, Badge, Progress, Image } from "@chakra-ui/react";
 import { BeastStateModel, BeastType, ActionType, GameAction } from "../domain/types";
 import { getTypeName } from "../domain/combat";
-import { getBeastImagePath, getSpeciesNameByTokenId, getSubclass, getSubclassName } from "../data/beasts";
+import { getBeastImagePath, getSpeciesNameByTokenId, getSubclass, getSubclassName, getPassiveInfo, isPassiveActive } from "../data/beasts";
 
 interface BeastHUDProps {
   beast: BeastStateModel;
@@ -187,6 +187,37 @@ export function BeastHUD({
               </Text>
             </Flex>
           </Flex>
+
+          {/* Passive badge */}
+          {(() => {
+            const passive = getPassiveInfo(subclass);
+            const active = isPassiveActive(subclass, {
+              hp: hp, hp_max: hpMax,
+              last_moved: Boolean(beast.last_moved), alive,
+            });
+            return (
+              <Flex
+                mt={0.5}
+                px={1.5}
+                py={0.5}
+                borderRadius="2px"
+                border="1px solid"
+                borderColor={passive.color}
+                bg={`${passive.color}11`}
+                opacity={active ? 1 : 0.35}
+                align="center"
+                gap={1}
+                transition="opacity 0.2s"
+              >
+                <Text fontSize="8px" color={passive.color} fontFamily="mono" fontWeight="800">
+                  [{passive.shortLabel}]
+                </Text>
+                <Text fontSize="8px" color={passive.color} fontFamily="mono" opacity={0.8} noOfLines={1}>
+                  {passive.description}
+                </Text>
+              </Flex>
+            );
+          })()}
         </Box>
       </Flex>
 

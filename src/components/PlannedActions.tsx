@@ -1,7 +1,8 @@
 import { Box, Button, Flex, Text, Switch, VStack, HStack } from "@chakra-ui/react";
 import { BeastStateModel, BeastType, ActionType, GameAction } from "../domain/types";
 import { getTypeColor } from "../domain/combat";
-import { getSpeciesNameByTokenId } from "../data/beasts";
+import { getSpeciesNameByTokenId, getSubclass, getPassiveInfo, isPassiveActive } from "../data/beasts";
+import { Subclass } from "../domain/types";
 
 interface PlannedActionsProps {
   myBeasts: BeastStateModel[];
@@ -35,7 +36,21 @@ function actionBorderColor(type: ActionType): string {
   }
 }
 
-function describeAction(action: GameAction, enemyBeasts: BeastStateModel[]): string {
+function getPassiveTag(beast: BeastStateModel, target?: BeastStateModel): string {
+  const subclass = getSubclass(Number(beast.beast_id));
+  const targetInfo = target ? { hp: Number(target.hp), hp_max: Number(target.hp_max) } : undefined;
+  const active = isPassiveActive(subclass, {
+    hp: Number(beast.hp), hp_max: Number(beast.hp_max),
+    last_moved: Boolean(beast.last_moved), alive: Boolean(beast.alive),
+  }, targetInfo);
+  if (!active) return "";
+  const info = getPassiveInfo(subclass);
+  if (subclass === Subclass.Enchanter) return ""; // passive is permanent, not per-action
+  return ` (${info.shortLabel})`;
+}
+
+function describeAction(action: GameAction, myBeasts: BeastStateModel[], enemyBeasts: BeastStateModel[]): string {
+  const attacker = myBeasts.find((b) => Number(b.beast_index) === action.beastIndex);
   switch (action.actionType) {
     case ActionType.MOVE:
       return `Move -> (${action.targetRow},${action.targetCol})`;
@@ -44,14 +59,16 @@ function describeAction(action: GameAction, enemyBeasts: BeastStateModel[]): str
       const name = target
         ? getSpeciesNameByTokenId(Number(target.token_id)) || getSpeciesNameByTokenId(Number(target.beast_id))
         : `#${action.targetIndex}`;
-      return `Atk -> ${name} #${action.targetIndex}`;
+      const tag = attacker && target ? getPassiveTag(attacker, target) : "";
+      return `Atk -> ${name}${tag}`;
     }
     case ActionType.CONSUMABLE_ATTACK_POTION: {
       const target = enemyBeasts.find((b) => Number(b.beast_index) === action.targetIndex);
       const name = target
         ? getSpeciesNameByTokenId(Number(target.token_id)) || getSpeciesNameByTokenId(Number(target.beast_id))
         : `#${action.targetIndex}`;
-      return `Potion+Atk -> ${name} #${action.targetIndex}`;
+      const tag = attacker && target ? getPassiveTag(attacker, target) : "";
+      return `Potion+Atk -> ${name}${tag}`;
     }
     default:
       return "?";
@@ -142,7 +159,7 @@ export function PlannedActions({
                   {actionSymbol(action.actionType)}
                 </Text>
                 <Text fontSize="xs" color="#8BFFC4" fontFamily="mono" flex={1} noOfLines={1}>
-                  {describeAction(action, enemyBeasts)}
+                  {describeAction(action, aliveBeasts, enemyBeasts)}
                 </Text>
               </Flex>
             );

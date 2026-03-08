@@ -63,6 +63,7 @@ export interface BeastState {
 	position_row: BigNumberish;
 	position_col: BigNumberish;
 	alive: boolean;
+	last_moved: boolean;
 }
 
 // Type definition for `tactical_beats::models::index::Game` struct
@@ -386,6 +387,7 @@ export const schema: SchemaType = {
 			position_row: 0,
 			position_col: 0,
 			alive: false,
+			last_moved: false,
 		},
 		Game: {
 			game_id: 0,

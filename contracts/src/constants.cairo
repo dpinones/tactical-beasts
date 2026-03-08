@@ -75,6 +75,14 @@ pub const SUBCLASS_RANGER: u8 = 3; // Hunter sniper: mov 1, med HP, med dmg, ran
 pub const SUBCLASS_JUGGERNAUT: u8 = 4; // Brute tank: mov 1, very high HP, low dmg, melee
 pub const SUBCLASS_BERSERKER: u8 = 5; // Brute bruiser: mov 1, high HP, high dmg, melee
 
+// Passive ability modifiers (percentages)
+pub const PASSIVE_FORTIFY_REDUCTION: u32 = 10; // Juggernaut: -10% damage received if didn't move
+pub const PASSIVE_RAGE_BONUS: u32 = 12; // Berserker: +12% damage if HP < 50%
+pub const PASSIVE_FIRST_STRIKE_BONUS: u32 = 15; // Stalker: +15% damage vs 100% HP targets
+pub const PASSIVE_SIPHON_HEAL: u32 = 15; // Warlock: heals 15% of damage dealt
+pub const PASSIVE_REGEN_BONUS_HP: u32 = 8; // Enchanter: starts with +8% max HP
+pub const PASSIVE_EXPOSED_PENALTY: u32 = 30; // Ranger: +30% damage from adjacent enemies
+
 // Combat defaults
 pub const DEFAULT_LEVEL: u16 = 5;
 pub const DEFAULT_TIER: u8 = 3;

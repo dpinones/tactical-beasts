@@ -44,6 +44,7 @@ pub struct BeastState {
     pub position_row: u8,
     pub position_col: u8,
     pub alive: bool,
+    pub last_moved: bool,
 }
 
 #[derive(Copy, Drop, Serde)]

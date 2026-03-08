@@ -36,8 +36,10 @@ pub mod game_system {
     use crate::constants::{
         ACTION_ATTACK, ACTION_CONSUMABLE_ATTACK, ACTION_MOVE, BEASTS_PER_PLAYER, BEAST_NFT_ADDRESS,
         DEFAULT_BEAST_TOKEN_MIN, DEFAULT_EXTRA_LIVES, GAME_STATUS_FINISHED, GAME_STATUS_PLAYING,
-        GAME_STATUS_WAITING, LEADERBOARD_ID, MAINNET_CHAIN_ID, MAX_ROUNDS, NAMESPACE, TASK_FLAWLESS, TASK_WINNER,
-        WIN_BONUS,
+        GAME_STATUS_WAITING, LEADERBOARD_ID, MAINNET_CHAIN_ID, MAX_ROUNDS, NAMESPACE, PASSIVE_EXPOSED_PENALTY,
+        PASSIVE_FIRST_STRIKE_BONUS, PASSIVE_FORTIFY_REDUCTION, PASSIVE_RAGE_BONUS, PASSIVE_REGEN_BONUS_HP,
+        PASSIVE_SIPHON_HEAL, SUBCLASS_BERSERKER, SUBCLASS_ENCHANTER, SUBCLASS_JUGGERNAUT, SUBCLASS_RANGER,
+        SUBCLASS_STALKER, SUBCLASS_WARLOCK, TASK_FLAWLESS, TASK_WINNER, WIN_BONUS,
     };
     use crate::elements::achievements::{ACHIEVEMENT_COUNT, Achievement, AchievementTrait};
     use crate::events::index::{GameCreated, GameFinished, PlayerJoined};
@@ -334,6 +336,29 @@ pub mod game_system {
                 i += 1;
             }
 
+            // Reset last_moved for beasts that didn't act this turn
+            // (they stayed still, so last_moved = false for next turn's Fortify check)
+            let acted_beasts = @actions;
+            let mut bi: u8 = 0;
+            while bi < BEASTS_PER_PLAYER {
+                let mut beast_s: BeastState = world.read_model((game_id, attacker_index, bi));
+                if beast_s.alive {
+                    let mut acted = false;
+                    let mut ai: u32 = 0;
+                    while ai < acted_beasts.len() {
+                        if (*acted_beasts.at(ai)).beast_index == bi {
+                            acted = true;
+                        }
+                        ai += 1;
+                    };
+                    if !acted {
+                        beast_s.last_moved = false;
+                        world.write_model(@beast_s);
+                    }
+                }
+                bi += 1;
+            };
+
             // Check victory
             let winner = check_victory(ref world, game_id);
             if winner != zero_address() {
@@ -535,6 +560,16 @@ pub mod game_system {
         // Validate tier: only T2-T4 beasts are allowed in tactical combat
         assert!(beast::is_valid_tier(species_id), "Beast tier not allowed: only T2-T4");
 
+        // Enchanter passive: Regeneration — starts with +8% max HP
+        let subclass = beast::get_subclass(species_id.into());
+        let (final_hp, final_hp_max) = if subclass == SUBCLASS_ENCHANTER {
+            let hp_u32: u32 = hp.into();
+            let bonus: u16 = (hp_u32 * PASSIVE_REGEN_BONUS_HP / 100).try_into().unwrap();
+            (hp + bonus, hp + bonus)
+        } else {
+            (hp, hp)
+        };
+
         let beast_state = BeastState {
             game_id,
             player_index,
@@ -544,12 +579,13 @@ pub mod game_system {
             beast_type,
             tier,
             level,
-            hp,
-            hp_max: hp,
+            hp: final_hp,
+            hp_max: final_hp_max,
             extra_lives: DEFAULT_EXTRA_LIVES,
             position_row: 0,
             position_col: 0,
             alive: true,
+            last_moved: false,
         };
         world.write_model(@beast_state);
     }
@@ -580,6 +616,7 @@ pub mod game_system {
 
             attacker_beast.position_row = action.target_row;
             attacker_beast.position_col = action.target_col;
+            attacker_beast.last_moved = true;
             world.write_model(@attacker_beast);
             return;
         }
@@ -613,7 +650,7 @@ pub mod game_system {
                 .finalize();
 
             let is_crit = combat::roll_crit(beast::get_luck(attacker_beast.beast_id), seed);
-            let damage = combat::calculate_damage(
+            let mut damage = combat::calculate_damage(
                 attacker_beast.level,
                 attacker_beast.tier,
                 attacker_beast.beast_type,
@@ -622,10 +659,51 @@ pub mod game_system {
                 is_crit,
             );
 
+            // --- Attacker offensive passives ---
+            let atk_subclass = beast::get_subclass(attacker_beast.beast_id);
+
+            // Berserker Rage: +12% damage if HP < 50%
+            if atk_subclass == SUBCLASS_BERSERKER && attacker_beast.hp * 2 < attacker_beast.hp_max {
+                damage = combat::apply_passive_bonus(damage, PASSIVE_RAGE_BONUS);
+            }
+
+            // Stalker First Strike: +15% damage vs 100% HP targets
+            if atk_subclass == SUBCLASS_STALKER && defender_beast.hp == defender_beast.hp_max {
+                damage = combat::apply_passive_bonus(damage, PASSIVE_FIRST_STRIKE_BONUS);
+            }
+
+            // --- Defender defensive passives ---
+            let def_subclass = beast::get_subclass(defender_beast.beast_id);
+
+            // Juggernaut Fortify: -10% damage received if didn't move last turn
+            if def_subclass == SUBCLASS_JUGGERNAUT && !defender_beast.last_moved {
+                damage = combat::apply_passive_reduction(damage, PASSIVE_FORTIFY_REDUCTION);
+            }
+
+            // Ranger Exposed: +30% damage from adjacent enemies (dist <= 1)
+            if def_subclass == SUBCLASS_RANGER && dist <= 1 {
+                damage = combat::apply_passive_bonus(damage, PASSIVE_EXPOSED_PENALTY);
+            }
+
             apply_damage(ref defender_beast, damage);
             world.write_model(@defender_beast);
 
-            // Counter-attack if defender survives
+            // Warlock Siphon: heal 15% of damage dealt
+            if atk_subclass == SUBCLASS_WARLOCK {
+                let heal: u16 = (damage.into() * PASSIVE_SIPHON_HEAL / 100).try_into().unwrap();
+                if heal > 0 {
+                    attacker_beast.hp = if attacker_beast.hp + heal > attacker_beast.hp_max {
+                        attacker_beast.hp_max
+                    } else {
+                        attacker_beast.hp + heal
+                    };
+                }
+            }
+
+            // Mark attacker as not moved this turn (attacked instead)
+            attacker_beast.last_moved = false;
+
+            // Counter-attack if defender survives (no passives apply on counters)
             if defender_beast.alive {
                 let counter_seed = PoseidonTrait::new().update(seed).update('counter').finalize();
 
@@ -640,8 +718,8 @@ pub mod game_system {
                 );
 
                 apply_damage(ref attacker_beast, counter_damage);
-                world.write_model(@attacker_beast);
             }
+            world.write_model(@attacker_beast);
             return;
         }
 

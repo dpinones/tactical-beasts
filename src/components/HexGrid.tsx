@@ -8,7 +8,9 @@ import {
   isObstacle,
 } from "../domain/hexGrid";
 import { BeastStateModel, ActionType, GameAction, HexCoord } from "../domain/types";
-import { getBeastImagePath } from "../data/beasts";
+import { getBeastImagePath, getSubclass, getPassiveInfo, isPassiveActive } from "../data/beasts";
+import { Subclass } from "../domain/types";
+import { hexDistance as domainHexDistance } from "../domain/hexGrid";
 
 interface HexGridProps {
   hexSize?: number;
@@ -325,6 +327,48 @@ export function HexGrid({
             +{extraLives}
           </text>
         )}
+
+        {/* Passive indicator */}
+        {(() => {
+          const sub = getSubclass(Number(beast.beast_id));
+          const passive = getPassiveInfo(sub);
+          // Check if passive is active (basic check without target context)
+          const hasAdjacentEnemy = sub === Subclass.Ranger && enemyBeasts.some((e) => {
+            if (!e.alive) return false;
+            const ePos = { row: Number(e.position_row), col: Number(e.position_col) };
+            const bPos = getEffectivePosition(beast);
+            return domainHexDistance(bPos, ePos) <= 1;
+          });
+          const active = isPassiveActive(sub, {
+            hp: Number(beast.hp), hp_max: Number(beast.hp_max),
+            last_moved: Boolean(beast.last_moved), alive: true,
+          }, undefined, hasAdjacentEnemy);
+          return (
+            <g style={{ pointerEvents: "none" }} opacity={active ? 1 : 0.3}>
+              <rect
+                x={cx - hpBarWidth / 2}
+                y={hpBarY - 14}
+                width={hpBarWidth}
+                height={10}
+                rx={2}
+                fill={`${passive.color}33`}
+                stroke={passive.color}
+                strokeWidth={0.5}
+              />
+              <text
+                x={cx}
+                y={hpBarY - 6.5}
+                textAnchor="middle"
+                fill={passive.color}
+                fontSize={6}
+                fontWeight="bold"
+                fontFamily="'JetBrains Mono', monospace"
+              >
+                {passive.shortLabel}: {passive.name}
+              </text>
+            </g>
+          );
+        })()}
 
         {/* Planned action badge */}
         {actionBadge && (

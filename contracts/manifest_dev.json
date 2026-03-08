@@ -57,8 +57,8 @@
       ]
     },
     {
-      "address": "0x1de3b9299f1d335d2304b993da7abb09ad289cbadbe165070bd778dab7a8c54",
-      "class_hash": "0x2b6e974d259f7b291dae84dfac1106a5600b18e1a8698140877e2b0db69e98c",
+      "address": "0x2c770d97d3fcec2ff889132764a0075011bc02ffd028d97b707ae59c8e90dc1",
+      "class_hash": "0x11a44066275fc0cbab68324e2ef3c8d7548a9c11e95a22230a3428306763af6",
       "init_calldata": [],
       "tag": "TB1-game_system",
       "selector": "0x3687e683c1056316f61e197bb9013734f28aee2e3450dbc720d5b2fbe6ea0e0",
@@ -275,9 +275,14 @@
           "name": "alive",
           "type": "core::bool",
           "key": false
+        },
+        {
+          "name": "last_moved",
+          "type": "core::bool",
+          "key": false
         }
       ],
-      "class_hash": "0x8efd3840e6f62172a6d0dbbd3c5dc45cfa4e672e9377752231abb065c8588a",
+      "class_hash": "0x5ce22cc6910e73f3cc40b08af697002aabf4dfaca8bd0a0745c7983a383fa82",
       "tag": "TB1-BeastState",
       "selector": "0x3c76b0f094c4046a595bef5d57800a9212e62c958233c558213537521d4d6e6"
     },
@@ -4041,6 +4046,10 @@
         {
           "name": "alive",
           "type": "core::bool"
+        },
+        {
+          "name": "last_moved",
+          "type": "core::bool"
         }
       ]
     },
@@ -4090,6 +4099,10 @@
         },
         {
           "name": "alive",
+          "type": "core::bool"
+        },
+        {
+          "name": "last_moved",
           "type": "core::bool"
         }
       ]

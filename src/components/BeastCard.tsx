@@ -45,7 +45,7 @@ export function BeastCard({ beast, isSelected, onToggle, disabled }: BeastCardPr
 
   return (
     <Box
-      bg={isSelected ? "rgba(0, 255, 68, 0.12)" : "surface.panel"}
+      bg={isSelected ? "surface.card" : "surface.panel"}
       border="1px solid"
       borderColor={isSelected ? "green.400" : "surface.border"}
       borderRadius="3px"
@@ -58,9 +58,7 @@ export function BeastCard({ beast, isSelected, onToggle, disabled }: BeastCardPr
         !disabled
           ? {
               borderColor: isSelected ? "green.400" : "surface.borderLight",
-              bg: isSelected
-                ? "rgba(0, 255, 68, 0.15)"
-                : "surface.hover",
+              bg: isSelected ? "surface.card" : "surface.hover",
             }
           : undefined
       }

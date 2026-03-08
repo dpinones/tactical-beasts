@@ -33,6 +33,8 @@ import { OBSTACLES } from "../domain/hexGrid";
 import { GameStatus, BeastType, Subclass, CatalogBeast, ZERO_ADDR } from "../domain/types";
 import { updateRecentBeasts } from "../services/supabase";
 import { getSubclass, getSubclassName, DEFAULT_BEASTS } from "../data/beasts";
+import { MAX_T2_PER_TEAM, MAX_T3_PER_TEAM } from "../domain/combat";
+import { toast } from "sonner";
 
 type Phase = "creating" | "joining" | "lobby" | "select" | "confirming" | "coin" | "waiting" | "error";
 
@@ -100,6 +102,41 @@ export function TeamSelectPage() {
   }, [ownedCatalog]);
 
   const defaultTokenIds = new Set(DEFAULT_BEASTS.map((b) => b.tokenId));
+
+  // Tier-limited toggle: max 1 T2 and max 2 T3 per team
+  const handleToggleBeast = useCallback((tokenId: number) => {
+    // Always allow deselecting
+    if (selectedBeasts.includes(tokenId)) {
+      toggleBeast(tokenId);
+      return;
+    }
+    const beast = catalog.find((b) => b.tokenId === tokenId);
+    if (!beast) return;
+    const currentTiers = selectedBeasts
+      .map((id) => catalog.find((b) => b.tokenId === id))
+      .filter(Boolean)
+      .map((b) => b!.tier);
+    if (beast.tier === 2 && currentTiers.filter((t) => t === 2).length >= MAX_T2_PER_TEAM) {
+      toast.error("Max 1 T2 beast per team");
+      return;
+    }
+    if (beast.tier === 3 && currentTiers.filter((t) => t === 3).length >= MAX_T3_PER_TEAM) {
+      toast.error("Max 2 T3 beasts per team");
+      return;
+    }
+    toggleBeast(tokenId);
+  }, [selectedBeasts, catalog, toggleBeast]);
+
+  // Check if a beast's tier slot is full (for disabling cards)
+  const isTierFull = useCallback((tier: number): boolean => {
+    const currentTiers = selectedBeasts
+      .map((id) => catalog.find((b) => b.tokenId === id))
+      .filter(Boolean)
+      .map((b) => b!.tier);
+    if (tier === 2) return currentTiers.filter((t) => t === 2).length >= MAX_T2_PER_TEAM;
+    if (tier === 3) return currentTiers.filter((t) => t === 3).length >= MAX_T3_PER_TEAM;
+    return false;
+  }, [selectedBeasts, catalog]);
 
   // Apply filters to a beast list
   const applyFilters = useCallback((beasts: CatalogBeast[], skipTypeFilter = false): CatalogBeast[] => {
@@ -556,8 +593,8 @@ export function TeamSelectPage() {
                           key={beast.tokenId}
                           beast={beast}
                           isSelected={selectedBeasts.includes(beast.tokenId)}
-                          onToggle={toggleBeast}
-                          disabled={selectedBeasts.length >= 3 && !selectedBeasts.includes(beast.tokenId)}
+                          onToggle={handleToggleBeast}
+                          disabled={!selectedBeasts.includes(beast.tokenId) && (selectedBeasts.length >= 3 || isTierFull(beast.tier))}
                           isDefault={true}
                         />
                       ))}
@@ -577,8 +614,8 @@ export function TeamSelectPage() {
                           key={beast.tokenId}
                           beast={beast}
                           isSelected={selectedBeasts.includes(beast.tokenId)}
-                          onToggle={toggleBeast}
-                          disabled={selectedBeasts.length >= 3 && !selectedBeasts.includes(beast.tokenId)}
+                          onToggle={handleToggleBeast}
+                          disabled={!selectedBeasts.includes(beast.tokenId) && (selectedBeasts.length >= 3 || isTierFull(beast.tier))}
                           isDefault={false}
                         />
                       ))}
@@ -757,7 +794,7 @@ export function TeamSelectPage() {
                       size="xs"
                       variant="ghost"
                       color="danger.300"
-                      onClick={() => toggleBeast(tokenId)}
+                      onClick={() => handleToggleBeast(tokenId)}
                       px={1}
                     >
                       ✕

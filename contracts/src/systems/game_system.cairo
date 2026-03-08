@@ -38,8 +38,9 @@ pub mod game_system {
         DEFAULT_BEAST_TOKEN_MIN, DEFAULT_EXTRA_LIVES, GAME_STATUS_FINISHED, GAME_STATUS_PLAYING,
         GAME_STATUS_WAITING, LEADERBOARD_ID, MAINNET_CHAIN_ID, MAX_ROUNDS, NAMESPACE, PASSIVE_EXPOSED_PENALTY,
         PASSIVE_FIRST_STRIKE_BONUS, PASSIVE_FORTIFY_REDUCTION, PASSIVE_RAGE_BONUS, PASSIVE_REGEN_BONUS_HP,
-        PASSIVE_SIPHON_HEAL, SUBCLASS_BERSERKER, SUBCLASS_ENCHANTER, SUBCLASS_JUGGERNAUT, SUBCLASS_RANGER,
-        SUBCLASS_STALKER, SUBCLASS_WARLOCK, TASK_FLAWLESS, TASK_WINNER, WIN_BONUS,
+        COUNTER_ATTACK_PCT, MAX_T2_PER_TEAM, MAX_T3_PER_TEAM, MIN_DAMAGE, PASSIVE_SIPHON_HEAL,
+        SUBCLASS_BERSERKER, SUBCLASS_ENCHANTER, SUBCLASS_JUGGERNAUT, SUBCLASS_RANGER, SUBCLASS_STALKER,
+        SUBCLASS_WARLOCK, TASK_FLAWLESS, TASK_WINNER, WIN_BONUS,
     };
     use crate::elements::achievements::{ACHIEVEMENT_COUNT, Achievement, AchievementTrait};
     use crate::events::index::{GameCreated, GameFinished, PlayerJoined};
@@ -263,6 +264,9 @@ pub mod game_system {
             create_beast(ref world, game_id, player_index, 0, beast_1, caller);
             create_beast(ref world, game_id, player_index, 1, beast_2, caller);
             create_beast(ref world, game_id, player_index, 2, beast_3, caller);
+
+            // Validate team tier composition: max 1 T2, max 2 T3, unlimited T4
+            validate_team_tiers(ref world, game_id, player_index);
 
             try_start_game(ref world, game_id);
         }
@@ -590,6 +594,23 @@ pub mod game_system {
         world.write_model(@beast_state);
     }
 
+    fn validate_team_tiers(ref world: WorldStorage, game_id: u32, player_index: u8) {
+        let mut t2_count: u8 = 0;
+        let mut t3_count: u8 = 0;
+        let mut i: u8 = 0;
+        while i < BEASTS_PER_PLAYER {
+            let bs: BeastState = world.read_model((game_id, player_index, i));
+            if bs.tier == 2 {
+                t2_count += 1;
+            } else if bs.tier == 3 {
+                t3_count += 1;
+            }
+            i += 1;
+        };
+        assert!(t2_count <= MAX_T2_PER_TEAM, "Max 1 T2 beast per team");
+        assert!(t3_count <= MAX_T3_PER_TEAM, "Max 2 T3 beasts per team");
+    }
+
     fn resolve_action(
         ref world: WorldStorage,
         game_id: u32,
@@ -708,14 +729,17 @@ pub mod game_system {
                 let counter_seed = PoseidonTrait::new().update(seed).update('counter').finalize();
 
                 let counter_crit = combat::roll_crit(beast::get_luck(defender_beast.beast_id), counter_seed);
-                let counter_damage = combat::calculate_damage(
+                let full_counter: u32 = combat::calculate_damage(
                     defender_beast.level,
                     defender_beast.tier,
                     defender_beast.beast_type,
                     attacker_beast.beast_type,
                     false,
                     counter_crit,
-                );
+                ).into();
+                let counter_damage: u16 = ((full_counter * COUNTER_ATTACK_PCT) / 100)
+                    .try_into().unwrap();
+                let counter_damage = if counter_damage < MIN_DAMAGE { MIN_DAMAGE } else { counter_damage };
 
                 apply_damage(ref attacker_beast, counter_damage);
             }

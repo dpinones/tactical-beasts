@@ -92,6 +92,11 @@ pub const DEFAULT_LUCK: u8 = 10;
 pub const DEFAULT_MOVE_RANGE: u8 = 2;
 pub const DEFAULT_ATTACK_RANGE: u8 = 1;
 pub const MIN_DAMAGE: u16 = 2;
+pub const COUNTER_ATTACK_PCT: u32 = 20;
+
+// Team composition limits per tier
+pub const MAX_T2_PER_TEAM: u8 = 1;
+pub const MAX_T3_PER_TEAM: u8 = 2;
 
 // Default beast token IDs start at this threshold (fictional, not real NFTs)
 pub const DEFAULT_BEAST_TOKEN_MIN: u32 = 100000;

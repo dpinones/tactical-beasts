@@ -21,6 +21,13 @@ export function getAttackRange(beast: BattleBeast): number {
   return 1;
 }
 
+// Counter-attack deals 20% of normal damage
+export const COUNTER_ATTACK_PCT = 20;
+
+// Team composition limits per tier
+export const MAX_T2_PER_TEAM = 1;
+export const MAX_T3_PER_TEAM = 2;
+
 // --- Combat calculations ---
 
 export function getTypeAdvantage(

@@ -378,12 +378,6 @@ export function BattlePage() {
       overflow="hidden"
       className="arena-background"
     >
-      {/* Decorative banners */}
-      <div className="arena-banner arena-banner--1" />
-      <div className="arena-banner arena-banner--2" />
-      <div className="arena-banner arena-banner--3" />
-      <div className="arena-banner arena-banner--4" />
-
       {/* === TOP HUD === */}
       <Box className="battle-hud-top" px={4} pt={0}>
         <Flex w="100%" maxW="700px" align="flex-start" justify="center" gap={5}>

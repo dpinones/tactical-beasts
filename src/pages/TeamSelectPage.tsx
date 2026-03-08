@@ -11,6 +11,13 @@ import {
   SimpleGrid,
   Image,
   Select,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalCloseButton,
+  ModalBody,
+  useDisclosure,
 } from "@chakra-ui/react";
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
@@ -39,7 +46,8 @@ export function TeamSelectPage() {
   const joinGameId = gameIdParam ? parseInt(gameIdParam) : null;
 
   const { account: { account } } = useDojo();
-  const { createGame, joinGame, setTeam, isLoading } = useGameActions();
+  const { createGame, joinGame, setTeam, abandonGame, isLoading } = useGameActions();
+  const leaveModal = useDisclosure();
   const { selectedBeasts, toggleBeast, clearSelectedBeasts, setActiveGameId } = useGameStore();
 
   const [filter, setFilter] = useState<"all" | "Magical" | "Hunter" | "Brute">("all");
@@ -99,14 +107,7 @@ export function TeamSelectPage() {
       result = result.filter((b) => getSubclass(b.beastId) === subclassFilter);
     }
     if (search) {
-      const s = search.toLowerCase();
-      result = result.filter(
-        (b) =>
-          b.beast.toLowerCase().includes(s) ||
-          b.name.toLowerCase().includes(s) ||
-          b.prefix.toLowerCase().includes(s) ||
-          b.suffix.toLowerCase().includes(s)
-      );
+      result = result.filter((b) => String(b.tokenId).startsWith(search));
     }
     return result.slice(0, 50);
   }, [catalog, filter, tierFilter, subclassFilter, search]);
@@ -191,6 +192,13 @@ export function TeamSelectPage() {
       setPhase("select");
     }
   }, [phase, polledGame]);
+
+  // Navigate to result if game finishes (opponent abandoned)
+  useEffect(() => {
+    if (polledGame && polledGame.status === GameStatus.FINISHED && gameId) {
+      navigate(`/result/${gameId}`);
+    }
+  }, [polledGame, gameId, navigate]);
 
   // After confirming team: wait until both teams are set, then show coin toss
   useEffect(() => {
@@ -342,22 +350,12 @@ export function TeamSelectPage() {
     >
       {/* Header */}
       <Flex justify="space-between" align="center" mb={4}>
-        <Flex align="center" gap={3}>
-          <Button size="sm" variant="ghost" onClick={() => navigate("/")}>Back</Button>
-          <Heading size="md" fontFamily="heading" color="green.300" textTransform="uppercase">
-            Select Your Team — Game #{gameId}
-          </Heading>
-        </Flex>
+        <Heading size="md" fontFamily="heading" color="green.300" textTransform="uppercase">
+          Select Your Team — Game #{gameId}
+        </Heading>
+        <Button size="sm" variant="ghost" onClick={leaveModal.onOpen}>Leave</Button>
       </Flex>
 
-      {/* Status bar */}
-      <Box bg="surface.panel" border="1px solid" borderColor="surface.border" borderRadius="3px" p={3} mb={4}>
-        <Flex align="center">
-          <Text fontSize="xs" color="text.secondary">
-            Choose 3 beasts for your team
-          </Text>
-        </Flex>
-      </Box>
 
       {/* Two-panel layout */}
       <Flex direction={{ base: "column", lg: "row" }} gap={4} flex={1} minH={0} overflow="hidden">
@@ -371,7 +369,7 @@ export function TeamSelectPage() {
           {/* Filters */}
           <Flex gap={2} mb={3} flexWrap="wrap" align="center">
             <Input
-              placeholder="Search beast..."
+              placeholder="Token ID..."
               size="sm"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -498,16 +496,18 @@ export function TeamSelectPage() {
             <Text fontSize="9px" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em" mb={2}>
               Arena Map
             </Text>
-            <HexGrid
-              hexSize={17}
-              myBeasts={[]}
-              enemyBeasts={[]}
-              selectedBeastIndex={null}
-              onCellClick={() => {}}
-              onBeastClick={() => {}}
-              myPlayerIndex={1}
-              obstacles={obstacles}
-            />
+            <Box pointerEvents="none">
+              <HexGrid
+                hexSize={17}
+                myBeasts={[]}
+                enemyBeasts={[]}
+                selectedBeastIndex={null}
+                onCellClick={() => {}}
+                onBeastClick={() => {}}
+                myPlayerIndex={1}
+                obstacles={obstacles}
+              />
+            </Box>
           </Box>
 
           {/* Selected beasts */}
@@ -613,29 +613,58 @@ export function TeamSelectPage() {
               })}
             </Flex>
           </Box>
+
+          {/* Confirm button */}
+          <Flex gap={3} align="center" mt={4}>
+            <Button
+              variant="primary"
+              size="lg"
+              onClick={handleConfirmTeam}
+              isDisabled={selectedBeasts.length !== 3}
+              isLoading={phase === "confirming"}
+              flex={1}
+            >
+              Confirm Team ({selectedBeasts.length}/3)
+            </Button>
+            <Button variant="ghost" size="sm" onClick={clearSelectedBeasts}>Clear</Button>
+          </Flex>
+
+          {statusMsg && (
+            <Text fontSize="xs" color="text.secondary" mt={2} textAlign="center">{statusMsg}</Text>
+          )}
         </Box>
       </Flex>
 
-      {/* Confirm button */}
-      <Box position="sticky" bottom={0} bg="surface.bg" pt={3} pb={2} borderTop="1px solid" borderColor="surface.border">
-        <Flex gap={3} align="center">
-          <Button
-            variant="primary"
-            size="lg"
-            onClick={handleConfirmTeam}
-            isDisabled={selectedBeasts.length !== 3}
-            isLoading={phase === "confirming"}
-            flex={1}
-          >
-            Confirm Team ({selectedBeasts.length}/3)
-          </Button>
-          <Button variant="ghost" size="sm" onClick={clearSelectedBeasts}>Clear</Button>
-        </Flex>
-      </Box>
-
-      {statusMsg && (
-        <Text fontSize="xs" color="text.secondary" mt={2} textAlign="center">{statusMsg}</Text>
-      )}
+      {/* Leave confirmation modal */}
+      <Modal isOpen={leaveModal.isOpen} onClose={leaveModal.onClose} isCentered>
+        <ModalOverlay />
+        <ModalContent bg="#1a0e06" border="1px solid" borderColor="rgba(180,40,40,0.4)">
+          <ModalHeader fontSize="md" color="red.300">Leave Game</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={6}>
+            <Text fontSize="sm" color="gray.400" mb={4}>
+              Are you sure you want to leave? This will count as a loss and your opponent wins.
+            </Text>
+            <HStack justify="flex-end" gap={3}>
+              <Button size="sm" variant="ghost" color="gray.400" onClick={leaveModal.onClose}>
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                colorScheme="red"
+                isLoading={isLoading}
+                onClick={async () => {
+                  if (gameId) await abandonGame(gameId);
+                  leaveModal.onClose();
+                  navigate("/");
+                }}
+              >
+                Leave
+              </Button>
+            </HStack>
+          </ModalBody>
+        </ModalContent>
+      </Modal>
     </Flex>
   );
 }

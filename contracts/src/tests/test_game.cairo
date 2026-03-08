@@ -3,8 +3,9 @@ use starknet::testing::{set_account_contract_address, set_block_timestamp, set_c
 use crate::constants::{GAME_STATUS_FINISHED, GAME_STATUS_PLAYING, GAME_STATUS_WAITING, MAX_ROUNDS, WIN_BONUS};
 use crate::logic::board;
 use crate::models::index::{BeastState, Game, GameToken, GameTokens, MapState, MatchmakingQueue, PlayerProfile};
-use crate::systems::game_system::{
-    IGameSystemDispatcherTrait, IMinigameTokenDataDispatcher, IMinigameTokenDataDispatcherTrait,
+use crate::systems::game_system::IGameSystemDispatcherTrait;
+use game_components_embeddable_game_standard::minigame::interface::{
+    IMinigameTokenDataDispatcher, IMinigameTokenDataDispatcherTrait,
 };
 use crate::tests::setup::{PLAYER1, PLAYER2, Systems, spawn_game};
 use crate::types::Action;
@@ -228,7 +229,7 @@ fn test_create_mints_nft() {
     assert!(game_tokens.p1_token_id == 1, "P1 should get token_id 1");
     assert!(game_tokens.p2_token_id == 0, "P2 token should be 0 before join");
 
-    let game_token: GameToken = world.read_model(1_u64);
+    let game_token: GameToken = world.read_model(1);
     assert!(game_token.match_id == game_id);
     assert!(game_token.player == PLAYER1());
 }
@@ -242,7 +243,7 @@ fn test_join_mints_nft() {
     assert!(game_tokens.p1_token_id == 1, "P1 should get token_id 1");
     assert!(game_tokens.p2_token_id == 2, "P2 should get token_id 2");
 
-    let game_token: GameToken = world.read_model(2_u64);
+    let game_token: GameToken = world.read_model(2);
     assert!(game_token.match_id == game_id);
     assert!(game_token.player == PLAYER2());
 }

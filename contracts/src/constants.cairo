@@ -23,45 +23,9 @@ pub const TYPE_BRUTE: u8 = 2;
 pub const GRID_NUM_ROWS: u8 = 7;
 pub const BEASTS_PER_PLAYER: u8 = 3;
 
-// EGS
-pub const LEADERBOARD_ID: felt252 = 1;
+// EGS scoring
 pub const MAX_ROUNDS: u16 = 50;
 pub const WIN_BONUS: u64 = 100;
-
-// Collection
-#[inline]
-pub fn COLLECTION_NAME() -> ByteArray {
-    "Tactical Beasts"
-}
-
-#[inline]
-pub fn COLLECTION_SYMBOL() -> ByteArray {
-    "TBST"
-}
-
-#[inline]
-pub fn COLLECTION_DESCRIPTION() -> ByteArray {
-    "Tactical Beasts - Tactical turn-based grid combat game on Starknet"
-}
-
-#[inline]
-pub fn COLLECTION_IMAGE() -> ByteArray {
-    ""
-}
-
-#[inline]
-pub fn COLLECTION_BANNER() -> ByteArray {
-    ""
-}
-
-#[inline]
-pub fn COLLECTION_URL() -> ByteArray {
-    ""
-}
-
-// Achievement task identifiers
-pub const TASK_WINNER: felt252 = 'WINNER';
-pub const TASK_FLAWLESS: felt252 = 'FLAWLESS';
 
 // Valid tier range (T1 and T5 are excluded from tactical combat)
 pub const MIN_TIER: u8 = 2;

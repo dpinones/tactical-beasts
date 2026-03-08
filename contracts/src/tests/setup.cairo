@@ -1,16 +1,12 @@
-use achievement::events::index as achievement_events;
-use achievement::models::index as achievement_models;
 use dojo::world::{WorldStorage, WorldStorageTrait, world};
 use dojo_cairo_test::{
     ContractDef, ContractDefTrait, NamespaceDef, TestResource, WorldStorageTestTrait, spawn_test_world,
 };
-use leaderboard::events::index as leaderboard_events;
 use starknet::ContractAddress;
 use starknet::testing::{set_account_contract_address, set_contract_address};
 use crate::constants::NAMESPACE;
 use crate::events::index as events;
 use crate::models::index as models;
-use crate::systems::collection::{Collection, NAME as COLLECTION_NAME};
 use crate::systems::game_system::{IGameSystemDispatcher, NAME as GAME_SYSTEM_NAME, game_system};
 
 pub fn PLAYER1() -> ContractAddress {
@@ -40,19 +36,10 @@ fn setup_namespace() -> NamespaceDef {
             TestResource::Model(models::m_MatchmakingQueue::TEST_CLASS_HASH),
             TestResource::Model(models::m_PlayerProfile::TEST_CLASS_HASH),
             TestResource::Model(models::m_MapState::TEST_CLASS_HASH),
-            TestResource::Model(achievement_models::m_AchievementDefinition::TEST_CLASS_HASH),
-            TestResource::Model(achievement_models::m_AchievementCompletion::TEST_CLASS_HASH),
-            TestResource::Model(achievement_models::m_AchievementAdvancement::TEST_CLASS_HASH),
-            TestResource::Model(achievement_models::m_AchievementAssociation::TEST_CLASS_HASH),
             TestResource::Event(events::e_GameCreated::TEST_CLASS_HASH),
             TestResource::Event(events::e_PlayerJoined::TEST_CLASS_HASH),
             TestResource::Event(events::e_GameFinished::TEST_CLASS_HASH),
-            TestResource::Event(achievement_events::e_TrophyCreation::TEST_CLASS_HASH),
-            TestResource::Event(achievement_events::e_TrophyProgression::TEST_CLASS_HASH),
-            TestResource::Event(achievement_events::e_AchievementCompleted::TEST_CLASS_HASH),
-            TestResource::Event(achievement_events::e_AchievementClaimed::TEST_CLASS_HASH),
-            TestResource::Event(leaderboard_events::e_LeaderboardScore::TEST_CLASS_HASH),
-            TestResource::Contract(game_system::TEST_CLASS_HASH), TestResource::Contract(Collection::TEST_CLASS_HASH),
+            TestResource::Contract(game_system::TEST_CLASS_HASH),
         ]
             .span(),
     }
@@ -64,10 +51,10 @@ fn setup_contracts() -> Span<ContractDef> {
     [
         ContractDefTrait::new(@NAMESPACE(), @GAME_SYSTEM_NAME())
             .with_writer_of([ns_hash].span())
-            .with_init_calldata(array![].span()),
-        ContractDefTrait::new(@NAMESPACE(), @COLLECTION_NAME())
-            .with_owner_of([ns_hash].span())
-            .with_init_calldata(array![].span()),
+            .with_init_calldata(array![
+                PLAYER1().into(), // creator_address
+                0,                // denshokan_address (zero for tests)
+            ].span()),
     ]
         .span()
 }

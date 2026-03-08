@@ -10,10 +10,6 @@ pub mod events {
     pub mod index;
 }
 
-pub mod elements {
-    pub mod achievements;
-}
-
 pub mod logic {
     pub mod beast;
     pub mod board;
@@ -25,7 +21,6 @@ pub mod utils {
 }
 
 pub mod systems {
-    pub mod collection;
     pub mod game_system;
 }
 

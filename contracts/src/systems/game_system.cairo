@@ -17,32 +17,31 @@ pub trait IGameSystem<T> {
     fn abandon_game(ref self: T, game_id: u32);
 }
 
-#[starknet::interface]
-pub trait IMinigameTokenData<T> {
-    fn score(self: @T, token_id: u64) -> u64;
-    fn game_over(self: @T, token_id: u64) -> bool;
-}
-
 #[dojo::contract]
 pub mod game_system {
-    use achievement::components::achievable::AchievableComponent;
     use core::hash::HashStateTrait;
     use core::poseidon::PoseidonTrait;
     use dojo::event::EventStorage;
     use dojo::model::ModelStorage;
     use dojo::world::{WorldStorage, WorldStorageTrait};
-    use leaderboard::components::rankable::RankableComponent;
+    use game_components_embeddable_game_standard::minigame::extensions::settings::interface::IMinigameSettings;
+    use game_components_embeddable_game_standard::minigame::interface::IMinigameTokenData;
+    use game_components_embeddable_game_standard::minigame::minigame::{
+        assert_token_ownership, mint, post_action, pre_action,
+    };
+    use game_components_embeddable_game_standard::minigame::minigame_component::MinigameComponent;
+    use openzeppelin_introspection::src5::SRC5Component;
     use starknet::ContractAddress;
+    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
     use crate::constants::{
         ACTION_ATTACK, ACTION_CONSUMABLE_ATTACK, ACTION_MOVE, BEASTS_PER_PLAYER, BEAST_NFT_ADDRESS,
-        DEFAULT_BEAST_TOKEN_MIN, DEFAULT_EXTRA_LIVES, GAME_STATUS_FINISHED, GAME_STATUS_PLAYING,
-        GAME_STATUS_WAITING, LEADERBOARD_ID, MAINNET_CHAIN_ID, MAX_ROUNDS, NAMESPACE, PASSIVE_EXPOSED_PENALTY,
-        PASSIVE_FIRST_STRIKE_BONUS, PASSIVE_FORTIFY_REDUCTION, PASSIVE_RAGE_BONUS, PASSIVE_REGEN_BONUS_HP,
-        COUNTER_ATTACK_PCT, MAX_T2_PER_TEAM, MAX_T3_PER_TEAM, MIN_DAMAGE, PASSIVE_SIPHON_HEAL,
+        COUNTER_ATTACK_PCT, DEFAULT_BEAST_TOKEN_MIN, DEFAULT_EXTRA_LIVES, GAME_STATUS_FINISHED,
+        GAME_STATUS_PLAYING, GAME_STATUS_WAITING, MAINNET_CHAIN_ID, MAX_ROUNDS, MAX_T2_PER_TEAM,
+        MAX_T3_PER_TEAM, MIN_DAMAGE, NAMESPACE, PASSIVE_EXPOSED_PENALTY, PASSIVE_FIRST_STRIKE_BONUS,
+        PASSIVE_FORTIFY_REDUCTION, PASSIVE_RAGE_BONUS, PASSIVE_REGEN_BONUS_HP, PASSIVE_SIPHON_HEAL,
         SUBCLASS_BERSERKER, SUBCLASS_ENCHANTER, SUBCLASS_JUGGERNAUT, SUBCLASS_RANGER, SUBCLASS_STALKER,
-        SUBCLASS_WARLOCK, TASK_FLAWLESS, TASK_WINNER, WIN_BONUS,
+        SUBCLASS_WARLOCK, WIN_BONUS,
     };
-    use crate::elements::achievements::{ACHIEVEMENT_COUNT, Achievement, AchievementTrait};
     use crate::events::index::{GameCreated, GameFinished, PlayerJoined};
     use crate::interfaces::{IBeastsDispatcher, IBeastsDispatcherTrait, IERC721Dispatcher, IERC721DispatcherTrait};
     use crate::logic::{beast, board, combat};
@@ -50,9 +49,8 @@ pub mod game_system {
         BeastConfig, BeastState, Game, GameConfig, GameToken, GameTokens, MapState, MatchmakingQueue, PlayerProfile,
         PlayerState,
     };
-    use crate::systems::collection::{ICollectionDispatcher, ICollectionDispatcherTrait, NAME as COLLECTION_NAME};
     use crate::types::Action;
-    use super::{IGameSystem, IMinigameTokenData};
+    use super::IGameSystem;
 
     fn zero_address() -> ContractAddress {
         0.try_into().unwrap()
@@ -60,93 +58,107 @@ pub mod game_system {
 
     // Components
 
-    component!(path: RankableComponent, storage: rankable, event: RankableEvent);
-    impl RankableInternalImpl = RankableComponent::InternalImpl<ContractState>;
-    component!(path: AchievableComponent, storage: achievable, event: AchievableEvent);
-    impl AchievableInternalImpl = AchievableComponent::InternalImpl<ContractState>;
+    component!(path: MinigameComponent, storage: minigame, event: MinigameEvent);
+    #[abi(embed_v0)]
+    impl MinigameImpl = MinigameComponent::MinigameImpl<ContractState>;
+    impl MinigameInternalImpl = MinigameComponent::InternalImpl<ContractState>;
+
+    component!(path: SRC5Component, storage: src5, event: SRC5Event);
+    #[abi(embed_v0)]
+    impl SRC5Impl = SRC5Component::SRC5Impl<ContractState>;
 
     #[storage]
     struct Storage {
         #[substorage(v0)]
-        rankable: RankableComponent::Storage,
+        minigame: MinigameComponent::Storage,
         #[substorage(v0)]
-        achievable: AchievableComponent::Storage,
+        src5: SRC5Component::Storage,
+        denshokan_address: ContractAddress,
     }
 
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
         #[flat]
-        RankableEvent: RankableComponent::Event,
+        MinigameEvent: MinigameComponent::Event,
         #[flat]
-        AchievableEvent: AchievableComponent::Event,
+        SRC5Event: SRC5Component::Event,
     }
 
-    fn dojo_init(ref self: ContractState) {
+    fn dojo_init(
+        ref self: ContractState,
+        creator_address: ContractAddress,
+        denshokan_address: ContractAddress,
+    ) {
+        self.denshokan_address.write(denshokan_address);
+
+        // Initialize MinigameComponent only when Denshokan is deployed
+        if denshokan_address != zero_address() {
+            self
+                .minigame
+                .initializer(
+                    creator_address,
+                    "Tactical Beasts",
+                    "Tactical turn-based grid combat game on Starknet",
+                    "Provable Games",
+                    "Provable Games",
+                    "Strategy",
+                    "",
+                    Option::None,
+                    Option::None,
+                    Option::None,
+                    Option::None,
+                    Option::None,
+                    denshokan_address,
+                    Option::None,
+                    Option::None,
+                    1,
+                );
+        }
+
         let mut world = self.world(@NAMESPACE());
         let config = GameConfig { id: 0, game_count: 0, token_count: 0 };
         world.write_model(@config);
-
-        // Initialize leaderboard (top 100)
-        self.rankable.set(LEADERBOARD_ID, 100);
-
-        // Register achievements
-        let mut achievement_id: u8 = ACHIEVEMENT_COUNT;
-        while achievement_id > 0 {
-            let achievement: Achievement = achievement_id.into();
-            self
-                .achievable
-                .create(
-                    world,
-                    id: achievement.identifier(),
-                    rewarder: 0.try_into().unwrap(),
-                    start: 0,
-                    end: 0,
-                    tasks: achievement.tasks(),
-                    metadata: achievement.metadata(),
-                    to_store: true,
-                );
-            achievement_id -= 1;
-        };
     }
 
     #[abi(embed_v0)]
     impl GameSystemImpl of IGameSystem<ContractState> {
         fn create_game(ref self: ContractState) -> u32 {
             let mut world = self.world(@NAMESPACE());
+            let denshokan = self.denshokan_address.read();
             let caller = starknet::get_caller_address();
-            _create_game(ref world, caller, false)
+            _create_game(ref world, denshokan, caller, false)
         }
 
         fn create_friendly_game(ref self: ContractState) -> u32 {
             let mut world = self.world(@NAMESPACE());
+            let denshokan = self.denshokan_address.read();
             let caller = starknet::get_caller_address();
-            _create_game(ref world, caller, true)
+            _create_game(ref world, denshokan, caller, true)
         }
 
         fn join_game(ref self: ContractState, game_id: u32) {
             let mut world = self.world(@NAMESPACE());
+            let denshokan = self.denshokan_address.read();
             let caller = starknet::get_caller_address();
-            _join_game(ref world, caller, game_id);
+            _join_game(ref world, denshokan, caller, game_id);
         }
 
         fn find_match(ref self: ContractState) -> u32 {
             let mut world = self.world(@NAMESPACE());
+            let denshokan = self.denshokan_address.read();
             let caller = starknet::get_caller_address();
 
             let queue: MatchmakingQueue = world.read_model(0);
 
             if queue.waiting_player == zero_address() {
-                // No one waiting — create game and enter queue
-                let game_id = _create_game(ref world, caller, false);
+                let game_id = _create_game(ref world, denshokan, caller, false);
                 world.write_model(@MatchmakingQueue { id: 0, waiting_player: caller, waiting_game_id: game_id });
                 game_id
             } else {
                 assert!(queue.waiting_player != caller, "Already in queue");
-                // Match with waiting player
                 let game_id = queue.waiting_game_id;
-                _join_game(ref world, caller, game_id);
-                // Clear queue
+                _join_game(ref world, denshokan, caller, game_id);
                 world.write_model(@MatchmakingQueue { id: 0, waiting_player: zero_address(), waiting_game_id: 0 });
                 game_id
             }
@@ -165,6 +177,7 @@ pub mod game_system {
         fn abandon_game(ref self: ContractState, game_id: u32) {
             let mut world = self.world(@NAMESPACE());
             let caller = starknet::get_caller_address();
+            let denshokan = self.denshokan_address.read();
 
             let mut game: Game = world.read_model(game_id);
             assert!(
@@ -185,15 +198,24 @@ pub mod game_system {
             let time = starknet::get_block_timestamp();
             world.emit_event(@GameFinished { game_id, winner, rounds: game.round, time });
 
+            // Post-action on caller's token (sync game_over state)
+            let game_tokens: GameTokens = world.read_model(game_id);
+            let caller_token = if caller == game.player1 {
+                game_tokens.p1_token_id
+            } else {
+                game_tokens.p2_token_id
+            };
+            if denshokan != zero_address() {
+                post_action(denshokan, caller_token);
+            }
+
             // Skip profile updates for friendly matches
             if !game.is_friendly {
-                // Track abandon
                 let mut abandoner_profile: PlayerProfile = world.read_model(caller);
                 abandoner_profile.abandons += 1;
                 abandoner_profile.losses += 1;
                 world.write_model(@abandoner_profile);
 
-                // Update winner profile only if opponent exists
                 if winner != zero_address() {
                     let winner_index: u8 = if winner == game.player1 {
                         1
@@ -213,7 +235,6 @@ pub mod game_system {
                     winner_profile.total_deaths += winner_deaths;
                     world.write_model(@winner_profile);
 
-                    // Also count kills/deaths for abandoner
                     let abandoner_index: u8 = if winner_index == 1 {
                         2
                     } else {
@@ -231,7 +252,6 @@ pub mod game_system {
 
         fn set_beast_config(ref self: ContractState, beast_nft_address: ContractAddress) {
             let mut world = self.world(@NAMESPACE());
-            // TODO: add owner check
             world.write_model(@BeastConfig { id: 0, beast_nft_address });
         }
 
@@ -265,7 +285,6 @@ pub mod game_system {
             create_beast(ref world, game_id, player_index, 1, beast_2, caller);
             create_beast(ref world, game_id, player_index, 2, beast_3, caller);
 
-            // Validate team tier composition: max 1 T2, max 2 T3, unlimited T4
             validate_team_tiers(ref world, game_id, player_index);
 
             try_start_game(ref world, game_id);
@@ -274,6 +293,7 @@ pub mod game_system {
         fn execute_turn(ref self: ContractState, game_id: u32, actions: Array<Action>) {
             let mut world = self.world(@NAMESPACE());
             let caller = starknet::get_caller_address();
+            let denshokan = self.denshokan_address.read();
 
             let mut game: Game = world.read_model(game_id);
             assert!(game.status == GAME_STATUS_PLAYING, "Game is not active");
@@ -284,6 +304,18 @@ pub mod game_system {
                 game.player2
             };
             assert!(caller == attacker_addr, "Not your turn");
+
+            // EGS lifecycle: validate token ownership + playability
+            if denshokan != zero_address() {
+                let game_tokens: GameTokens = world.read_model(game_id);
+                let caller_token = if caller == game.player1 {
+                    game_tokens.p1_token_id
+                } else {
+                    game_tokens.p2_token_id
+                };
+                assert_token_ownership(denshokan, caller_token);
+                pre_action(denshokan, caller_token);
+            }
 
             let attacker_index = game.current_attacker;
             let defender_index: u8 = if attacker_index == 1 {
@@ -341,7 +373,6 @@ pub mod game_system {
             }
 
             // Reset last_moved for beasts that didn't act this turn
-            // (they stayed still, so last_moved = false for next turn's Fortify check)
             let acted_beasts = @actions;
             let mut bi: u8 = 0;
             while bi < BEASTS_PER_PLAYER {
@@ -373,37 +404,24 @@ pub mod game_system {
                 let time = starknet::get_block_timestamp();
                 world.emit_event(@GameFinished { game_id, winner, rounds: game.round, time });
 
-                // Skip ranking, achievements, and profile updates for friendly matches
-                if !game.is_friendly {
-                    // Calculate composite score and submit to leaderboard
+                // EGS: post_action on winner's token to sync game_over
+                if denshokan != zero_address() {
                     let game_tokens: GameTokens = world.read_model(game_id);
-                    let winner_token_id = if winner == game.player1 {
+                    let winner_token = if winner == game.player1 {
                         game_tokens.p1_token_id
                     } else {
                         game_tokens.p2_token_id
                     };
-                    let score = compute_score(game.round);
-                    let player_id: felt252 = winner.into();
-                    self.rankable.submit(world, LEADERBOARD_ID, winner_token_id, player_id, score, time, true);
+                    post_action(denshokan, winner_token);
+                }
 
-                    // Update collection metadata
-                    let collection = get_collection(world);
-                    collection.update(winner_token_id.into());
-
-                    // Progress achievements — Winner task
-                    self.achievable.progress(world, player_id, TASK_WINNER, 1, true);
-
-                    // Check flawless victory (all 3 beasts alive)
+                // Update player profiles (skip for friendly matches)
+                if !game.is_friendly {
                     let winner_index: u8 = if winner == game.player1 {
                         1
                     } else {
                         2
                     };
-                    if all_beasts_alive(ref world, game_id, winner_index) {
-                        self.achievable.progress(world, player_id, TASK_FLAWLESS, 1, true);
-                    }
-
-                    // Update player profiles
                     let loser = if winner == game.player1 {
                         game.player2
                     } else {
@@ -424,9 +442,11 @@ pub mod game_system {
         }
     }
 
+    // --- EGS: IMinigameTokenData ---
+
     #[abi(embed_v0)]
-    impl MinigameTokenDataImpl of IMinigameTokenData<ContractState> {
-        fn score(self: @ContractState, token_id: u64) -> u64 {
+    impl TokenDataImpl of IMinigameTokenData<ContractState> {
+        fn score(self: @ContractState, token_id: felt252) -> u64 {
             let world = self.world(@NAMESPACE());
             let game_token: GameToken = world.read_model(token_id);
             let game: Game = world.read_model(game_token.match_id);
@@ -437,28 +457,85 @@ pub mod game_system {
             }
         }
 
-        fn game_over(self: @ContractState, token_id: u64) -> bool {
+        fn game_over(self: @ContractState, token_id: felt252) -> bool {
             let world = self.world(@NAMESPACE());
             let game_token: GameToken = world.read_model(token_id);
             let game: Game = world.read_model(game_token.match_id);
             game.status == GAME_STATUS_FINISHED
         }
+
+        fn score_batch(self: @ContractState, token_ids: Span<felt252>) -> Array<u64> {
+            let mut scores = array![];
+            for id in token_ids {
+                scores.append(self.score(*id));
+            };
+            scores
+        }
+
+        fn game_over_batch(self: @ContractState, token_ids: Span<felt252>) -> Array<bool> {
+            let mut results = array![];
+            for id in token_ids {
+                results.append(self.game_over(*id));
+            };
+            results
+        }
+    }
+
+    // --- EGS: IMinigameSettings ---
+
+    #[abi(embed_v0)]
+    impl SettingsImpl of IMinigameSettings<ContractState> {
+        fn settings_exist(self: @ContractState, settings_id: u32) -> bool {
+            settings_id == 0
+        }
+
+        fn settings_exist_batch(self: @ContractState, settings_ids: Span<u32>) -> Array<bool> {
+            let mut results = array![];
+            for settings_id in settings_ids {
+                results.append(*settings_id == 0);
+            };
+            results
+        }
     }
 
     // --- Internal helpers ---
 
-    fn _create_game(ref world: WorldStorage, caller: ContractAddress, is_friendly: bool) -> u32 {
+    fn _create_game(
+        ref world: WorldStorage, denshokan: ContractAddress, caller: ContractAddress, is_friendly: bool,
+    ) -> u32 {
         let mut config: GameConfig = world.read_model(0);
         config.game_count += 1;
         let game_id = config.game_count;
 
-        // Mint NFT for player1
-        let collection = get_collection(world);
-        let token_id = collection.mint(caller, false);
-        config.token_count = token_id;
+        // Mint game token via Denshokan (or fallback for dev/test)
+        let token_id: felt252 = if denshokan != zero_address() {
+            mint(
+                denshokan,
+                starknet::get_contract_address(),
+                Option::None,
+                Option::None,
+                Option::Some(starknet::get_block_timestamp()),
+                Option::None,
+                Option::None,
+                Option::None,
+                Option::None,
+                Option::None,
+                Option::None,
+                caller,
+                false,
+                false,
+                0,
+                0,
+            )
+        } else {
+            // Dev/test fallback: generate token_id from counter
+            config.token_count += 1;
+            config.token_count.into()
+        };
+
         world.write_model(@config);
 
-        // Map token to match/player
+        // Map token to match/player (PvP: 2 tokens per battle)
         world.write_model(@GameToken { token_id, match_id: game_id, player: caller });
         world.write_model(@GameTokens { match_id: game_id, p1_token_id: token_id, p2_token_id: 0 });
 
@@ -481,18 +558,40 @@ pub mod game_system {
         game_id
     }
 
-    fn _join_game(ref world: WorldStorage, caller: ContractAddress, game_id: u32) {
+    fn _join_game(
+        ref world: WorldStorage, denshokan: ContractAddress, caller: ContractAddress, game_id: u32,
+    ) {
         let mut game: Game = world.read_model(game_id);
         assert!(game.status == GAME_STATUS_WAITING, "Game is not waiting");
         assert!(game.player1 != caller, "Cannot join your own game");
         assert!(game.player2 == zero_address(), "Game already has two players");
 
-        // Mint NFT for player2
-        let collection = get_collection(world);
-        let token_id = collection.mint(caller, false);
-
+        // Mint game token for player2
         let mut config: GameConfig = world.read_model(0);
-        config.token_count = token_id;
+        let token_id: felt252 = if denshokan != zero_address() {
+            mint(
+                denshokan,
+                starknet::get_contract_address(),
+                Option::None,
+                Option::None,
+                Option::Some(starknet::get_block_timestamp()),
+                Option::None,
+                Option::None,
+                Option::None,
+                Option::None,
+                Option::None,
+                Option::None,
+                caller,
+                false,
+                false,
+                0,
+                0,
+            )
+        } else {
+            config.token_count += 1;
+            config.token_count.into()
+        };
+
         world.write_model(@config);
 
         // Map token to match/player
@@ -523,7 +622,6 @@ pub mod game_system {
         let beast_nft_addr = if config.beast_nft_address != zero_address() {
             config.beast_nft_address
         } else {
-            // Only use the hardcoded NFT address on mainnet; on local/testnet use zero (hardcoded mode)
             let chain_id = starknet::get_tx_info().unbox().chain_id;
             if chain_id == MAINNET_CHAIN_ID {
                 let addr: ContractAddress = BEAST_NFT_ADDRESS.try_into().unwrap();
@@ -533,38 +631,30 @@ pub mod game_system {
             }
         };
 
-        // beast_id is always a token_id; resolve species + stats from NFT or hardcoded data
-        // Default beasts (token_id >= 100000) always use hardcoded stats, even on mainnet
         let is_default_beast = beast_id >= DEFAULT_BEAST_TOKEN_MIN;
         let (species_id, beast_type, tier, level, hp) = if !is_default_beast
             && beast_nft_addr != zero_address() {
-            // Real beasts mode: read from NFT contract
             let beast_dispatcher = IBeastsDispatcher { contract_address: beast_nft_addr };
             let erc721_dispatcher = IERC721Dispatcher { contract_address: beast_nft_addr };
 
-            // Validate ownership on mainnet only
             let chain_id = starknet::get_tx_info().unbox().chain_id;
             if chain_id == MAINNET_CHAIN_ID {
                 let owner = erc721_dispatcher.owner_of(beast_id.into());
                 assert!(owner == caller, "Not beast owner");
             }
 
-            // Read beast stats from NFT contract
             let packable = beast_dispatcher.get_beast(beast_id.into());
             let beast_type = beast::get_beast_type(packable.id.into());
             let tier = beast::derive_tier(packable.id);
             (packable.id, beast_type, tier, packable.level, packable.health)
         } else {
-            // Hardcoded mode: default beasts or local dev (no config set)
             let (species, tier, level, hp) = beast::get_beast_stats_by_token(beast_id);
             assert!(species > 0, "Unknown token_id");
             (species, beast::get_beast_type(species.into()), tier, level, hp)
         };
 
-        // Validate tier: only T2-T4 beasts are allowed in tactical combat
         assert!(beast::is_valid_tier(species_id), "Beast tier not allowed: only T2-T4");
 
-        // Enchanter passive: Regeneration — starts with +8% max HP
         let subclass = beast::get_subclass(species_id.into());
         let (final_hp, final_hp_max) = if subclass == SUBCLASS_ENCHANTER {
             let hp_u32: u32 = hp.into();
@@ -662,7 +752,6 @@ pub mod game_system {
             );
             assert!(dist <= beast::get_attack_range(attacker_beast.beast_id), "Out of attack range");
 
-            // Calculate attack damage
             let seed = PoseidonTrait::new()
                 .update(game_id.into())
                 .update(round.into())
@@ -680,28 +769,22 @@ pub mod game_system {
                 is_crit,
             );
 
-            // --- Attacker offensive passives ---
             let atk_subclass = beast::get_subclass(attacker_beast.beast_id);
 
-            // Berserker Rage: +12% damage if HP < 50%
             if atk_subclass == SUBCLASS_BERSERKER && attacker_beast.hp * 2 < attacker_beast.hp_max {
                 damage = combat::apply_passive_bonus(damage, PASSIVE_RAGE_BONUS);
             }
 
-            // Stalker First Strike: +15% damage vs 100% HP targets
             if atk_subclass == SUBCLASS_STALKER && defender_beast.hp == defender_beast.hp_max {
                 damage = combat::apply_passive_bonus(damage, PASSIVE_FIRST_STRIKE_BONUS);
             }
 
-            // --- Defender defensive passives ---
             let def_subclass = beast::get_subclass(defender_beast.beast_id);
 
-            // Juggernaut Fortify: -10% damage received if didn't move last turn
             if def_subclass == SUBCLASS_JUGGERNAUT && !defender_beast.last_moved {
                 damage = combat::apply_passive_reduction(damage, PASSIVE_FORTIFY_REDUCTION);
             }
 
-            // Ranger Exposed: +30% damage from adjacent enemies (dist <= 1)
             if def_subclass == SUBCLASS_RANGER && dist <= 1 {
                 damage = combat::apply_passive_bonus(damage, PASSIVE_EXPOSED_PENALTY);
             }
@@ -709,7 +792,6 @@ pub mod game_system {
             apply_damage(ref defender_beast, damage);
             world.write_model(@defender_beast);
 
-            // Warlock Siphon: heal 15% of damage dealt
             if atk_subclass == SUBCLASS_WARLOCK {
                 let heal: u16 = (damage.into() * PASSIVE_SIPHON_HEAL / 100).try_into().unwrap();
                 if heal > 0 {
@@ -721,10 +803,8 @@ pub mod game_system {
                 }
             }
 
-            // Mark attacker as not moved this turn (attacked instead)
             attacker_beast.last_moved = false;
 
-            // Counter-attack if defender survives (no passives apply on counters)
             if defender_beast.alive {
                 let counter_seed = PoseidonTrait::new().update(seed).update('counter').finalize();
 
@@ -765,7 +845,6 @@ pub mod game_system {
     }
 
     fn is_cell_occupied(ref world: WorldStorage, game_id: u32, row: u8, col: u8) -> bool {
-        // Check all 6 beasts (3 per player)
         let mut player: u8 = 1;
         loop {
             if player > 2 {
@@ -836,25 +915,15 @@ pub mod game_system {
         b0.alive && b1.alive && b2.alive
     }
 
-    fn get_collection(world: WorldStorage) -> ICollectionDispatcher {
-        let (collection_address, _) = world.dns(@COLLECTION_NAME()).expect('Collection not found!');
-        ICollectionDispatcher { contract_address: collection_address }
-    }
-
     fn try_start_game(ref world: WorldStorage, game_id: u32) {
         let mut game: Game = world.read_model(game_id);
         if game.player2 != zero_address() && game.p1_team_set && game.p2_team_set {
             game.status = GAME_STATUS_PLAYING;
             game.round = 1;
-
-            // TODO: randomize first attacker (e.g. VRF or commit-reveal)
-            // Hardcoded to player 1 for now to keep tests deterministic
             game.current_attacker = 1;
 
-            // Assign spawn positions
             assign_spawn_positions(ref world, game_id);
 
-            // Increment games_played only for ranked matches
             if !game.is_friendly {
                 let mut p1_profile: PlayerProfile = world.read_model(game.player1);
                 p1_profile.games_played += 1;
@@ -895,20 +964,17 @@ pub mod game_system {
             1
         };
 
-        // Kills = enemy beasts dead, Deaths = own beasts dead
         let winner_kills = count_dead_beasts(ref world, game_id, loser_index);
         let winner_deaths = count_dead_beasts(ref world, game_id, winner_index);
         let loser_kills = count_dead_beasts(ref world, game_id, winner_index);
         let loser_deaths = count_dead_beasts(ref world, game_id, loser_index);
 
-        // Winner profile
         let mut wp: PlayerProfile = world.read_model(winner);
         wp.wins += 1;
         wp.total_kills += winner_kills;
         wp.total_deaths += winner_deaths;
         world.write_model(@wp);
 
-        // Loser profile
         let mut lp: PlayerProfile = world.read_model(loser);
         lp.losses += 1;
         lp.total_kills += loser_kills;

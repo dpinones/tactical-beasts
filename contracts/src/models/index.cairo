@@ -74,7 +74,7 @@ pub struct GameConfig {
 #[dojo::model]
 pub struct GameToken {
     #[key]
-    pub token_id: u64,
+    pub token_id: felt252,
     pub match_id: u32,
     pub player: ContractAddress,
 }
@@ -84,8 +84,8 @@ pub struct GameToken {
 pub struct GameTokens {
     #[key]
     pub match_id: u32,
-    pub p1_token_id: u64,
-    pub p2_token_id: u64,
+    pub p1_token_id: felt252,
+    pub p2_token_id: felt252,
 }
 
 #[derive(Copy, Drop, Serde)]

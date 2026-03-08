@@ -13,9 +13,8 @@ private_key = "0x06c3f4d5e62d4b873a1389cec6671a9ef3414af6321d893bdf3967bc9c77fa4
 [writers]
 "TB2" = ["TB2-game_system"]
 
-[owners]
-"TB2" = ["TB2-Collection"]
-
 [init_call_args]
-"TB2-game_system" = []
-"TB2-Collection" = []
+"TB2-game_system" = [
+    "0x00dba4d5ba495338b74aceac92ddc26afff9319d675e09db0aadba40cc606245", # creator_address
+    "0x0", # denshokan_address (TODO: set when Denshokan is deployed)
+]

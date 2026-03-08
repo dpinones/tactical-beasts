@@ -61,7 +61,7 @@ export function BattlePage() {
   } = useDojo();
   const { executeTurn, abandonGame, isLoading } = useGameActions();
   const { game, refetch: refetchGame } = useGameQuery(gameId);
-  const { beasts, refetch: refetchBeasts } = useBeastStates(gameId);
+  const { beasts, rawBeasts, refetch: refetchBeasts } = useBeastStates(gameId);
   const { mapState } = useMapState(gameId);
   const obstacles = useMemo(() => {
     if (!mapState) return OBSTACLES;
@@ -95,8 +95,8 @@ export function BattlePage() {
   // Action planning state
   const [actions, setActions] = useState<Map<number, GameAction>>(new Map());
   const [selectedBeastIndex, setSelectedBeastIndex] = useState<number | null>(null);
-  const [potionToggle, setPotionToggle] = useState(false);
   const [actionHistory, setActionHistory] = useState<number[]>([]);
+  const [isConfirmLocked, setIsConfirmLocked] = useState(false);
 
   // Navigate to result on game finish
   useEffect(() => {
@@ -109,8 +109,8 @@ export function BattlePage() {
   useEffect(() => {
     setActions(new Map());
     setSelectedBeastIndex(null);
-    setPotionToggle(false);
     setActionHistory([]);
+    setIsConfirmLocked(false);
   }, [game?.current_attacker, game?.round]);
 
   // Get selected beast model
@@ -121,7 +121,7 @@ export function BattlePage() {
 
   // Get occupied cells for move validation (uses effective positions with planned moves)
   const occupiedCells = useMemo((): HexCoord[] => {
-    return beasts
+    return rawBeasts
       .filter((b) => b.alive)
       .map((b) => {
         const isMine = Number(b.player_index) === myPlayerIndex;
@@ -133,7 +133,7 @@ export function BattlePage() {
         }
         return { row: Number(b.position_row), col: Number(b.position_col) };
       });
-  }, [beasts, actions, myPlayerIndex]);
+  }, [rawBeasts, actions, myPlayerIndex]);
 
   // Computed move/attack cells for the selected beast
   const moveCells = useMemo((): HexCoord[] => {
@@ -213,7 +213,7 @@ export function BattlePage() {
         if (enemyBeast) {
           const action: GameAction = {
             beastIndex: selectedBeastIndex,
-            actionType: potionToggle ? ActionType.CONSUMABLE_ATTACK_POTION : ActionType.ATTACK,
+            actionType: ActionType.ATTACK,
             targetIndex: Number(enemyBeast.beast_index),
             targetRow: 0,
             targetCol: 0,
@@ -221,7 +221,6 @@ export function BattlePage() {
           const updated = new Map(actions).set(selectedBeastIndex, action);
           setActions(updated);
           setActionHistory((prev) => [...prev.filter((i) => i !== selectedBeastIndex), selectedBeastIndex]);
-          if (potionToggle) setPotionToggle(false);
           autoAdvance(updated);
           return;
         }
@@ -230,7 +229,7 @@ export function BattlePage() {
       // Click outside range -> deselect
       setSelectedBeastIndex(null);
     },
-    [isMyTurn, selectedBeastIndex, moveCells, attackCells, enemyBeasts, potionToggle, autoAdvance, actions]
+    [isMyTurn, selectedBeastIndex, moveCells, attackCells, enemyBeasts, autoAdvance, actions]
   );
 
   const handleBeastClick = useCallback(
@@ -246,7 +245,7 @@ export function BattlePage() {
         if (isInRange) {
           const action: GameAction = {
             beastIndex: selectedBeastIndex,
-            actionType: potionToggle ? ActionType.CONSUMABLE_ATTACK_POTION : ActionType.ATTACK,
+            actionType: ActionType.ATTACK,
             targetIndex: beastIndex,
             targetRow: 0,
             targetCol: 0,
@@ -254,7 +253,6 @@ export function BattlePage() {
           const updated = new Map(actions).set(selectedBeastIndex, action);
           setActions(updated);
           setActionHistory((prev) => [...prev.filter((i) => i !== selectedBeastIndex), selectedBeastIndex]);
-          if (potionToggle) setPotionToggle(false);
           autoAdvance(updated);
           return;
         }
@@ -269,7 +267,7 @@ export function BattlePage() {
         }
       }
     },
-    [isMyTurn, myPlayerIndex, selectedBeastIndex, enemyBeasts, attackCells, potionToggle, autoAdvance, actions]
+    [isMyTurn, myPlayerIndex, selectedBeastIndex, enemyBeasts, attackCells, autoAdvance, actions]
   );
 
   const handleUndoLast = useCallback(() => {
@@ -281,42 +279,42 @@ export function BattlePage() {
       return next;
     });
     setActionHistory((prev) => prev.slice(0, -1));
-    const undoneAction = actions.get(lastIdx);
-    if (undoneAction?.actionType === ActionType.CONSUMABLE_ATTACK_POTION) {
-      setPotionToggle(true);
-    }
     setSelectedBeastIndex(lastIdx);
-  }, [actionHistory, actions]);
+  }, [actionHistory]);
 
   const handleClearAll = useCallback(() => {
-    const hadPotion = Array.from(actions.values()).some(
-      (a) => a.actionType === ActionType.CONSUMABLE_ATTACK_POTION
-    );
     setActions(new Map());
     setActionHistory([]);
     setSelectedBeastIndex(null);
-    if (hadPotion) setPotionToggle(false);
-  }, [actions]);
+  }, []);
 
   const handleConfirmActions = useCallback(async () => {
-    if (!gameId) return;
+    if (!gameId || isConfirmLocked) return;
 
     const orderedActions: GameAction[] = actionHistory
       .map((idx) => actions.get(idx))
       .filter((a): a is GameAction => a !== undefined);
 
-    const res = await executeTurn(gameId, orderedActions);
-    if (res) {
-      addBattleEvent({
-        type: "attack",
-        message: `Turn executed (Round ${game?.round || "?"})`,
-      });
-      refetchGame();
-      refetchBeasts();
+    setIsConfirmLocked(true);
+    try {
+      const res = await executeTurn(gameId, orderedActions);
+      if (res) {
+        addBattleEvent({
+          type: "attack",
+          message: `Turn executed (Round ${game?.round || "?"})`,
+        });
+        refetchGame();
+        refetchBeasts();
+      } else {
+        setIsConfirmLocked(false);
+      }
+    } catch (error) {
+      console.error("Failed to confirm actions:", error);
+      setIsConfirmLocked(false);
     }
   }, [
     gameId,
-    myBeasts,
+    isConfirmLocked,
     actions,
     actionHistory,
     executeTurn,
@@ -327,17 +325,62 @@ export function BattlePage() {
   ]);
 
   const aliveCount = useMemo(() => myBeasts.filter((b) => b.alive).length, [myBeasts]);
-  const canConfirm = isMyTurn && aliveCount > 0;
+  const enemyAliveCount = useMemo(() => enemyBeasts.filter((b) => b.alive).length, [enemyBeasts]);
+  const canConfirm = isMyTurn && aliveCount > 0 && enemyAliveCount > 0 && !isConfirmLocked;
 
   // Contextual guidance message
   const guidanceMessage = useMemo(() => {
+    if (enemyAliveCount === 0) return "Enemy team defeated";
+    if (aliveCount === 0) return "Your team was defeated";
     if (!isMyTurn) return "Waiting for opponent...";
-    if (actions.size > 0) return `${actions.size} action(s) planned -- Confirm!`;
-    if (selectedBeastIndex === null) return "Select a beast";
-    return "Move or Attack";
-  }, [isMyTurn, selectedBeastIndex, actions.size]);
+    if (isConfirmLocked) return "acciones enviadas...";
+    if (actions.size >= 3) return "toca el boton confirmar";
+    if (actions.size > 0) return "hace otra accion o confirma que estas listo";
+    if (selectedBeastIndex === null) return "selecciona una bestia o pulsa confirmar";
+    return "elegi donde atacar o moverte";
+  }, [enemyAliveCount, aliveCount, isMyTurn, isConfirmLocked, selectedBeastIndex, actions.size]);
 
-  const potionUsed = false; // TODO: read from PlayerState
+  const hasBattleStateReady = useMemo(() => {
+    if (rawBeasts.length === 0) return false;
+    if (myBeasts.length === 0 && enemyBeasts.length === 0) return false;
+    return true;
+  }, [rawBeasts.length, myBeasts.length, enemyBeasts.length]);
+
+  useEffect(() => {
+    if (!game || !gameId) return;
+    if (game.status === GameStatus.FINISHED) return;
+    if (myPlayerIndex === 0) return;
+    if (!hasBattleStateReady) return;
+    // Guard against transient empty snapshots during polling.
+    if (aliveCount === 0 && enemyAliveCount === 0) return;
+    if (aliveCount > 0 && enemyAliveCount > 0) return;
+
+    const winnerAddress =
+      enemyAliveCount === 0 && aliveCount > 0
+        ? myAddress
+        : aliveCount === 0 && enemyAliveCount > 0
+          ? (myPlayerIndex === 1 ? game.player2 : game.player1)
+          : ZERO_ADDR;
+
+    navigate(`/result/${gameId}`, {
+      replace: true,
+      state: {
+        forcedOutcome: {
+          winner: winnerAddress,
+          reason: "frontend_ko_resolution",
+        },
+      },
+    });
+  }, [
+    game,
+    gameId,
+    myPlayerIndex,
+    hasBattleStateReady,
+    myAddress,
+    aliveCount,
+    enemyAliveCount,
+    navigate,
+  ]);
 
   // --- Loading state ---
   if (!game || beasts.length === 0) {
@@ -408,10 +451,17 @@ export function BattlePage() {
         </Flex>
       </Box>
 
+      {/* === TURN GUIDANCE (between round badge and board) === */}
+      {isMyTurn && (
+        <Box className="battle-turn-guidance">
+          <Text className="battle-turn-guidance__text">{guidanceMessage}</Text>
+        </Box>
+      )}
+
       {/* === MAIN GRID AREA === */}
       <Box
         position="absolute"
-        top="70px"
+        top={isMyTurn ? "96px" : "70px"}
         left={0}
         right={0}
         bottom={0}
@@ -433,21 +483,31 @@ export function BattlePage() {
         />
       </Box>
 
+      {isMyTurn && (
+        <Box className="battle-confirm-dock">
+          <Button
+            variant="unstyled"
+            className="battle-confirm-btn"
+            onClick={handleConfirmActions}
+            isDisabled={!canConfirm}
+            isLoading={isLoading || isConfirmLocked}
+          >
+            Confirm Actions
+          </Button>
+        </Box>
+      )}
+
       <Button
         position="absolute"
-        top="14px"
-        left="12px"
+        top="8px"
+        right="8px"
         zIndex={12}
-        size="xs"
-        variant="ghost"
-        color="text.muted"
-        _hover={{ color: "danger.300" }}
+        variant="unstyled"
+        className="battle-confirm-btn battle-leave-btn"
         onClick={abandonModal.onOpen}
-        fontSize="0.65rem"
-        px={1}
-        display={{ base: "none", lg: "inline-flex" }}
+        display="inline-flex"
       >
-        Abandon
+        Leave
       </Button>
 
       {/* === LEFT PANEL - My beasts + Actions === */}
@@ -492,13 +552,11 @@ export function BattlePage() {
         {isMyTurn && (
           <>
             <Box
-              className={`battle-panel ${canConfirm ? "battle-panel--ready" : ""}`}
+              className={`battle-panel ${actions.size > 0 && canConfirm ? "battle-panel--ready" : ""}`}
               flexShrink={0}
             >
               <Box className="battle-panel__header">
-                <Text className="battle-panel__title">
-                  {guidanceMessage}
-                </Text>
+                <Text className="battle-panel__title">Tus acciones</Text>
               </Box>
               <Box className="battle-panel__body">
                 <PlannedActions
@@ -506,13 +564,8 @@ export function BattlePage() {
                   enemyBeasts={enemyBeasts}
                   actions={actions}
                   actionHistory={actionHistory}
-                  potionToggle={potionToggle}
-                  potionUsed={potionUsed}
-                  onTogglePotion={() => setPotionToggle((v) => !v)}
                   onUndoLast={handleUndoLast}
                   onClearAll={handleClearAll}
-                  onConfirm={handleConfirmActions}
-                  isLoading={isLoading}
                 />
               </Box>
             </Box>

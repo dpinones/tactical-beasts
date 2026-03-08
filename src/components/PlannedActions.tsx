@@ -1,21 +1,15 @@
-import { Box, Button, Flex, Text, Switch, VStack, HStack } from "@chakra-ui/react";
+import { Box, Button, Flex, Text, VStack, HStack } from "@chakra-ui/react";
 import { BeastStateModel, BeastType, ActionType, GameAction } from "../domain/types";
 import { getTypeColor } from "../domain/combat";
-import { getSpeciesNameByTokenId, getSubclass, getPassiveInfo, isPassiveActive } from "../data/beasts";
-import { Subclass } from "../domain/types";
+import { getSpeciesNameByTokenId } from "../data/beasts";
 
 interface PlannedActionsProps {
   myBeasts: BeastStateModel[];
   enemyBeasts: BeastStateModel[];
   actions: Map<number, GameAction>;
   actionHistory: number[];
-  potionToggle: boolean;
-  potionUsed: boolean;
-  onTogglePotion: () => void;
   onUndoLast: () => void;
   onClearAll: () => void;
-  onConfirm: () => void;
-  isLoading: boolean;
 }
 
 function actionSymbol(type: ActionType): string {
@@ -36,40 +30,13 @@ function actionBorderColor(type: ActionType): string {
   }
 }
 
-function getPassiveTag(beast: BeastStateModel, target?: BeastStateModel): string {
-  const subclass = getSubclass(Number(beast.beast_id));
-  const targetInfo = target ? { hp: Number(target.hp), hp_max: Number(target.hp_max) } : undefined;
-  const active = isPassiveActive(subclass, {
-    hp: Number(beast.hp), hp_max: Number(beast.hp_max),
-    last_moved: Boolean(beast.last_moved), alive: Boolean(beast.alive),
-  }, targetInfo);
-  if (!active) return "";
-  const info = getPassiveInfo(subclass);
-  if (subclass === Subclass.Enchanter) return ""; // passive is permanent, not per-action
-  return ` (${info.shortLabel})`;
-}
-
-function describeAction(action: GameAction, myBeasts: BeastStateModel[], enemyBeasts: BeastStateModel[]): string {
-  const attacker = myBeasts.find((b) => Number(b.beast_index) === action.beastIndex);
+function describeAction(action: GameAction): string {
   switch (action.actionType) {
     case ActionType.MOVE:
-      return `Move -> (${action.targetRow},${action.targetCol})`;
-    case ActionType.ATTACK: {
-      const target = enemyBeasts.find((b) => Number(b.beast_index) === action.targetIndex);
-      const name = target
-        ? getSpeciesNameByTokenId(Number(target.token_id)) || getSpeciesNameByTokenId(Number(target.beast_id))
-        : `#${action.targetIndex}`;
-      const tag = attacker && target ? getPassiveTag(attacker, target) : "";
-      return `Atk -> ${name}${tag}`;
-    }
-    case ActionType.CONSUMABLE_ATTACK_POTION: {
-      const target = enemyBeasts.find((b) => Number(b.beast_index) === action.targetIndex);
-      const name = target
-        ? getSpeciesNameByTokenId(Number(target.token_id)) || getSpeciesNameByTokenId(Number(target.beast_id))
-        : `#${action.targetIndex}`;
-      const tag = attacker && target ? getPassiveTag(attacker, target) : "";
-      return `Potion+Atk -> ${name}${tag}`;
-    }
+      return "Moved";
+    case ActionType.ATTACK:
+    case ActionType.CONSUMABLE_ATTACK_POTION:
+      return "Attacked";
     default:
       return "?";
   }
@@ -77,49 +44,20 @@ function describeAction(action: GameAction, myBeasts: BeastStateModel[], enemyBe
 
 export function PlannedActions({
   myBeasts,
-  enemyBeasts,
+  enemyBeasts: _enemyBeasts,
   actions,
   actionHistory,
-  potionToggle,
-  potionUsed,
-  onTogglePotion,
   onUndoLast,
   onClearAll,
-  onConfirm,
-  isLoading,
 }: PlannedActionsProps) {
   const aliveBeasts = myBeasts.filter((b) => b.alive);
   return (
     <VStack gap={1.5} align="stretch">
-      {/* Potion toggle */}
-      <Flex
-        align="center"
-        justify="space-between"
-        bg="rgba(122, 163, 142, 0.12)"
-        border="1px solid"
-        borderColor={potionToggle ? "#8BB8A0" : "rgba(122, 163, 142, 0.32)"}
-        borderRadius="10px"
-        px={2.5}
-        py={1.5}
-        boxShadow={potionToggle ? "0 0 0 1px rgba(139, 184, 160, 0.24), 0 8px 16px rgba(0, 0, 0, 0.28)" : "none"}
-      >
-        <Text fontSize="xs" color={potionUsed ? "rgba(167,213,191,0.45)" : "#A7D5BF"} fontFamily="mono" fontWeight="600" textTransform="uppercase">
-          Use Potion
-        </Text>
-        <Switch
-          size="sm"
-          colorScheme="green"
-          isChecked={potionToggle}
-          isDisabled={potionUsed}
-          onChange={onTogglePotion}
-        />
-      </Flex>
-
       {/* Planned actions list */}
       <Box p={0}>
         <VStack gap={0.5} align="stretch">
           {/* Actions in execution order (selection order) */}
-          {actionHistory.map((idx, i) => {
+          {actionHistory.map((idx) => {
             const beast = aliveBeasts.find((b) => Number(b.beast_index) === idx);
             if (!beast) return null;
             const action = actions.get(idx);
@@ -141,9 +79,6 @@ export function PlannedActions({
                 borderLeft="3px solid"
                 borderLeftColor={actionBorderColor(action.actionType)}
               >
-                <Text fontSize="xs" color="rgba(167,213,191,0.6)" fontFamily="mono" fontWeight="700" w="14px">
-                  {i + 1}.
-                </Text>
                 <Text
                   fontSize="xs"
                   color={color}
@@ -159,7 +94,7 @@ export function PlannedActions({
                   {actionSymbol(action.actionType)}
                 </Text>
                 <Text fontSize="xs" color="#BFDCCB" fontFamily="mono" flex={1} noOfLines={1}>
-                  {describeAction(action, aliveBeasts, enemyBeasts)}
+                  {describeAction(action)}
                 </Text>
               </Flex>
             );
@@ -182,9 +117,6 @@ export function PlannedActions({
                   py={1}
                   borderRadius="8px"
                 >
-                  <Text fontSize="xs" color="rgba(167,213,191,0.45)" fontFamily="mono" fontWeight="700" w="14px">
-                    -
-                  </Text>
                   <Text
                     fontSize="xs"
                     color={color}
@@ -226,18 +158,6 @@ export function PlannedActions({
           Clear All
         </Button>
       </HStack>
-      <Button
-        variant="primary"
-        size="sm"
-        fontSize="sm"
-        onClick={onConfirm}
-        isDisabled={false}
-        isLoading={isLoading}
-        w="100%"
-        className={actions.size > 0 ? "confirm-ready-glow" : undefined}
-      >
-        Confirm ({actions.size}/{aliveBeasts.length})
-      </Button>
     </VStack>
   );
 }

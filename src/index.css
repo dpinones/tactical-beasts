@@ -293,14 +293,14 @@ body {
 }
 
 .hex-cell--zone-enemy {
-  fill: rgba(179, 110, 110, 0.22);
-  stroke: rgba(199, 137, 137, 0.72);
+  fill: transparent;
+  stroke: rgba(197, 214, 204, 0.2);
   stroke-width: 2.5;
 }
 
 .hex-cell--zone-enemy:hover {
-  fill: rgba(179, 110, 110, 0.34);
-  stroke: rgba(216, 171, 171, 0.9);
+  fill: rgba(163, 192, 176, 0.08);
+  stroke: rgba(197, 214, 204, 0.32);
 }
 
 .hex-cell--zone-neutral {
@@ -328,15 +328,14 @@ body {
 }
 
 .hex-cell--selected-beast {
-  fill: rgba(151, 187, 168, 0.32);
-  stroke: rgba(196, 223, 208, 0.95);
+  fill: rgba(0, 71, 255, 0.48);
+  stroke: rgba(56, 128, 255, 0.98);
   stroke-width: 2.8;
-  animation: pulse-selected-cell 1.2s ease-in-out infinite;
 }
 
 .hex-cell--selected-beast:hover {
-  fill: rgba(170, 205, 186, 0.4);
-  stroke: #D9ECE1;
+  fill: rgba(0, 71, 255, 0.58);
+  stroke: #5C9EFF;
 }
 
 .hex-cell--move-range {
@@ -354,16 +353,16 @@ body {
 }
 
 .hex-cell--attack-range {
-  fill: rgba(171, 105, 105, 0.24);
-  stroke: rgba(199, 137, 137, 0.8);
+  fill: rgba(198, 82, 82, 0.3);
+  stroke: rgba(214, 128, 128, 0.84);
   stroke-width: 2;
   cursor: pointer;
   animation: pulse-attack 1.5s ease-in-out infinite;
 }
 
 .hex-cell--attack-range:hover {
-  fill: rgba(188, 125, 125, 0.36);
-  stroke: #DBA6A6;
+  fill: rgba(212, 94, 94, 0.4);
+  stroke: #E4B1B1;
   stroke-width: 2.5;
 }
 
@@ -373,19 +372,8 @@ body {
 }
 
 @keyframes pulse-attack {
-  0%, 100% { fill: rgba(171, 105, 105, 0.15); }
-  50% { fill: rgba(188, 125, 125, 0.32); }
-}
-
-@keyframes pulse-selected-cell {
-  0%, 100% {
-    fill: rgba(151, 187, 168, 0.2);
-    stroke: rgba(196, 223, 208, 0.8);
-  }
-  50% {
-    fill: rgba(170, 205, 186, 0.36);
-    stroke: rgba(222, 239, 230, 1);
-  }
+  0%, 100% { fill: rgba(191, 88, 88, 0.24); }
+  50% { fill: rgba(212, 94, 94, 0.38); }
 }
 
 /* ---------------------------------------------------------------------------
@@ -469,6 +457,90 @@ body {
   background: rgba(104, 68, 68, 0.28);
   border: 1px solid rgba(157, 106, 106, 0.48);
   color: #e1c2c2;
+}
+
+.battle-turn-guidance {
+  position: absolute;
+  top: 102px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9;
+  pointer-events: none;
+  width: auto;
+  max-width: min(92vw, 640px);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  text-align: center;
+}
+
+.battle-turn-guidance__text {
+  display: inline-block;
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #d8ebe1;
+  line-height: 1.2;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.65);
+}
+
+.battle-confirm-dock {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  z-index: 11;
+  width: min(92vw, 440px);
+  pointer-events: none;
+}
+
+.chakra-button.battle-confirm-btn {
+  width: 100%;
+  min-height: 68px;
+  border-radius: 16px;
+  border: 2px solid #5d816e;
+  background-color: #1a2f26 !important;
+  background-image: linear-gradient(180deg, #244034 0%, #1a2f26 52%, #12201a 100%) !important;
+  color: #e9e2d8;
+  font-family: var(--font-heading);
+  font-size: 1.12rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255,255,255,0.06);
+  pointer-events: auto;
+}
+
+.chakra-button.battle-confirm-btn:hover:not(:disabled) {
+  border-color: #a9ccb8;
+  background-color: #20372c !important;
+  background-image: linear-gradient(180deg, #2b4b3d 0%, #20372c 52%, #15261e 100%) !important;
+}
+
+.chakra-button.battle-confirm-btn:disabled,
+.chakra-button.battle-confirm-btn[disabled] {
+  opacity: 0.62;
+  cursor: not-allowed;
+}
+
+.chakra-button.battle-confirm-btn:active:not(:disabled) {
+  background-color: #14241d !important;
+  background-image: linear-gradient(180deg, #1d342a 0%, #14241d 52%, #0e1914 100%) !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45), inset 0 2px 0 rgba(0,0,0,0.18);
+}
+
+.chakra-button.battle-confirm-btn.battle-leave-btn {
+  width: auto;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 12px;
+  font-size: 0.82rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
 }
 
 /* ---------------------------------------------------------------------------
@@ -615,13 +687,6 @@ body {
       inset 0 1px 0 rgba(255, 255, 255, 0.06);
   }
 }
-
-/* Confirm button ready */
-@keyframes confirm-glow {
-  0%, 100% { box-shadow: 0 0 8px rgba(135, 180, 155, 0.16); }
-  50% { box-shadow: 0 0 16px rgba(135, 180, 155, 0.4); }
-}
-.confirm-ready-glow { animation: confirm-glow 1.5s ease-in-out infinite; }
 
 /* Battle log entry fade in */
 @keyframes log-entry-appear {

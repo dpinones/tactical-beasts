@@ -10,7 +10,7 @@ import {
   Spinner,
   Image,
 } from "@chakra-ui/react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useMemo } from "react";
 import { useDojo } from "../dojo/DojoContext";
 import { useGameQuery, useBeastStates } from "../hooks/useGameQuery";
@@ -41,6 +41,7 @@ export function ResultPage() {
   const { gameId: gameIdParam } = useParams<{ gameId: string }>();
   const gameId = gameIdParam ? parseInt(gameIdParam) : null;
   const navigate = useNavigate();
+  const location = useLocation();
 
   const {
     account: { account },
@@ -51,10 +52,10 @@ export function ResultPage() {
     useGameStore();
 
   const myAddress = account?.address || "";
+  const forcedOutcome = (location.state as { forcedOutcome?: { winner?: string } } | null)?.forcedOutcome;
+  const resolvedWinner = forcedOutcome?.winner || game?.winner || ZERO_ADDR;
 
-  const isWinner = game
-    ? isSameAddress(game.winner, myAddress)
-    : false;
+  const isWinner = resolvedWinner !== ZERO_ADDR && isSameAddress(resolvedWinner, myAddress);
 
   const score = useMemo(() => {
     if (!game || !isWinner) return 0;
@@ -180,9 +181,9 @@ export function ResultPage() {
               color={isWinner ? "green.300" : "danger.300"}
               fontSize="sm"
             >
-              {isSameAddress(game.winner, myAddress)
+              {isSameAddress(resolvedWinner, myAddress)
                 ? "You"
-                : truncateAddr(game.winner)}
+                : truncateAddr(resolvedWinner)}
             </Text>
           </Flex>
 

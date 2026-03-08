@@ -3,6 +3,10 @@ import { DojoProvider, DojoCall } from "@dojoengine/core";
 import { Account, AccountInterface, BigNumberish, CairoOption, CairoCustomEnum } from "starknet";
 import * as models from "./models.gen";
 
+type Action = models.Action;
+type GameContextDetails = models.GameContextDetails;
+type MintGameParams = models.MintGameParams;
+
 export function setupWorld(provider: DojoProvider) {
 
 	const build_game_system_abandonGame_calldata = (gameId: BigNumberish): DojoCall => {

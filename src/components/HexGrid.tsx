@@ -8,7 +8,7 @@ import {
   isObstacle,
 } from "../domain/hexGrid";
 import { BeastStateModel, ActionType, GameAction, HexCoord } from "../domain/types";
-import { getBeastImagePath, getSubclass, getPassiveInfo, isPassiveActive } from "../data/beasts";
+import { getBeastImagePath, getSubclass, isPassiveActive } from "../data/beasts";
 import { Subclass } from "../domain/types";
 import { hexDistance as domainHexDistance } from "../domain/hexGrid";
 
@@ -154,21 +154,41 @@ export function HexGrid({
   function renderBeast(beast: BeastStateModel, cx: number, cy: number) {
     const isMine = Number(beast.player_index) === myPlayerIndex;
     const beastIdx = Number(beast.beast_index);
-    const isSelected = isMine && beastIdx === selectedBeastIndex;
     const hp = Number(beast.hp);
     const hpMax = Number(beast.hp_max);
     const hpPct = hpMax > 0 ? hp / hpMax : 0;
-    const extraLives = Number(beast.extra_lives);
     const actionBadge = isMine ? getActionBadge(beastIdx) : null;
+    const subclass = getSubclass(Number(beast.beast_id));
+    const opponents = isMine ? enemyBeasts : myBeasts;
+    const hasAdjacentEnemy = subclass === Subclass.Ranger && opponents.some((opponent) => {
+      if (!opponent.alive) return false;
+      const opponentPos = {
+        row: Number(opponent.position_row),
+        col: Number(opponent.position_col),
+      };
+      const beastPos = getEffectivePosition(beast);
+      return domainHexDistance(beastPos, opponentPos) <= 1;
+    });
+    const passiveActive = isPassiveActive(
+      subclass,
+      {
+        hp,
+        hp_max: hpMax,
+        last_moved: Boolean(beast.last_moved),
+        alive: Boolean(beast.alive),
+      },
+      undefined,
+      hasAdjacentEnemy
+    );
 
     const imgSize = hexSize * 0.82;
     const spriteScale = 2.45;
     const beastImgSrc = getBeastImagePath(Number(beast.beast_id), isMine ? "right" : "left");
 
     // HP bar dimensions
-    const hpBarWidth = hexSize * 0.85;
-    const hpBarHeight = 5;
-    const hpBarY = cy - imgSize - 6;
+    const hpBarWidth = hexSize * 1.12;
+    const hpBarHeight = 7;
+    const hpBarY = cy - imgSize - 8;
 
     return (
       <g
@@ -189,67 +209,6 @@ export function HexGrid({
           style={{ pointerEvents: "none" }}
         />
 
-        {/* Selection ring pulse */}
-        {isSelected && (
-          <g style={{ pointerEvents: "none" }}>
-            <polygon
-              points={hexClipPoints(cx, cy - 2, hexSize * 0.63)}
-              fill="none"
-              stroke="#BBD6C7"
-              strokeWidth={2.8}
-              opacity={0.72}
-              filter="url(#glowFilter)"
-            >
-              <animate attributeName="opacity" values="0.78;0.3;0.78" dur="1.2s" repeatCount="indefinite" />
-            </polygon>
-            <polygon
-              points={hexClipPoints(cx, cy - 2, hexSize * 0.72)}
-              fill="none"
-              stroke="rgba(196, 223, 208, 0.9)"
-              strokeWidth={1.3}
-              strokeDasharray="5 4"
-              opacity={0.85}
-            >
-              <animateTransform
-                attributeName="transform"
-                type="rotate"
-                from={`0 ${cx} ${cy - 2}`}
-                to={`360 ${cx} ${cy - 2}`}
-                dur="2.4s"
-                repeatCount="indefinite"
-              />
-            </polygon>
-            {[0, 1, 2, 3, 4, 5].map((i) => {
-              const angle = (Math.PI * 2 * i) / 6;
-              const px = cx + Math.cos(angle) * hexSize * 0.65;
-              const py = cy - 2 + Math.sin(angle) * hexSize * 0.48;
-              return (
-                <circle
-                  key={`sel-particle-${beastIdx}-${i}`}
-                  cx={px}
-                  cy={py}
-                  r={2.1}
-                  fill="#D6E9DF"
-                  opacity={0.9}
-                >
-                  <animate
-                    attributeName="opacity"
-                    values="0.1;1;0.1"
-                    dur={`${0.9 + i * 0.08}s`}
-                    repeatCount="indefinite"
-                  />
-                  <animate
-                    attributeName="r"
-                    values="1.1;2.4;1.1"
-                    dur={`${1 + i * 0.08}s`}
-                    repeatCount="indefinite"
-                  />
-                </circle>
-              );
-            })}
-          </g>
-        )}
-
         {/* Team color tint base (behind sprite) */}
         <polygon
           points={hexClipPoints(cx, cy - 2, imgSize)}
@@ -267,6 +226,49 @@ export function HexGrid({
           filter="url(#beastShadow)"
           preserveAspectRatio="xMidYMid meet"
         />
+
+        {/* Passive active particles (high-contrast yellow, above sprite) */}
+        {passiveActive && (
+          <g style={{ pointerEvents: "none" }}>
+            {Array.from({ length: 12 }).map((_, i) => {
+              const angle = (Math.PI * 2 * i) / 12;
+              const orbit = hexSize * (0.52 + (i % 3) * 0.09);
+              const px = cx + Math.cos(angle) * orbit;
+              const py = cy - hexSize * 0.18 + Math.sin(angle) * orbit * 0.62;
+              const duration = 0.9 + (i % 4) * 0.18;
+              return (
+                <circle
+                  key={`passive-particle-${beastIdx}-${i}`}
+                  cx={px}
+                  cy={py}
+                  r={2.1}
+                  fill="#FFF200"
+                  opacity={0.8}
+                  filter="url(#passiveParticleGlow)"
+                >
+                  <animate
+                    attributeName="opacity"
+                    values="0.1;1;0.1"
+                    dur={`${duration}s`}
+                    repeatCount="indefinite"
+                  />
+                  <animate
+                    attributeName="r"
+                    values="1.3;4.9;1.3"
+                    dur={`${duration + 0.2}s`}
+                    repeatCount="indefinite"
+                  />
+                  <animate
+                    attributeName="cy"
+                    values={`${py + 2.4};${py - 3.6};${py + 2.4}`}
+                    dur={`${duration + 0.3}s`}
+                    repeatCount="indefinite"
+                  />
+                </circle>
+              );
+            })}
+          </g>
+        )}
 
         {/* HP bar above beast (floating, like Tactical Monsters) */}
         <g style={{ pointerEvents: "none" }}>
@@ -301,7 +303,7 @@ export function HexGrid({
           {/* HP text */}
           <text
             x={cx}
-            y={hpBarY - 2}
+            y={hpBarY - 3}
             textAnchor="middle"
             fill="#FFFFFF"
             fontSize={7}
@@ -312,63 +314,6 @@ export function HexGrid({
             {hp}/{hpMax}
           </text>
         </g>
-
-        {/* Extra lives indicator */}
-        {extraLives > 0 && (
-          <text
-            x={cx + hexSize * 0.38}
-            y={cy - imgSize + 6}
-            fill="#CDAE79"
-            fontSize={8}
-            fontWeight="bold"
-            fontFamily="'JetBrains Mono', monospace"
-            style={{ pointerEvents: "none" }}
-          >
-            +{extraLives}
-          </text>
-        )}
-
-        {/* Passive indicator */}
-        {(() => {
-          const sub = getSubclass(Number(beast.beast_id));
-          const passive = getPassiveInfo(sub);
-          // Check if passive is active (basic check without target context)
-          const hasAdjacentEnemy = sub === Subclass.Ranger && enemyBeasts.some((e) => {
-            if (!e.alive) return false;
-            const ePos = { row: Number(e.position_row), col: Number(e.position_col) };
-            const bPos = getEffectivePosition(beast);
-            return domainHexDistance(bPos, ePos) <= 1;
-          });
-          const active = isPassiveActive(sub, {
-            hp: Number(beast.hp), hp_max: Number(beast.hp_max),
-            last_moved: Boolean(beast.last_moved), alive: true,
-          }, undefined, hasAdjacentEnemy);
-          return (
-            <g style={{ pointerEvents: "none" }} opacity={active ? 1 : 0.3}>
-              <rect
-                x={cx - hpBarWidth / 2}
-                y={hpBarY - 14}
-                width={hpBarWidth}
-                height={10}
-                rx={2}
-                fill={`${passive.color}33`}
-                stroke={passive.color}
-                strokeWidth={0.5}
-              />
-              <text
-                x={cx}
-                y={hpBarY - 6.5}
-                textAnchor="middle"
-                fill={passive.color}
-                fontSize={6}
-                fontWeight="bold"
-                fontFamily="'JetBrains Mono', monospace"
-              >
-                {passive.shortLabel}: {passive.name}
-              </text>
-            </g>
-          );
-        })()}
 
         {/* Planned action badge */}
         {actionBadge && (
@@ -453,6 +398,13 @@ export function HexGrid({
         <defs>
           <filter id="glowFilter" x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur stdDeviation="3" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          <filter id="passiveParticleGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="1.4" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
               <feMergeNode in="SourceGraphic" />

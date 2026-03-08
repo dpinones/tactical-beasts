@@ -1,7 +1,7 @@
 import { Box, Flex, Text, Badge, Progress, Image } from "@chakra-ui/react";
 import { BeastStateModel, BeastType, ActionType, GameAction } from "../domain/types";
 import { getTypeName } from "../domain/combat";
-import { getBeastImagePath, getSpeciesNameByTokenId, getSubclass, getSubclassName, getPassiveInfo, isPassiveActive } from "../data/beasts";
+import { getBeastImagePath, getSpeciesNameByTokenId, getSubclass, getSubclassName, getPassiveInfo } from "../data/beasts";
 
 interface BeastHUDProps {
   beast: BeastStateModel;
@@ -56,6 +56,10 @@ export function BeastHUD({
   const speciesName = getSpeciesNameByTokenId(tokenId) || getSpeciesNameByTokenId(beastId);
   const subclass = getSubclass(beastId);
   const subclassName = getSubclassName(subclass);
+  const passive = getPassiveInfo(subclass);
+  const passiveColor = "#B8E6DB";
+  const passiveBorderColor = "rgba(184, 230, 219, 0.72)";
+  const passiveBg = "rgba(184, 230, 219, 0.12)";
   const accentSoft = isMine ? "#A7D5BF" : "#D9B1B1";
   const cardBg = isSelected
     ? (isMine ? "rgba(55,110,88,0.25)" : "rgba(110,65,65,0.25)")
@@ -90,7 +94,7 @@ export function BeastHUD({
           : undefined
       }
       boxShadow={isSelected ? "glow" : "none"}
-      minW="140px"
+      minW="156px"
       position="relative"
       className={isSelected ? "beast-selected-glow" : !alive ? "beast-ko" : undefined}
     >
@@ -162,7 +166,7 @@ export function BeastHUD({
             </Flex>
             <Progress
               value={hpPct}
-              size="xs"
+              size="sm"
               variant={hpVariant(hpPct, isMine)}
               borderRadius="6px"
             />
@@ -187,38 +191,31 @@ export function BeastHUD({
               </Text>
             </Flex>
           </Flex>
-
-          {/* Passive badge */}
-          {(() => {
-            const passive = getPassiveInfo(subclass);
-            const active = isPassiveActive(subclass, {
-              hp: hp, hp_max: hpMax,
-              last_moved: Boolean(beast.last_moved), alive,
-            });
-            return (
-              <Flex
-                mt={0.5}
-                px={1.5}
-                py={0.5}
-                borderRadius="6px"
-                border="1px solid"
-                borderColor={passive.color}
-                bg={`${passive.color}11`}
-                opacity={active ? 1 : 0.35}
-                align="center"
-                gap={1}
-                transition="opacity 0.2s"
-              >
-                <Text fontSize="8px" color={passive.color} fontFamily="mono" fontWeight="800">
-                  [{passive.shortLabel}]
-                </Text>
-                <Text fontSize="8px" color={passive.color} fontFamily="mono" opacity={0.8} noOfLines={1}>
-                  {passive.description}
-                </Text>
-              </Flex>
-            );
-          })()}
         </Box>
+      </Flex>
+
+      {/* Passive info - full row to use left-side free space */}
+      <Flex
+        mt={1}
+        px={1.5}
+        py={0.6}
+        borderRadius="8px"
+        border="1px solid"
+        borderColor={passiveBorderColor}
+        bg={passiveBg}
+        opacity={1}
+        align="center"
+        gap={1}
+      >
+        <Text
+          fontSize="9px"
+          color={passiveColor}
+          fontFamily="mono"
+          opacity={0.92}
+          lineHeight={1.2}
+        >
+          {passive.description}
+        </Text>
       </Flex>
 
       {alive && (

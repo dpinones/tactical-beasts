@@ -1,45 +1,6 @@
 import type { SchemaType as ISchemaType } from "@dojoengine/sdk";
 
-import { BigNumberish } from 'starknet';
-
-// Type definition for `achievement::models::index::AchievementAdvancement` struct
-export interface AchievementAdvancement {
-	player_id: BigNumberish;
-	achievement_id: BigNumberish;
-	task_id: BigNumberish;
-	count: BigNumberish;
-	timestamp: BigNumberish;
-}
-
-// Type definition for `achievement::models::index::AchievementAssociation` struct
-export interface AchievementAssociation {
-	task_id: BigNumberish;
-	achievements: Array<BigNumberish>;
-}
-
-// Type definition for `achievement::models::index::AchievementCompletion` struct
-export interface AchievementCompletion {
-	player_id: BigNumberish;
-	achievement_id: BigNumberish;
-	timestamp: BigNumberish;
-	unclaimed: boolean;
-}
-
-// Type definition for `achievement::models::index::AchievementDefinition` struct
-export interface AchievementDefinition {
-	id: BigNumberish;
-	rewarder: string;
-	start: BigNumberish;
-	end: BigNumberish;
-	tasks: Array<Task>;
-}
-
-// Type definition for `achievement::types::task::Task` struct
-export interface Task {
-	id: BigNumberish;
-	total: BigNumberish;
-	description: string;
-}
+import { CairoOption, CairoOptionVariant, BigNumberish } from 'starknet';
 
 // Type definition for `tactical_beats::models::index::BeastConfig` struct
 export interface BeastConfig {
@@ -147,53 +108,6 @@ export interface PlayerState {
 	potion_used: boolean;
 }
 
-// Type definition for `achievement::events::index::AchievementClaimed` struct
-export interface AchievementClaimed {
-	player_id: BigNumberish;
-	achievement_id: BigNumberish;
-	time: BigNumberish;
-}
-
-// Type definition for `achievement::events::index::AchievementCompleted` struct
-export interface AchievementCompleted {
-	player_id: BigNumberish;
-	achievement_id: BigNumberish;
-	time: BigNumberish;
-}
-
-// Type definition for `achievement::events::index::TrophyCreation` struct
-export interface TrophyCreation {
-	id: BigNumberish;
-	hidden: boolean;
-	index: BigNumberish;
-	points: BigNumberish;
-	start: BigNumberish;
-	end: BigNumberish;
-	group: BigNumberish;
-	icon: BigNumberish;
-	title: BigNumberish;
-	description: string;
-	tasks: Array<Task>;
-	data: string;
-}
-
-// Type definition for `achievement::events::index::TrophyProgression` struct
-export interface TrophyProgression {
-	player_id: BigNumberish;
-	task_id: BigNumberish;
-	count: BigNumberish;
-	time: BigNumberish;
-}
-
-// Type definition for `leaderboard::events::index::LeaderboardScore` struct
-export interface LeaderboardScore {
-	leaderboard_id: BigNumberish;
-	game_id: BigNumberish;
-	player: BigNumberish;
-	score: BigNumberish;
-	timestamp: BigNumberish;
-}
-
 // Type definition for `tactical_beats::events::index::GameCreated` struct
 export interface GameCreated {
 	game_id: BigNumberish;
@@ -216,77 +130,36 @@ export interface PlayerJoined {
 	time: BigNumberish;
 }
 
-// Type definition for `collection::components::erc4906::erc4906::ERC4906Component::BatchMetadataUpdate` struct
-export interface BatchMetadataUpdate {
-	from_token_id: BigNumberish;
-	to_token_id: BigNumberish;
+// Type definition for `game_components_interfaces::structs::metagame::GameContext` struct
+export interface GameContext {
+	name: BigNumberish;
+	value: BigNumberish;
 }
 
-// Type definition for `collection::components::erc4906::erc4906::ERC4906Component::MetadataUpdate` struct
-export interface MetadataUpdate {
-	token_id: BigNumberish;
+// Type definition for `game_components_interfaces::structs::metagame::GameContextDetails` struct
+export interface GameContextDetails {
+	name: string;
+	description: string;
+	id: CairoOption<BigNumberish>;
+	context: Array<GameContext>;
 }
 
-// Type definition for `openzeppelin_access::accesscontrol::accesscontrol::AccessControlComponent::RoleAdminChanged` struct
-export interface RoleAdminChanged {
-	role: BigNumberish;
-	previous_admin_role: BigNumberish;
-	new_admin_role: BigNumberish;
-}
-
-// Type definition for `openzeppelin_access::accesscontrol::accesscontrol::AccessControlComponent::RoleGranted` struct
-export interface RoleGranted {
-	role: BigNumberish;
-	account: string;
-	sender: string;
-}
-
-// Type definition for `openzeppelin_access::accesscontrol::accesscontrol::AccessControlComponent::RoleGrantedWithDelay` struct
-export interface RoleGrantedWithDelay {
-	role: BigNumberish;
-	account: string;
-	sender: string;
-	delay: BigNumberish;
-}
-
-// Type definition for `openzeppelin_access::accesscontrol::accesscontrol::AccessControlComponent::RoleRevoked` struct
-export interface RoleRevoked {
-	role: BigNumberish;
-	account: string;
-	sender: string;
-}
-
-// Type definition for `openzeppelin_access::ownable::ownable::OwnableComponent::OwnershipTransferStarted` struct
-export interface OwnershipTransferStarted {
-	previous_owner: string;
-	new_owner: string;
-}
-
-// Type definition for `openzeppelin_access::ownable::ownable::OwnableComponent::OwnershipTransferred` struct
-export interface OwnershipTransferred {
-	previous_owner: string;
-	new_owner: string;
-}
-
-// Type definition for `openzeppelin_token::erc721::erc721::ERC721Component::Approval` struct
-export interface Approval {
-	owner: string;
-	approved: string;
-	token_id: BigNumberish;
-}
-
-// Type definition for `openzeppelin_token::erc721::erc721::ERC721Component::ApprovalForAll` struct
-export interface ApprovalForAll {
-	owner: string;
-	operator: string;
-	approved: boolean;
-}
-
-// Type definition for `openzeppelin_token::erc721::erc721::ERC721Component::Transfer` struct
-export interface Transfer {
-	from: string;
+// Type definition for `game_components_interfaces::structs::minigame::MintGameParams` struct
+export interface MintGameParams {
+	player_name: CairoOption<BigNumberish>;
+	settings_id: CairoOption<BigNumberish>;
+	start: CairoOption<BigNumberish>;
+	end: CairoOption<BigNumberish>;
+	objective_id: CairoOption<BigNumberish>;
+	context: CairoOption<GameContextDetails>;
+	client_url: CairoOption<string>;
+	renderer_address: CairoOption<string>;
+	skills_address: CairoOption<string>;
 	to: string;
-	token_id: BigNumberish;
+	soulbound: boolean;
+	paymaster: boolean;
+	salt: BigNumberish;
+	metadata: BigNumberish;
 }
 
 // Type definition for `tactical_beats::types::Action` struct
@@ -300,11 +173,6 @@ export interface Action {
 
 export interface SchemaType extends ISchemaType {
 	tactical_beats: {
-		AchievementAdvancement: AchievementAdvancement,
-		AchievementAssociation: AchievementAssociation,
-		AchievementCompletion: AchievementCompletion,
-		AchievementDefinition: AchievementDefinition,
-		Task: Task,
 		BeastConfig: BeastConfig,
 		BeastState: BeastState,
 		Game: Game,
@@ -315,59 +183,17 @@ export interface SchemaType extends ISchemaType {
 		MatchmakingQueue: MatchmakingQueue,
 		PlayerProfile: PlayerProfile,
 		PlayerState: PlayerState,
-		AchievementClaimed: AchievementClaimed,
-		AchievementCompleted: AchievementCompleted,
-		TrophyCreation: TrophyCreation,
-		TrophyProgression: TrophyProgression,
-		LeaderboardScore: LeaderboardScore,
 		GameCreated: GameCreated,
 		GameFinished: GameFinished,
 		PlayerJoined: PlayerJoined,
-		BatchMetadataUpdate: BatchMetadataUpdate,
-		MetadataUpdate: MetadataUpdate,
-		RoleAdminChanged: RoleAdminChanged,
-		RoleGranted: RoleGranted,
-		RoleGrantedWithDelay: RoleGrantedWithDelay,
-		RoleRevoked: RoleRevoked,
-		OwnershipTransferStarted: OwnershipTransferStarted,
-		OwnershipTransferred: OwnershipTransferred,
-		Approval: Approval,
-		ApprovalForAll: ApprovalForAll,
-		Transfer: Transfer,
+		GameContext: GameContext,
+		GameContextDetails: GameContextDetails,
+		MintGameParams: MintGameParams,
 		Action: Action,
 	},
 }
 export const schema: SchemaType = {
 	tactical_beats: {
-		AchievementAdvancement: {
-			player_id: 0,
-			achievement_id: 0,
-			task_id: 0,
-			count: 0,
-			timestamp: 0,
-		},
-		AchievementAssociation: {
-			task_id: 0,
-			achievements: [0],
-		},
-		AchievementCompletion: {
-			player_id: 0,
-			achievement_id: 0,
-			timestamp: 0,
-			unclaimed: false,
-		},
-		AchievementDefinition: {
-			id: 0,
-			rewarder: "",
-			start: 0,
-			end: 0,
-			tasks: [{ id: 0, total: 0, description: "", }],
-		},
-		Task: {
-			id: 0,
-			total: 0,
-		description: "",
-		},
 		BeastConfig: {
 			id: 0,
 			beast_nft_address: "",
@@ -454,43 +280,6 @@ export const schema: SchemaType = {
 			beast_3: 0,
 			potion_used: false,
 		},
-		AchievementClaimed: {
-			player_id: 0,
-			achievement_id: 0,
-			time: 0,
-		},
-		AchievementCompleted: {
-			player_id: 0,
-			achievement_id: 0,
-			time: 0,
-		},
-		TrophyCreation: {
-			id: 0,
-			hidden: false,
-			index: 0,
-			points: 0,
-			start: 0,
-			end: 0,
-			group: 0,
-			icon: 0,
-			title: 0,
-		description: "",
-			tasks: [{ id: 0, total: 0, description: "", }],
-		data: "",
-		},
-		TrophyProgression: {
-			player_id: 0,
-			task_id: 0,
-			count: 0,
-			time: 0,
-		},
-		LeaderboardScore: {
-			leaderboard_id: 0,
-			game_id: 0,
-			player: 0,
-			score: 0,
-			timestamp: 0,
-		},
 		GameCreated: {
 			game_id: 0,
 			player1: "",
@@ -507,56 +296,31 @@ export const schema: SchemaType = {
 			player2: "",
 			time: 0,
 		},
-		BatchMetadataUpdate: {
-		from_token_id: 0,
-		to_token_id: 0,
+		GameContext: {
+			name: 0,
+			value: 0,
 		},
-		MetadataUpdate: {
-		token_id: 0,
+		GameContextDetails: {
+		name: "",
+		description: "",
+			id: new CairoOption(CairoOptionVariant.None),
+			context: [{ name: 0, value: 0, }],
 		},
-		RoleAdminChanged: {
-			role: 0,
-			previous_admin_role: 0,
-			new_admin_role: 0,
-		},
-		RoleGranted: {
-			role: 0,
-			account: "",
-			sender: "",
-		},
-		RoleGrantedWithDelay: {
-			role: 0,
-			account: "",
-			sender: "",
-			delay: 0,
-		},
-		RoleRevoked: {
-			role: 0,
-			account: "",
-			sender: "",
-		},
-		OwnershipTransferStarted: {
-			previous_owner: "",
-			new_owner: "",
-		},
-		OwnershipTransferred: {
-			previous_owner: "",
-			new_owner: "",
-		},
-		Approval: {
-			owner: "",
-			approved: "",
-		token_id: 0,
-		},
-		ApprovalForAll: {
-			owner: "",
-			operator: "",
-			approved: false,
-		},
-		Transfer: {
-			from: "",
+		MintGameParams: {
+			player_name: new CairoOption(CairoOptionVariant.None),
+			settings_id: new CairoOption(CairoOptionVariant.None),
+			start: new CairoOption(CairoOptionVariant.None),
+			end: new CairoOption(CairoOptionVariant.None),
+			objective_id: new CairoOption(CairoOptionVariant.None),
+			context: new CairoOption(CairoOptionVariant.None),
+			client_url: new CairoOption(CairoOptionVariant.None),
+			renderer_address: new CairoOption(CairoOptionVariant.None),
+			skills_address: new CairoOption(CairoOptionVariant.None),
 			to: "",
-		token_id: 0,
+			soulbound: false,
+			paymaster: false,
+			salt: 0,
+			metadata: 0,
 		},
 		Action: {
 			beast_index: 0,
@@ -568,11 +332,6 @@ export const schema: SchemaType = {
 	},
 };
 export enum ModelsMapping {
-	AchievementAdvancement = 'achievement-AchievementAdvancement',
-	AchievementAssociation = 'achievement-AchievementAssociation',
-	AchievementCompletion = 'achievement-AchievementCompletion',
-	AchievementDefinition = 'achievement-AchievementDefinition',
-	Task = 'achievement-Task',
 	BeastConfig = 'tactical_beats-BeastConfig',
 	BeastState = 'tactical_beats-BeastState',
 	Game = 'tactical_beats-Game',
@@ -583,25 +342,11 @@ export enum ModelsMapping {
 	MatchmakingQueue = 'tactical_beats-MatchmakingQueue',
 	PlayerProfile = 'tactical_beats-PlayerProfile',
 	PlayerState = 'tactical_beats-PlayerState',
-	AchievementClaimed = 'achievement-AchievementClaimed',
-	AchievementCompleted = 'achievement-AchievementCompleted',
-	TrophyCreation = 'achievement-TrophyCreation',
-	TrophyProgression = 'achievement-TrophyProgression',
-	LeaderboardScore = 'leaderboard-LeaderboardScore',
 	GameCreated = 'tactical_beats-GameCreated',
 	GameFinished = 'tactical_beats-GameFinished',
 	PlayerJoined = 'tactical_beats-PlayerJoined',
-	BatchMetadataUpdate = 'collection-BatchMetadataUpdate',
-	MetadataUpdate = 'collection-MetadataUpdate',
-	ContractURIUpdated = 'collection-ContractURIUpdated',
-	RoleAdminChanged = 'openzeppelin_access-RoleAdminChanged',
-	RoleGranted = 'openzeppelin_access-RoleGranted',
-	RoleGrantedWithDelay = 'openzeppelin_access-RoleGrantedWithDelay',
-	RoleRevoked = 'openzeppelin_access-RoleRevoked',
-	OwnershipTransferStarted = 'openzeppelin_access-OwnershipTransferStarted',
-	OwnershipTransferred = 'openzeppelin_access-OwnershipTransferred',
-	Approval = 'openzeppelin_token-Approval',
-	ApprovalForAll = 'openzeppelin_token-ApprovalForAll',
-	Transfer = 'openzeppelin_token-Transfer',
+	GameContext = 'game_components_interfaces-GameContext',
+	GameContextDetails = 'game_components_interfaces-GameContextDetails',
+	MintGameParams = 'game_components_interfaces-MintGameParams',
 	Action = 'tactical_beats-Action',
 }

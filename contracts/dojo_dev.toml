@@ -3,7 +3,7 @@ name = "Tactical Beasts"
 seed = "tb-dev"
 
 [namespace]
-default = "TB1"
+default = "TB2"
 
 [env]
 chain_id = "KATANA_LOCAL"
@@ -12,14 +12,14 @@ account_address = "0x6677fe62ee39c7b07401f754138502bab7fac99d2d3c5d37df7d1c6fab1
 private_key = "0x3e3979c1ed728490308054fe357a9f49cf67f80f9721f44cc57235129e090f4"
 
 [migration]
-order_inits = ["TB1-game_system", "TB1-Collection"]
+order_inits = ["TB2-game_system", "TB2-Collection"]
 
 [writers]
-"TB1" = ["TB1-game_system"]
+"TB2" = ["TB2-game_system"]
 
 [owners]
-"TB1" = ["TB1-Collection"]
+"TB2" = ["TB2-Collection"]
 
 [init_call_args]
-"TB1-game_system" = []
-"TB1-Collection" = []
+"TB2-game_system" = []
+"TB2-Collection" = []

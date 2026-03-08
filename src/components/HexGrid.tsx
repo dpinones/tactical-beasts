@@ -105,10 +105,21 @@ export function HexGrid({
     return moveCells.some((c) => c.row === row && c.col === col);
   }
 
+  function isSelectedBeastCell(row: number, col: number): boolean {
+    if (selectedBeastIndex === null) return false;
+    const selected = myBeasts.find(
+      (b) => b.alive && Number(b.beast_index) === selectedBeastIndex
+    );
+    if (!selected) return false;
+    const pos = getEffectivePosition(selected);
+    return pos.row === row && pos.col === col;
+  }
+
   function getCellClass(row: number, col: number): string {
     if (isObstacle(row, col, obstacles)) return "hex-cell--obstacle";
     if (isInAttackCells(row, col)) return "hex-cell--attack-range";
     if (isInMoveCells(row, col)) return "hex-cell--move-range";
+    if (isSelectedBeastCell(row, col)) return "hex-cell--selected-beast";
     const beast = getBeastAt(row, col);
     if (beast) {
       const isMine = Number(beast.player_index) === myPlayerIndex;
@@ -149,8 +160,8 @@ export function HexGrid({
     const extraLives = Number(beast.extra_lives);
     const actionBadge = isMine ? getActionBadge(beastIdx) : null;
 
-    const clipId = `beast-clip-${beast.player_index}-${beast.beast_index}`;
     const imgSize = hexSize * 0.82;
+    const spriteScale = 2.45;
     const beastImgSrc = getBeastImagePath(Number(beast.beast_id));
 
     // HP bar dimensions
@@ -167,13 +178,6 @@ export function HexGrid({
         }}
         style={{ cursor: "pointer" }}
       >
-        {/* Clip path for hex shape */}
-        <defs>
-          <clipPath id={clipId}>
-            <polygon points={hexClipPoints(cx, cy - 2, imgSize)} />
-          </clipPath>
-        </defs>
-
         {/* Shadow under beast */}
         <ellipse
           cx={cx}
@@ -186,35 +190,81 @@ export function HexGrid({
 
         {/* Selection ring pulse */}
         {isSelected && (
-          <polygon
-            points={hexClipPoints(cx, cy - 2, hexSize * 0.5)}
-            fill="none"
-            stroke="#00FFDD"
-            strokeWidth={2.5}
-            opacity={0.6}
-          >
-            <animate attributeName="opacity" values="0.6;0.2;0.6" dur="1.5s" repeatCount="indefinite" />
-          </polygon>
+          <g style={{ pointerEvents: "none" }}>
+            <polygon
+              points={hexClipPoints(cx, cy - 2, hexSize * 0.63)}
+              fill="none"
+              stroke="#7BFFFF"
+              strokeWidth={2.8}
+              opacity={0.72}
+              filter="url(#glowFilter)"
+            >
+              <animate attributeName="opacity" values="0.78;0.3;0.78" dur="1.2s" repeatCount="indefinite" />
+            </polygon>
+            <polygon
+              points={hexClipPoints(cx, cy - 2, hexSize * 0.72)}
+              fill="none"
+              stroke="rgba(123, 255, 255, 0.9)"
+              strokeWidth={1.3}
+              strokeDasharray="5 4"
+              opacity={0.85}
+            >
+              <animateTransform
+                attributeName="transform"
+                type="rotate"
+                from={`0 ${cx} ${cy - 2}`}
+                to={`360 ${cx} ${cy - 2}`}
+                dur="2.4s"
+                repeatCount="indefinite"
+              />
+            </polygon>
+            {[0, 1, 2, 3, 4, 5].map((i) => {
+              const angle = (Math.PI * 2 * i) / 6;
+              const px = cx + Math.cos(angle) * hexSize * 0.65;
+              const py = cy - 2 + Math.sin(angle) * hexSize * 0.48;
+              return (
+                <circle
+                  key={`sel-particle-${beastIdx}-${i}`}
+                  cx={px}
+                  cy={py}
+                  r={2.1}
+                  fill="#B7FFFF"
+                  opacity={0.9}
+                >
+                  <animate
+                    attributeName="opacity"
+                    values="0.1;1;0.1"
+                    dur={`${0.9 + i * 0.08}s`}
+                    repeatCount="indefinite"
+                  />
+                  <animate
+                    attributeName="r"
+                    values="1.1;2.4;1.1"
+                    dur={`${1 + i * 0.08}s`}
+                    repeatCount="indefinite"
+                  />
+                </circle>
+              );
+            })}
+          </g>
         )}
+
+        {/* Team color tint base (behind sprite) */}
+        <polygon
+          points={hexClipPoints(cx, cy - 2, imgSize)}
+          fill={isMine ? "rgba(0,220,150,0.08)" : "rgba(255,51,51,0.08)"}
+          stroke="none"
+        />
 
         {/* Beast image */}
         <image
           href={beastImgSrc}
-          x={cx - imgSize * 0.7}
-          y={cy - imgSize * 0.9}
-          width={imgSize * 1.4}
-          height={imgSize * 1.4}
-          clipPath={`url(#${clipId})`}
+          x={cx - imgSize * (spriteScale / 2)}
+          y={cy - imgSize * 1.34}
+          width={imgSize * spriteScale}
+          height={imgSize * spriteScale}
           filter="url(#beastShadow)"
           preserveAspectRatio="xMidYMid meet"
-        />
-
-        {/* Team color tint overlay */}
-        <polygon
-          points={hexClipPoints(cx, cy - 2, imgSize)}
-          fill={isMine ? "rgba(0,220,150,0.08)" : "rgba(255,51,51,0.08)"}
-          stroke={isSelected ? "#00FFDD" : "rgba(232, 224, 208, 0.7)"}
-          strokeWidth={isSelected ? 2.5 : 1.2}
         />
 
         {/* HP bar above beast (floating, like Tactical Monsters) */}
@@ -324,6 +374,23 @@ export function HexGrid({
     );
   }
 
+  function getBeastRenderPositions() {
+    return allBeasts
+      .filter((beast) => beast.alive)
+      .map((beast) => {
+        const pos = getEffectivePosition(beast);
+        const rowWidth = ARENA_ROWS[pos.col];
+        if (rowWidth === undefined) return null;
+        const visualRow = flipBoard ? rowWidth - 1 - pos.row : pos.row;
+        const { x, y } = hexToPixel(visualRow, pos.col, hexSize);
+        return { beast, x, y };
+      })
+      .filter((entry): entry is { beast: BeastStateModel; x: number; y: number } => entry !== null)
+      .sort((a, b) => a.y - b.y); // far (top) first, near (bottom) last
+  }
+
+  const beastRenderPositions = getBeastRenderPositions();
+
   return (
     <Box
       className="arena-perspective"
@@ -363,7 +430,6 @@ export function HexGrid({
             // If flipped, mirror the row (horizontal) position
             const visualRow = flipBoard ? rowWidth - 1 - logicalRow : logicalRow;
             const { x, y } = hexToPixel(visualRow, col, hexSize);
-            const beast = getBeastAt(logicalRow, col);
             const cellClass = getCellClass(logicalRow, col);
             const clickable = isInMoveCells(logicalRow, col) || isInAttackCells(logicalRow, col);
 
@@ -386,25 +452,30 @@ export function HexGrid({
                   style={{ pointerEvents: "none" }}
                 />
 
-                {/* Obstacle marker — stone/cannon */}
+                {/* Obstacle marker image */}
                 {isObstacle(logicalRow, col, obstacles) && (
                   <g style={{ pointerEvents: "none" }}>
-                    <circle cx={x} cy={y} r={hexSize * 0.22} fill="rgba(60,45,25,0.7)" stroke="rgba(90,70,40,0.6)" strokeWidth={1.5} />
-                    <circle cx={x} cy={y} r={hexSize * 0.1} fill="rgba(40,30,15,0.8)" />
-                    <circle cx={x - hexSize * 0.15} cy={y + hexSize * 0.12} r={hexSize * 0.08} fill="rgba(70,55,30,0.5)" />
-                    <circle cx={x + hexSize * 0.14} cy={y - hexSize * 0.1} r={hexSize * 0.07} fill="rgba(70,55,30,0.45)" />
+                    <image
+                      href="/obstaculo.png"
+                      x={x - hexSize * 1.26}
+                      y={y - hexSize * 1.26}
+                      width={hexSize * 2.52}
+                      height={hexSize * 2.52}
+                      preserveAspectRatio="xMidYMid meet"
+                      filter="url(#beastShadow)"
+                    />
                   </g>
                 )}
 
                 {/* Attack target flash */}
                 {isAttackTarget(logicalRow, col) && renderAttackFlash(x, y, `atk-flash-${logicalRow}-${col}`)}
-
-                {/* Beast */}
-                {beast && renderBeast(beast, x, y)}
               </g>
             );
           });
         })}
+
+        {/* Beasts are rendered as a top layer so cells/overlays never cover them */}
+        {beastRenderPositions.map(({ beast, x, y }) => renderBeast(beast, x, y))}
       </svg>
     </Box>
   );

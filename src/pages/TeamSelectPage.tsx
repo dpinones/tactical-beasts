@@ -224,7 +224,7 @@ export function TeamSelectPage() {
   // --- Creating / Joining ---
   if (phase === "creating" || phase === "joining") {
     return (
-      <Flex direction="column" align="center" justify="center" minH="100vh" bgImage="url('/bg_select_team.png')" bgSize="cover" bgPosition="center" gap={4}>
+      <Flex direction="column" align="center" justify="center" minH="100vh" bgImage="url('/seleccion%20de%20bestias.png')" bgSize="cover" bgPosition="center" gap={4}>
         <Spinner color="green.400" size="lg" />
         <Text fontSize="sm" color="text.secondary">{statusMsg}</Text>
         <Button variant="ghost" size="sm" onClick={() => navigate("/")}>Cancel</Button>
@@ -235,7 +235,7 @@ export function TeamSelectPage() {
   // --- Error ---
   if (phase === "error") {
     return (
-      <Flex direction="column" align="center" justify="center" minH="100vh" bgImage="url('/bg_select_team.png')" bgSize="cover" bgPosition="center" gap={4}>
+      <Flex direction="column" align="center" justify="center" minH="100vh" bgImage="url('/seleccion%20de%20bestias.png')" bgSize="cover" bgPosition="center" gap={4}>
         <Text fontSize="sm" color="danger.300">{statusMsg}</Text>
         <Button variant="secondary" onClick={() => navigate("/")}>Back to Home</Button>
       </Flex>
@@ -245,7 +245,7 @@ export function TeamSelectPage() {
   // --- Lobby: waiting for opponent ---
   if (phase === "lobby" && gameId) {
     return (
-      <Flex direction="column" align="center" justify="center" minH="100vh" bgImage="url('/bg_select_team.png')" bgSize="cover" bgPosition="center" gap={6} p={4}>
+      <Flex direction="column" align="center" justify="center" minH="100vh" bgImage="url('/seleccion%20de%20bestias.png')" bgSize="cover" bgPosition="center" gap={6} p={4}>
         <Heading size="lg" fontFamily="heading" color="green.300" textTransform="uppercase">
           Game Created
         </Heading>
@@ -287,7 +287,7 @@ export function TeamSelectPage() {
   // --- Waiting for opponent's team ---
   if (phase === "waiting") {
     return (
-      <Flex direction="column" align="center" justify="center" minH="100vh" bgImage="url('/bg_select_team.png')" bgSize="cover" bgPosition="center" gap={4}>
+      <Flex direction="column" align="center" justify="center" minH="100vh" bgImage="url('/seleccion%20de%20bestias.png')" bgSize="cover" bgPosition="center" gap={4}>
         <Heading size="md" fontFamily="heading" color="green.300" textTransform="uppercase">
           Team Confirmed
         </Heading>
@@ -300,7 +300,16 @@ export function TeamSelectPage() {
 
   // --- Team selection (2-panel layout) ---
   return (
-    <Flex direction="column" minH="100vh" p={4} maxW="1400px" mx="auto" bgImage="url('/bg_select_team.png')" bgSize="cover" bgPosition="center">
+    <Flex
+      direction="column"
+      h="100vh"
+      w="100vw"
+      overflow="hidden"
+      p={4}
+      bgImage="url('/seleccion%20de%20bestias.png')"
+      bgSize="cover"
+      bgPosition="center"
+    >
       {/* Header */}
       <Flex justify="space-between" align="center" mb={4}>
         <Flex align="center" gap={3}>
@@ -313,20 +322,22 @@ export function TeamSelectPage() {
 
       {/* Status bar */}
       <Box bg="surface.panel" border="1px solid" borderColor="surface.border" borderRadius="3px" p={3} mb={4}>
-        <Flex justify="space-between" align="center">
+        <Flex align="center">
           <Text fontSize="xs" color="text.secondary">
             Choose 3 beasts for your team
-          </Text>
-          <Text fontSize="xs" color="text.gold" fontFamily="mono">
-            Team: {selectedBeasts.length}/3
           </Text>
         </Flex>
       </Box>
 
       {/* Two-panel layout */}
-      <Flex direction={{ base: "column", lg: "row" }} gap={4} flex={1} minH={0}>
-        {/* Left panel: Filters + Beast catalog */}
-        <Box flex={3}>
+      <Flex direction={{ base: "column", lg: "row" }} gap={4} flex={1} minH={0} overflow="hidden">
+        {/* Left panel: Filters + Beast catalog (only scrollable area) */}
+        <Box
+          flex={3}
+          minH={0}
+          overflowY="auto"
+          pr={1}
+        >
           {/* Filters */}
           <Flex gap={2} mb={3} flexWrap="wrap" align="center">
             <Input
@@ -399,7 +410,7 @@ export function TeamSelectPage() {
           </Flex>
 
           {/* Beast catalog */}
-          <Box flex={1} overflowY="auto" mb={4}>
+          <Box mb={4}>
             {beastsLoading ? (
               <Flex justify="center" py={8}>
                 <Spinner color="green.400" size="lg" />
@@ -426,7 +437,7 @@ export function TeamSelectPage() {
         </Box>
 
         {/* Right panel: Opponent profile + Map preview */}
-        <Box flex={2}>
+        <Box flex={2} minH={0} overflow="hidden">
           {/* Opponent profile */}
           {opponentProfile && (
             <Box bg="surface.panel" border="1px solid" borderColor="danger.700" borderRadius="3px" p={3} mb={4}>
@@ -453,12 +464,12 @@ export function TeamSelectPage() {
           )}
 
           {/* Map preview */}
-          <Box bg="surface.panel" border="1px solid" borderColor="surface.border" borderRadius="3px" p={3}>
+          <Box bg="surface.panel" border="1px solid" borderColor="surface.border" borderRadius="3px" p={2}>
             <Text fontSize="9px" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em" mb={2}>
               Arena Map
             </Text>
             <HexGrid
-              hexSize={22}
+              hexSize={17}
               myBeasts={[]}
               enemyBeasts={[]}
               selectedBeastIndex={null}
@@ -467,31 +478,53 @@ export function TeamSelectPage() {
               myPlayerIndex={1}
               obstacles={obstacles}
             />
-            <HStack gap={4} mt={2} fontSize="9px" color="text.muted" justify="center">
-              <HStack gap={1}>
-                <Box w="8px" h="8px" bg="rgba(85,102,85,0.5)" />
-                <Text>Obstacle</Text>
-              </HStack>
-              <HStack gap={1}>
-                <Box w="8px" h="8px" bg="rgba(0,255,68,0.15)" border="1px solid" borderColor="green.700" />
-                <Text>P1 Spawn</Text>
-              </HStack>
-              <HStack gap={1}>
-                <Box w="8px" h="8px" bg="rgba(255,51,51,0.15)" border="1px solid" borderColor="red.700" />
-                <Text>P2 Spawn</Text>
-              </HStack>
-            </HStack>
           </Box>
 
           {/* Selected beasts */}
-          <Box mt={4}>
-            <Text fontSize="9px" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em" mb={2}>
-              Your Team ({selectedBeasts.length}/3)
-            </Text>
-            <Flex direction="column" gap={2}>
-              {selectedBeasts.map((tokenId, i) => {
-                const beast = catalog.find((b) => b.tokenId === tokenId);
-                if (!beast) return null;
+          <Box mt={4} bg="surface.panel" border="1px solid" borderColor="surface.border" borderRadius="3px" p={2}>
+            <Flex align="center" justify="space-between" mb={2}>
+              <Text fontSize="9px" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em">
+                Your Team
+              </Text>
+              <Badge
+                bg="rgba(255,215,0,0.2)"
+                border="1px solid"
+                borderColor="rgba(255,215,0,0.55)"
+                color="#FFD94A"
+                fontSize="10px"
+                px={2}
+                py={0.5}
+                borderRadius="3px"
+              >
+                {selectedBeasts.length}/3
+              </Badge>
+            </Flex>
+            <Flex direction="column" gap={1.5}>
+              {Array.from({ length: 3 }, (_, i) => {
+                const tokenId = selectedBeasts[i];
+                const beast = tokenId ? catalog.find((b) => b.tokenId === tokenId) : null;
+                if (!beast || !tokenId) {
+                  return (
+                    <Flex
+                      key={`empty-slot-${i}`}
+                      border="1px dashed"
+                      borderColor="surface.border"
+                      borderRadius="3px"
+                      p={1.5}
+                      align="center"
+                      gap={3}
+                      h="44px"
+                      bg="rgba(0, 0, 0, 0.14)"
+                    >
+                      <Text fontSize="xs" color="text.muted" fontWeight="bold" w="16px">
+                        {i + 1}
+                      </Text>
+                      <Text fontSize="xs" color="text.muted">
+                        Empty slot
+                      </Text>
+                    </Flex>
+                  );
+                }
                 const subclass = getSubclass(beast.beastId);
                 return (
                   <Flex
@@ -500,7 +533,7 @@ export function TeamSelectPage() {
                     border="1px solid"
                     borderColor="green.700"
                     borderRadius="3px"
-                    p={2}
+                    p={1.5}
                     align="center"
                     gap={3}
                   >
@@ -510,8 +543,8 @@ export function TeamSelectPage() {
                     <Image
                       src={`/beasts/${beast.beast.toLowerCase()}.png`}
                       alt={beast.beast}
-                      w="40px"
-                      h="40px"
+                      w="34px"
+                      h="34px"
                       objectFit="contain"
                       borderRadius="3px"
                       bg="surface.card"
@@ -520,7 +553,7 @@ export function TeamSelectPage() {
                       <Text fontSize="xs" fontWeight="600" color="text.primary" noOfLines={1}>
                         {beast.beast}
                       </Text>
-                      <HStack gap={2} fontSize="9px" color="text.secondary">
+                      <HStack gap={1.5} fontSize="8px" color="text.secondary">
                         <Badge variant={beast.type === BeastType.Magical ? "magical" : beast.type === BeastType.Hunter ? "hunter" : "brute"} fontSize="8px">
                           {beast.typeName}
                         </Badge>
@@ -529,7 +562,7 @@ export function TeamSelectPage() {
                       </HStack>
                     </Box>
                     <Flex direction="column" align="flex-end" gap={0.5}>
-                      <Text fontSize="9px" color="text.gold" fontFamily="mono">
+                      <Text fontSize="8px" color="text.gold" fontFamily="mono">
                         Lv{beast.level} · HP {beast.health}
                       </Text>
                       <Text fontSize="8px" color="text.muted" fontFamily="mono">
@@ -548,21 +581,6 @@ export function TeamSelectPage() {
                   </Flex>
                 );
               })}
-              {selectedBeasts.length < 3 && (
-                <Flex
-                  border="1px dashed"
-                  borderColor="surface.border"
-                  borderRadius="3px"
-                  p={2}
-                  justify="center"
-                  align="center"
-                  h="52px"
-                >
-                  <Text fontSize="xs" color="text.muted">
-                    {selectedBeasts.length === 0 ? "Select 3 beasts" : `Select ${3 - selectedBeasts.length} more`}
-                  </Text>
-                </Flex>
-              )}
             </Flex>
           </Box>
         </Box>

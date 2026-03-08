@@ -13,6 +13,7 @@ pub trait IGameSystem<T> {
     fn set_team(ref self: T, game_id: u32, beast_1: u32, beast_2: u32, beast_3: u32);
     fn set_team_dynamic(ref self: T, game_id: u32, beasts: Array<u32>);
     fn set_beast_config(ref self: T, beast_nft_address: ContractAddress);
+    fn set_denshokan_address(ref self: T, denshokan_address: ContractAddress);
     fn execute_turn(ref self: T, game_id: u32, actions: Array<crate::types::Action>);
     fn find_match(ref self: T) -> u32;
     fn cancel_matchmaking(ref self: T);
@@ -94,6 +95,7 @@ pub mod game_system {
         #[substorage(v0)]
         src5: SRC5Component::Storage,
         denshokan_address: ContractAddress,
+        owner: ContractAddress,
     }
 
     #[event]
@@ -110,6 +112,7 @@ pub mod game_system {
         creator_address: ContractAddress,
         denshokan_address: ContractAddress,
     ) {
+        self.owner.write(creator_address);
         self.denshokan_address.write(denshokan_address);
 
         // Initialize MinigameComponent only when Denshokan is deployed
@@ -307,6 +310,12 @@ pub mod game_system {
         fn set_beast_config(ref self: ContractState, beast_nft_address: ContractAddress) {
             let mut world = self.world(@NAMESPACE());
             world.write_model(@BeastConfig { id: 0, beast_nft_address });
+        }
+
+        fn set_denshokan_address(ref self: ContractState, denshokan_address: ContractAddress) {
+            let caller = starknet::get_caller_address();
+            assert!(caller == self.owner.read(), "Only owner can set denshokan address");
+            self.denshokan_address.write(denshokan_address);
         }
 
         fn create_settings(

@@ -23,11 +23,15 @@ const getRpcUrl = (slot: string | undefined) => {
 };
 
 const getToriiUrl = (slot: string | undefined) => {
+  const envTorii = import.meta.env.VITE_TORII_URL?.trim();
+  if (envTorii) return envTorii;
   const baseUrl = getBaseUrl(slot);
   return baseUrl ? `${baseUrl}/torii` : DEFAULT_TORII_URL;
 };
 
 const getGraphqlUrl = (slot: string | undefined) => {
+  const envTorii = import.meta.env.VITE_TORII_URL?.trim();
+  if (envTorii) return `${envTorii}/graphql`;
   const baseUrl = getBaseUrl(slot);
   return baseUrl ? `${baseUrl}/torii/graphql` : DEFAULT_GRAPHQL_URL;
 };

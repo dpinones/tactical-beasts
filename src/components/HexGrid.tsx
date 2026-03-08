@@ -162,7 +162,7 @@ export function HexGrid({
 
     const imgSize = hexSize * 0.82;
     const spriteScale = 2.45;
-    const beastImgSrc = getBeastImagePath(Number(beast.beast_id));
+    const beastImgSrc = getBeastImagePath(Number(beast.beast_id), isMine ? "right" : "left");
 
     // HP bar dimensions
     const hpBarWidth = hexSize * 0.85;

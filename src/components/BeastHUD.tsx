@@ -98,7 +98,7 @@ export function BeastHUD({
       <Flex align="center" gap={2}>
         <Box position="relative" flexShrink={0}>
           <Image
-            src={getBeastImagePath(Number(beast.beast_id))}
+            src={getBeastImagePath(Number(beast.beast_id), isMine ? "right" : "left")}
             alt={beastName || speciesName}
             w="56px"
             h="56px"

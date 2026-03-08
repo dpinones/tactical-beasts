@@ -93,10 +93,11 @@ export function getSpeciesNameByTokenId(tokenId: number): string {
   return tokenSpeciesMap.get(tokenId) || getSpeciesNameById(tokenId);
 }
 
-export function getBeastImagePath(beastId: number): string {
+export function getBeastImagePath(beastId: number, facing: "right" | "left" = "right"): string {
   // Try tokenId first, then fall back to species beastId
   const species = getSpeciesNameByTokenId(beastId) || getSpeciesNameById(beastId);
-  return `/beasts/${species.toLowerCase()}.png`;
+  const name = species.toLowerCase();
+  return facing === "left" ? `/beasts/left/${name}.png` : `/beasts/${name}.png`;
 }
 
 // Subclass mapping by beast_id (species)

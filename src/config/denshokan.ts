@@ -11,9 +11,9 @@ export const DENSHOKAN_ADDRESSES = {
     viewerAddress: "0x025d92f18c6c1ed2114774adf68249a95fc468d9381ab33fa4b9ccfff7cf5f9f",
   },
   mainnet: {
-    denshokanAddress: "",
-    registryAddress: "",
-    viewerAddress: "",
+    denshokanAddress: "0x0029ffae8b0c4626e06395a947800bc89e76422107f6adff8937a6e9a1e01f28",
+    registryAddress: "0x05b4a2ed39dfb28a33c2dd73cbedf02091a31dccb9ed4ed19201e3c255865851",
+    viewerAddress: "0x01825fa210dc2abd02fa03d4eb37dabf1d6b69e9c4cd471ee402fa0fcc78611b",
   },
 } as const;
 

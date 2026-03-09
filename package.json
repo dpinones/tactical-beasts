@@ -8,6 +8,8 @@
     "dev:sepolia": "vite --mode sepolia",
     "build": "tsc && vite build",
     "build:sepolia": "tsc && vite build --mode sepolia",
+    "dev:mainnet": "vite --mode mainnet",
+    "build:mainnet": "tsc && vite build --mode mainnet",
     "preview": "vite preview",
     "generate": "cd contracts && sozo build --typescript --bindings-output ../src/dojo",
     "postgenerate": "bash scripts/patch-namespace.sh",

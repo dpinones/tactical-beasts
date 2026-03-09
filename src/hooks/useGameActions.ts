@@ -116,6 +116,28 @@ export function useGameActions() {
     [client, account, execute]
   );
 
+  const setTeamDynamic = useCallback(
+    async (gameId: number, beasts: number[]) => {
+      const response = await execute(client.game_system.setTeamDynamic, [
+        account,
+        gameId,
+        beasts,
+      ]);
+      if (response) {
+        const txHash = (response as any)?.transaction_hash;
+        if (txHash) {
+          try {
+            await account.waitForTransaction(txHash, { retryInterval: 100 });
+          } catch (e) {
+            console.error("Failed to confirm set_team_dynamic:", e);
+          }
+        }
+      }
+      return response;
+    },
+    [client, account, execute]
+  );
+
   const executeTurn = useCallback(
     async (gameId: number, actions: GameAction[]) => {
       const contractActions = actions.map((a) => ({
@@ -214,6 +236,7 @@ export function useGameActions() {
     createFriendlyGame,
     joinGame,
     setTeam,
+    setTeamDynamic,
     executeTurn,
     findMatch,
     cancelMatchmaking,

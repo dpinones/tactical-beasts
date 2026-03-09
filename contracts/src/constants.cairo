@@ -1,6 +1,6 @@
 #[inline]
 pub fn NAMESPACE() -> ByteArray {
-    "TB4"
+    "TB5"
 }
 
 // Game status

@@ -33,6 +33,8 @@ function parseGameNode(node: any): GameModel {
     winner: node.winner,
     p1_team_set: Boolean(node.p1_team_set),
     p2_team_set: Boolean(node.p2_team_set),
+    is_friendly: Boolean(node.is_friendly),
+    settings_id: Number(node.settings_id ?? 1),
   };
 }
 

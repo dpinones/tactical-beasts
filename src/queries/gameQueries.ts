@@ -15,6 +15,8 @@ export const GET_GAME = gql`
           winner
           p1_team_set
           p2_team_set
+          is_friendly
+          settings_id
         }
       }
     }

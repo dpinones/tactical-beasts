@@ -3,7 +3,7 @@ name = "Tactical Beasts"
 seed = "tb-sepolia"
 
 [namespace]
-default = "TB4"
+default = "TB5"
 
 [env]
 rpc_url = "https://api.cartridge.gg/x/starknet/sepolia"
@@ -11,10 +11,10 @@ account_address = "0x00dba4d5ba495338b74aceac92ddc26afff9319d675e09db0aadba40cc6
 private_key = "0x06c3f4d5e62d4b873a1389cec6671a9ef3414af6321d893bdf3967bc9c77fa47"
 
 [writers]
-"TB4" = ["TB4-game_system"]
+"TB5" = ["TB5-game_system"]
 
 [init_call_args]
-"TB4-game_system" = [
+"TB5-game_system" = [
     "0x00dba4d5ba495338b74aceac92ddc26afff9319d675e09db0aadba40cc606245", # creator_address
     "0x0142712722e62a38f9c40fcc904610e1a14c70125876ecaaf25d803556734467", # denshokan_address (sepolia)
 ]

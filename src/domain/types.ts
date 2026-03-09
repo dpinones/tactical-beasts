@@ -105,6 +105,8 @@ export interface GameModel {
   winner: string;
   p1_team_set: boolean;
   p2_team_set: boolean;
+  is_friendly: boolean;
+  settings_id: number;
 }
 
 // Onchain beast state model

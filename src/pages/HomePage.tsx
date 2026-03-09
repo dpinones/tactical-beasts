@@ -17,10 +17,9 @@ import {
   ModalBody,
   ModalCloseButton,
   useDisclosure,
-  IconButton,
 } from "@chakra-ui/react";
 import { keyframes } from "@emotion/react";
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo, type MouseEvent as ReactMouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "../dojo/WalletContext";
 import { useGameStore } from "../stores/gameStore";
@@ -52,6 +51,47 @@ function truncateAddr(addr: string): string {
   return addr.slice(0, 6) + "..." + addr.slice(-4);
 }
 
+interface HomeHowToTopic {
+  title: string;
+  description: string;
+  items: Array<{
+    label: string;
+    text: string;
+  }>;
+}
+
+const HOW_TO_LEADERBOARD: HomeHowToTopic = {
+  title: "Leaderboard",
+  description: "Como se calcula la posicion de cada jugador en el ranking.",
+  items: [
+    { label: "Formula de score", text: "Score = (wins x 500) + (total_kills x 50)." },
+    { label: "Filtro de jugadores", text: "Solo aparecen perfiles con al menos 1 partida jugada." },
+    { label: "Empates", text: "Si hay score igual, el orden final depende del orden recibido del backend." },
+  ],
+};
+
+const HOW_TO_SETTINGS: HomeHowToTopic = {
+  title: "Settings",
+  description: "Que configura cada parametro y como impacta en el gameplay.",
+  items: [
+    { label: "Min Tier / Max Tier", text: "Define el rango de tier permitido para elegir bestias en la partida." },
+    { label: "Max T2 per team", text: "Limita cuantas bestias tier 2 puede llevar cada equipo." },
+    { label: "Max T3 per team", text: "Limita cuantas bestias tier 3 puede llevar cada equipo." },
+    { label: "Beasts/Player", text: "Define la cantidad total de bestias por lado en el combate." },
+    { label: "Settings ID", text: "Cada preset se guarda con un ID y ese ID se usa al crear/invitar partidas." },
+  ],
+};
+
+const HOW_TO_TOKENS: HomeHowToTopic = {
+  title: "My Tokens",
+  description: "Como leer los tokens de partida y sus estados.",
+  items: [
+    { label: "Que representa un token", text: "Cada token representa una sesion/partida registrada." },
+    { label: "ACTIVE vs COMPLETED", text: "ACTIVE: la partida sigue en curso. COMPLETED: la partida termino." },
+    { label: "Settings", text: "Muestra el ID de settings usado para esa partida." },
+  ],
+};
+
 export function HomePage() {
   const {
     finalAccount,
@@ -73,8 +113,10 @@ export function HomePage() {
   const [joinInput, setJoinInput] = useState("");
   const [statusMsg, setStatusMsg] = useState("");
   const [friendOpen, setFriendOpen] = useState(false);
+  const [activeHowTo, setActiveHowTo] = useState<HomeHowToTopic | null>(null);
   const configsModal = useDisclosure();
   const profileModal = useDisclosure();
+  const howToModal = useDisclosure();
 
   // Supabase state
   const [profile, setProfile] = useState<PlayerConfig | null>(null);
@@ -259,6 +301,11 @@ export function HomePage() {
     }
     clearSelectedBeasts();
     navigate(`/team-select/join/${id}`);
+  };
+
+  const openHowTo = (topic: HomeHowToTopic) => {
+    setActiveHowTo(topic);
+    howToModal.onOpen();
   };
 
   // Hero beasts for background (must be before any early returns)
@@ -656,6 +703,8 @@ export function HomePage() {
             gradientTo="#4A3A25"
             borderColor="gold.400"
             onClick={() => navigate("/leaderboard")}
+            howTo={HOW_TO_LEADERBOARD}
+            onHowTo={openHowTo}
           />
 
           {/* MY BEASTS card */}
@@ -680,6 +729,8 @@ export function HomePage() {
             gradientTo="#2B3A4D"
             borderColor="blue.400"
             onClick={() => navigate("/my-tokens")}
+            howTo={HOW_TO_TOKENS}
+            onHowTo={openHowTo}
           />
 
           {/* SETTINGS card */}
@@ -692,6 +743,8 @@ export function HomePage() {
             gradientTo="#3D2B4D"
             borderColor="purple.400"
             onClick={() => navigate("/settings")}
+            howTo={HOW_TO_SETTINGS}
+            onHowTo={openHowTo}
           />
         </Flex>
 
@@ -736,6 +789,34 @@ export function HomePage() {
           ))}
         </Flex>
       </Flex>
+
+      {/* HOW TO modal (per-card) */}
+      <Modal isOpen={howToModal.isOpen} onClose={howToModal.onClose} isCentered>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>{activeHowTo?.title || "How To"}</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={6}>
+            <VStack align="stretch" gap={3}>
+              {activeHowTo?.description && (
+                <Text fontSize="sm" color="text.secondary">
+                  {activeHowTo.description}
+                </Text>
+              )}
+              {activeHowTo?.items.map((item) => (
+                <Box key={item.label} bg="surface.card" borderRadius="10px" p={3} border="1px solid" borderColor="surface.border">
+                  <Text fontSize="xs" color="text.primary" fontWeight="700" mb={1}>
+                    {item.label}
+                  </Text>
+                  <Text fontSize="xs" color="text.secondary">
+                    {item.text}
+                  </Text>
+                </Box>
+              ))}
+            </VStack>
+          </ModalBody>
+        </ModalContent>
+      </Modal>
 
       {/* Configs Modal */}
       <Modal isOpen={configsModal.isOpen} onClose={configsModal.onClose} isCentered>
@@ -837,6 +918,8 @@ function MenuCard({
   onClick,
   isFullWidth,
   badge,
+  howTo,
+  onHowTo,
 }: {
   title: string;
   subtitle: string;
@@ -848,6 +931,8 @@ function MenuCard({
   onClick: () => void;
   isFullWidth?: boolean;
   badge?: string;
+  howTo?: HomeHowToTopic;
+  onHowTo?: (topic: HomeHowToTopic) => void;
 }) {
   return (
     <Box
@@ -934,6 +1019,43 @@ function MenuCard({
           {subtitle}
         </Text>
       </Flex>
+
+      {/* HOW TO trigger for specific cards */}
+      {howTo && onHowTo && (
+        <Box
+          as="button"
+          aria-label={`How to ${title}`}
+          title={`How to ${title}`}
+          position="absolute"
+          top={3}
+          right={3}
+          w="24px"
+          h="24px"
+          borderRadius="full"
+          bg="rgba(8,12,10,0.88)"
+          border="1px solid"
+          borderColor={`${accentColor}88`}
+          color={accentColor}
+          fontFamily="heading"
+          fontSize="13px"
+          fontWeight="700"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          zIndex={3}
+          onClick={(e: ReactMouseEvent<HTMLButtonElement>) => {
+            e.stopPropagation();
+            onHowTo(howTo);
+          }}
+          _hover={{
+            transform: "scale(1.06)",
+            borderColor: accentColor,
+            boxShadow: `0 0 10px ${accentColor}66`,
+          }}
+        >
+          ?
+        </Box>
+      )}
 
       {/* Badge */}
       {badge && (

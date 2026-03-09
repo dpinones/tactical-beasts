@@ -41,6 +41,7 @@ import {
 } from "../domain/hexGrid";
 import { getMoveRange, getAttackRange } from "../domain/combat";
 import { getProfile } from "../services/supabase";
+import { HowToButton } from "../components/HowToGuide";
 
 function normalizeAddr(addr: string): string {
   if (!addr) return ZERO_ADDR;
@@ -423,6 +424,11 @@ export function BattlePage() {
       overflow="hidden"
       className="arena-background"
     >
+      {/* How To button — top right */}
+      <Box position="absolute" top={3} right={3} zIndex={10}>
+        <HowToButton />
+      </Box>
+
       {/* === TOP HUD === */}
       <Box className="battle-hud-top" px={4} pt={0}>
         <Flex w="100%" maxW="700px" align="flex-start" justify="center" gap={5}>

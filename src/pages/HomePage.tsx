@@ -46,6 +46,7 @@ import { controller } from "../dojo/controller/controller";
 import { usePlayerProfile, useGameSettings } from "../hooks/useGameQuery";
 import { Select } from "@chakra-ui/react";
 import { startMusic, playClick, useAudioStore } from "../stores/audioStore";
+import { HowToButton } from "../components/HowToGuide";
 
 const CHAIN = import.meta.env.VITE_CHAIN;
 
@@ -440,6 +441,9 @@ export function HomePage() {
         bg="linear-gradient(180deg, rgba(0,0,0,0.6) 0%, transparent 100%)"
       >
         <Box flex={1} />
+
+        {/* How To button */}
+        <HowToButton />
 
         {/* Friend/Social button */}
         <Box position="relative" ref={friendPanelRef}>

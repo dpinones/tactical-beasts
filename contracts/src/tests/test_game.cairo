@@ -451,13 +451,19 @@ fn test_find_match_joins_existing() {
 }
 
 #[test]
-#[should_panic]
-fn test_find_match_cannot_match_self() {
-    let (_world, systems) = spawn_game();
+fn test_find_match_already_in_queue_is_noop() {
+    let (world, systems) = spawn_game();
 
     set_player(PLAYER1());
-    systems.game.find_match();
-    systems.game.find_match(); // Should panic: "Already in queue"
+    let game_id1 = systems.game.find_match();
+    let game_id2 = systems.game.find_match(); // Should return same game_id without panic
+
+    assert!(game_id1 == game_id2, "Should return same game id");
+
+    // Queue should still have the player
+    let queue: MatchmakingQueue = world.read_model(0);
+    assert!(queue.waiting_player == PLAYER1());
+    assert!(queue.waiting_game_id == game_id1);
 }
 
 #[test]

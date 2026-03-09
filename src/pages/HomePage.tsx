@@ -419,10 +419,6 @@ export function HomePage() {
             </>
           )}
         </Flex>
-
-        <Text fontSize="xs" color="text.muted" position="absolute" bottom={4}>
-          v0.1.0 MVP
-        </Text>
       </Flex>
     );
   }

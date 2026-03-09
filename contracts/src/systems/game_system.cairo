@@ -217,8 +217,9 @@ pub mod game_system {
                 let game_id = _create_game(ref world, denshokan, caller, false, 1);
                 world.write_model(@MatchmakingQueue { id: 0, waiting_player: caller, waiting_game_id: game_id });
                 game_id
+            } else if queue.waiting_player == caller {
+                queue.waiting_game_id
             } else {
-                assert!(queue.waiting_player != caller, "Already in queue");
                 let game_id = queue.waiting_game_id;
                 _join_game(ref world, denshokan, caller, game_id);
                 world.write_model(@MatchmakingQueue { id: 0, waiting_player: zero_address(), waiting_game_id: 0 });

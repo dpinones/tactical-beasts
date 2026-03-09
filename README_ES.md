@@ -8,6 +8,10 @@ Parte del ecosistema [Provable Games](https://docs.provable.games/) — las best
 
 ---
 
+**[Demo Video](https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=RDdQw4w9WgXcQ&start_radio=1)** | **[Demo Sepolia](https://tactical-beasts-sepolia.vercel.app/)** | **[Demo Mainnet](https://tactical-beasts.vercel.app/)**
+
+---
+
 ## Tabla de Contenidos
 
 - [Objetivo](#objetivo)
@@ -325,10 +329,10 @@ Las partidas amistosas se excluyen del puntaje EGS.
 
 ## Denshokan
 
-
 - Minteo de tokens y gestion de metadata.
 - Envio de puntajes al leaderboard rankeable.
 - Actualizaciones de metadata ERC4906 en eventos del juego.
+- **[Ver Token IDs minteados](https://funfactory.gg/games?network=sepolia)**
 
 ---
 

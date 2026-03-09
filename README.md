@@ -8,6 +8,10 @@ Part of the [Provable Games](https://docs.provable.games/) ecosystem — beasts,
 
 ---
 
+**[Demo Video](https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=RDdQw4w9WgXcQ&start_radio=1)** | **[Sepolia Demo](https://tactical-beasts-sepolia.vercel.app/)** | **[Mainnet Demo](https://tactical-beasts.vercel.app/)**
+
+---
+
 ## Table of Contents
 
 - [Objective](#objective)
@@ -337,6 +341,7 @@ Friendly games are excluded from EGS scoring.
 - Token minting and metadata management.
 - Score submissions to the rankable leaderboard.
 - ERC4906 metadata updates on game events.
+- **[View minted Token IDs](https://funfactory.gg/games?network=sepolia)**
 
 ---
 

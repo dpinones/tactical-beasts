@@ -742,8 +742,6 @@ export function HomePage() {
             gradientTo="#4A3A25"
             borderColor="gold.400"
             onClick={() => navigate("/leaderboard")}
-            howTo={HOW_TO_LEADERBOARD}
-            onHowTo={openHowTo}
           />
 
           {/* MY BEASTS card */}
@@ -768,8 +766,6 @@ export function HomePage() {
             gradientTo="#2B3A4D"
             borderColor="blue.400"
             onClick={() => navigate("/my-tokens")}
-            howTo={HOW_TO_TOKENS}
-            onHowTo={openHowTo}
           />
 
           {/* SETTINGS card */}
@@ -782,8 +778,6 @@ export function HomePage() {
             gradientTo="#3D2B4D"
             borderColor="purple.400"
             onClick={() => navigate("/settings")}
-            howTo={HOW_TO_SETTINGS}
-            onHowTo={openHowTo}
           />
         </Flex>
 

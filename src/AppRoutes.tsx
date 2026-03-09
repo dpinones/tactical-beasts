@@ -9,6 +9,7 @@ import { ProfilePage } from "./pages/ProfilePage";
 import { LeaderboardPage } from "./pages/LeaderboardPage";
 import { GameSettingsPage } from "./pages/GameSettingsPage";
 import { MyTokensPage } from "./pages/MyTokensPage";
+import { TutorialPage } from "./pages/TutorialPage";
 
 export function AppRoutes() {
   return (
@@ -25,6 +26,7 @@ export function AppRoutes() {
       <Route path="/team-select/match/:gameId" element={<TeamSelectPage />} />
       <Route path="/battle/:gameId" element={<BattlePage />} />
       <Route path="/result/:gameId" element={<ResultPage />} />
+      <Route path="/tutorial" element={<TutorialPage />} />
     </Routes>
   );
 }

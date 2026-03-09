@@ -44,9 +44,12 @@ import {
 import { getUniqueBeastSpecies } from "../data/beasts";
 import { controller } from "../dojo/controller/controller";
 import { usePlayerProfile, useGameSettings } from "../hooks/useGameQuery";
+import { useGameActions } from "../hooks/useGameActions";
 import { Select } from "@chakra-ui/react";
 import { startMusic, playClick, useAudioStore } from "../stores/audioStore";
 import { HowToButton } from "../components/HowToGuide";
+import { TutorialButton } from "../components/TutorialOverlay";
+import { requestBotOpponent } from "../services/botApi";
 
 const CHAIN = import.meta.env.VITE_CHAIN;
 
@@ -112,7 +115,9 @@ export function HomePage() {
   const allowGuest = CHAIN !== "mainnet" && CHAIN !== "sepolia";
   const isLoggedIn = !!finalAccount;
 
-  const { clearSelectedBeasts } = useGameStore();
+  const { clearSelectedBeasts, setIsPracticeMode } = useGameStore();
+  const { createFriendlyGame } = useGameActions();
+  const [isPracticeLoading, setIsPracticeLoading] = useState(false);
 
   const [joinInput, setJoinInput] = useState("");
   const [statusMsg, setStatusMsg] = useState("");
@@ -349,6 +354,27 @@ export function HomePage() {
     navigate(`/team-select/join/${id}`);
   };
 
+  const handlePractice = async () => {
+    if (isPracticeLoading) return;
+    setIsPracticeLoading(true);
+    try {
+      const gameId = await createFriendlyGame();
+      if (!gameId) {
+        setStatusMsg("Failed to create practice game");
+        return;
+      }
+      setIsPracticeMode(true);
+      navigate("/matchmaking", {
+        state: { isPractice: true, gameId },
+      });
+    } catch (err) {
+      console.error("Practice mode error:", err);
+      setStatusMsg("Failed to start practice mode");
+    } finally {
+      setIsPracticeLoading(false);
+    }
+  };
+
   const openHowTo = (topic: HomeHowToTopic) => {
     setActiveHowTo(topic);
     howToModal.onOpen();
@@ -441,6 +467,9 @@ export function HomePage() {
         bg="linear-gradient(180deg, rgba(0,0,0,0.6) 0%, transparent 100%)"
       >
         <Box flex={1} />
+
+        {/* Tutorial button */}
+        <TutorialButton />
 
         {/* How To button */}
         <HowToButton />
@@ -731,6 +760,19 @@ export function HomePage() {
             onClick={() => navigate("/matchmaking")}
             isFullWidth
           />
+
+          {/* PRACTICE card */}
+          {/* <MenuCard
+            title="Practice"
+            subtitle="Play vs Bot"
+            beastName={heroBeasts[5] || heroBeasts[0]}
+            accentColor="#D8B4B4"
+            gradientFrom="#2D1A1A"
+            gradientTo="#4A2B2B"
+            borderColor="red.400"
+            onClick={handlePractice}
+            isLoading={isPracticeLoading}
+          /> */}
 
           {/* LEADERBOARD card */}
           <MenuCard
@@ -1108,6 +1150,7 @@ function MenuCard({
   borderColor,
   onClick,
   isFullWidth,
+  isLoading,
   badge,
   howTo,
   onHowTo,
@@ -1121,6 +1164,7 @@ function MenuCard({
   borderColor: string;
   onClick: () => void;
   isFullWidth?: boolean;
+  isLoading?: boolean;
   badge?: string;
   howTo?: HomeHowToTopic;
   onHowTo?: (topic: HomeHowToTopic) => void;
@@ -1199,7 +1243,7 @@ function MenuCard({
           textShadow={`0 0 20px ${accentColor}66`}
           lineHeight="1.2"
         >
-          {title}
+          {isLoading ? <Spinner size="sm" color={accentColor} /> : title}
         </Text>
         <Text
           fontSize="10px"
@@ -1207,7 +1251,7 @@ function MenuCard({
           mt={1}
           letterSpacing="0.05em"
         >
-          {subtitle}
+          {isLoading ? "Starting..." : subtitle}
         </Text>
       </Flex>
 

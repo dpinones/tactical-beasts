@@ -24,6 +24,20 @@ async function init() {
   if (!rootElement) throw new Error("React root not found");
   const root = ReactDOM.createRoot(rootElement);
 
+  // Tutorial is fully offline — skip Dojo setup entirely
+  if (window.location.pathname === "/tutorial") {
+    const { TutorialPage } = await import("./pages/TutorialPage");
+    root.render(
+      <ChakraBaseProvider theme={theme}>
+        <BrowserRouter>
+          <Toaster />
+          <TutorialPage />
+        </BrowserRouter>
+      </ChakraBaseProvider>
+    );
+    return;
+  }
+
   try {
     const setupResult = await setup(dojoConfig);
 
@@ -47,6 +61,7 @@ async function init() {
     );
   } catch (e) {
     console.error("Failed to initialize Dojo:", e);
+
     root.render(
       <ChakraBaseProvider theme={theme}>
         <div

@@ -36,6 +36,8 @@ import { getSubclass, getSubclassName, DEFAULT_BEASTS } from "../data/beasts";
 import { MAX_T2_PER_TEAM, MAX_T3_PER_TEAM } from "../domain/combat";
 import { toast } from "sonner";
 import { playClick } from "../stores/audioStore";
+import { TutorialOverlay } from "../components/TutorialOverlay";
+import { useTutorialStore } from "../stores/tutorialStore";
 
 type Phase = "creating" | "joining" | "lobby" | "select" | "confirming" | "coin" | "waiting" | "error";
 
@@ -98,6 +100,10 @@ export function TeamSelectPage() {
   }, []);
 
   const { beasts: ownedBeasts, isLoading: beastsLoading } = useOwnedBeasts();
+
+  // Tutorial integration
+  const tutorialCompleteStep = useTutorialStore((s) => s.completeStep);
+  const tutorialActive = useTutorialStore((s) => s.active);
 
   // Convert OwnedBeast to CatalogBeast for BeastCard compatibility, merge defaults
   const ownedCatalog = useMemo((): CatalogBeast[] => {
@@ -187,7 +193,17 @@ export function TeamSelectPage() {
     if (nextEmpty !== undefined) {
       setActiveSlot(nextEmpty);
     }
-  }, [selectedBeasts, catalog, toggleBeast, beatsPerPlayer, activeSlot]);
+    // Tutorial: track beast selection progress
+    if (tutorialActive) {
+      if (nextBeasts.length === 1) {
+        tutorialCompleteStep("pick-first-beast");
+      } else if (nextBeasts.length === 2) {
+        tutorialCompleteStep("combat-triangle");
+      } else if (nextBeasts.length >= beatsPerPlayer) {
+        tutorialCompleteStep("fill-team");
+      }
+    }
+  }, [selectedBeasts, catalog, toggleBeast, beatsPerPlayer, activeSlot, tutorialActive, tutorialCompleteStep]);
 
   // Check if a beast's tier slot is full (for disabling cards)
   const isTierFull = useCallback((tier: number): boolean => {
@@ -597,7 +613,7 @@ export function TeamSelectPage() {
       {/* Main content */}
       <Flex flex={1} minH={0} overflow="hidden">
         {/* LEFT — Beast catalog panel */}
-        <Box flex={3} minH={0} overflowY="auto" p={3}>
+        <Box flex={3} minH={0} overflowY="auto" p={3} data-tutorial="beast-catalog">
           {/* Filters */}
           <Text fontSize="xs" color="#6F7F72" fontFamily="mono" mb={1}>
             T1 and T5 beasts are excluded for game balance.
@@ -731,7 +747,7 @@ export function TeamSelectPage() {
         {/* RIGHT — Team + Map + Opponent (battle-panel style) */}
         <Box flex={2} minH={0} overflowY="auto" p={3} display="flex" flexDirection="column" gap={3} justifyContent="center">
           {/* Your Team panel */}
-          <Box className="battle-panel" flexShrink={0}>
+          <Box className="battle-panel" flexShrink={0} data-tutorial="team-slots">
             <Box className="battle-panel__header">
               <Flex justify="space-between" align="center">
                 <Flex align="center" gap={2}>
@@ -903,6 +919,9 @@ export function TeamSelectPage() {
           </ModalBody>
         </ModalContent>
       </Modal>
+
+      {/* Tutorial overlay */}
+      <TutorialOverlay page="team-select" />
     </Box>
   );
 }

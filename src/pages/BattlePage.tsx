@@ -1,5 +1,6 @@
 import {
   Box,
+  Badge,
   Button,
   Flex,
   Text,
@@ -42,6 +43,8 @@ import {
 import { getMoveRange, getAttackRange } from "../domain/combat";
 import { getProfile } from "../services/supabase";
 import { HowToButton } from "../components/HowToGuide";
+import { TutorialOverlay } from "../components/TutorialOverlay";
+import { useTutorialStore } from "../stores/tutorialStore";
 
 function normalizeAddr(addr: string): string {
   if (!addr) return ZERO_ADDR;
@@ -62,6 +65,10 @@ export function BattlePage() {
     account: { account },
   } = useDojo();
   const { executeTurn, abandonGame, isLoading } = useGameActions();
+
+  // Tutorial
+  const tutorialCompleteStep = useTutorialStore((s) => s.completeStep);
+  const tutorialActive = useTutorialStore((s) => s.active);
   const { game, refetch: refetchGame } = useGameQuery(gameId);
   const { beasts, rawBeasts, refetch: refetchBeasts } = useBeastStates(gameId);
   const { mapState } = useMapState(gameId);
@@ -69,7 +76,7 @@ export function BattlePage() {
     if (!mapState) return OBSTACLES;
     return mapStateToObstacles(mapState);
   }, [mapState]);
-  const { battleLog, addBattleEvent, clearBattleLog } = useGameStore();
+  const { battleLog, addBattleEvent, clearBattleLog, isPracticeMode } = useGameStore();
   const abandonModal = useDisclosure();
 
   const myAddress = account?.address || "";
@@ -221,6 +228,7 @@ export function BattlePage() {
         setActions(updated);
         setActionHistory((prev) => [...prev.filter((i) => i !== selectedBeastIndex), selectedBeastIndex]);
         autoAdvance(updated);
+        if (tutorialActive) tutorialCompleteStep("move-beast");
         return;
       }
 
@@ -242,6 +250,7 @@ export function BattlePage() {
           setActions(updated);
           setActionHistory((prev) => [...prev.filter((i) => i !== selectedBeastIndex), selectedBeastIndex]);
           autoAdvance(updated);
+          if (tutorialActive) tutorialCompleteStep("attack-demo");
           return;
         }
       }
@@ -274,6 +283,7 @@ export function BattlePage() {
           setActions(updated);
           setActionHistory((prev) => [...prev.filter((i) => i !== selectedBeastIndex), selectedBeastIndex]);
           autoAdvance(updated);
+          if (tutorialActive) tutorialCompleteStep("attack-demo");
           return;
         }
       }
@@ -284,6 +294,7 @@ export function BattlePage() {
           setSelectedBeastIndex(null);
         } else {
           setSelectedBeastIndex(beastIndex);
+          if (tutorialActive) tutorialCompleteStep("select-beast");
         }
       }
     },
@@ -315,6 +326,7 @@ export function BattlePage() {
       .map((idx) => actions.get(idx))
       .filter((a): a is GameAction => a !== undefined);
 
+    if (tutorialActive) tutorialCompleteStep("confirm-actions");
     setIsConfirmLocked(true);
     try {
       const res = await executeTurn(gameId, orderedActions);
@@ -468,6 +480,7 @@ export function BattlePage() {
         bottom={0}
         zIndex={3}
         transform={{ base: "none", lg: "translateX(60px)" }}
+        data-tutorial="hex-grid"
       >
         <HexGrid
           hexSize={50}
@@ -485,7 +498,7 @@ export function BattlePage() {
       </Box>
 
       {isMyTurn && !isConfirmLocked && (
-        <Box className="battle-confirm-dock">
+        <Box className="battle-confirm-dock" data-tutorial="confirm-button">
           <Button
             variant="unstyled"
             className="battle-confirm-btn"
@@ -522,6 +535,7 @@ export function BattlePage() {
         gap={3}
         align="stretch"
         display={{ base: "none", lg: "flex" }}
+        data-tutorial="my-beasts-panel"
       >
         <Box className="battle-panel" flexShrink={0}>
           <Box className="battle-panel__header">
@@ -588,7 +602,12 @@ export function BattlePage() {
       >
         <Box className="battle-panel battle-panel--enemy">
           <Box className="battle-panel__header">
-            <Text className="battle-panel__title">{enemyName}</Text>
+            <HStack gap={2}>
+              <Text className="battle-panel__title">{isPracticeMode ? "Bot" : enemyName}</Text>
+              {isPracticeMode && (
+                <Badge colorScheme="red" fontSize="8px" variant="subtle">BOT</Badge>
+              )}
+            </HStack>
           </Box>
           <Box className="battle-panel__body">
             <VStack gap={2} align="stretch">
@@ -643,6 +662,9 @@ export function BattlePage() {
           </ModalBody>
         </ModalContent>
       </Modal>
+
+      {/* Tutorial overlay */}
+      <TutorialOverlay page="battle" />
     </Box>
   );
 }

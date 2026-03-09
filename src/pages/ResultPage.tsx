@@ -49,7 +49,7 @@ export function ResultPage() {
   } = useDojo();
   const { game } = useGameQuery(gameId);
   const { beasts } = useBeastStates(gameId);
-  const { clearBattleLog, clearSelectedBeasts, setActiveGameId } =
+  const { clearBattleLog, clearSelectedBeasts, setActiveGameId, isPracticeMode, setIsPracticeMode } =
     useGameStore();
 
   const myAddress = account?.address || "";
@@ -85,6 +85,7 @@ export function ResultPage() {
     clearBattleLog();
     clearSelectedBeasts();
     setActiveGameId(null);
+    setIsPracticeMode(false);
     navigate("/");
   };
 
@@ -121,6 +122,9 @@ export function ResultPage() {
         >
           {isWinner ? "Victory" : "Defeat"}
         </Heading>
+        {isPracticeMode && (
+          <Badge colorScheme="red" fontSize="10px" variant="subtle">Practice Match</Badge>
+        )}
         <Text fontSize="sm" color="text.secondary">
           Game #{gameId} — Round {game.round}
         </Text>

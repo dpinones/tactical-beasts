@@ -33,6 +33,10 @@ interface TBGameStore {
   selectedBeastIndex: number | null;
   setSelectedBeastIndex: (index: number | null) => void;
 
+  // Practice mode (bot opponent)
+  isPracticeMode: boolean;
+  setIsPracticeMode: (v: boolean) => void;
+
   // UI state
   isAnimating: boolean;
   setIsAnimating: (v: boolean) => void;
@@ -72,6 +76,9 @@ export const useGameStore = create<TBGameStore>()(
 
       selectedBeastIndex: null,
       setSelectedBeastIndex: (index) => set({ selectedBeastIndex: index }),
+
+      isPracticeMode: false,
+      setIsPracticeMode: (v) => set({ isPracticeMode: v }),
 
       isAnimating: false,
       setIsAnimating: (v) => set({ isAnimating: v }),

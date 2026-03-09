@@ -1,4 +1,4 @@
-import { Flex, Text, VStack } from "@chakra-ui/react";
+import { Flex, Text, VStack, Link } from "@chakra-ui/react";
 import { BattleEvent } from "../domain/types";
 import { useRef, useEffect } from "react";
 
@@ -100,6 +100,22 @@ export function BattleLog({ events }: BattleLogProps) {
             </Text>
             <Text fontSize="xs" color={eventColor(event.type)}>
               {event.message}
+              {event.txHash && (
+                <>
+                  {" "}
+                  <Link
+                    href={`https://sepolia.voyager.online/tx/${event.txHash}`}
+                    isExternal
+                    color="#a7c4b3"
+                    textDecoration="underline"
+                    _hover={{ color: "green.300" }}
+                    fontSize="xs"
+                    fontFamily="mono"
+                  >
+                    tx: {event.txHash.slice(0, 6)}...{event.txHash.slice(-4)}
+                  </Link>
+                </>
+              )}
             </Text>
           </Flex>
         ))

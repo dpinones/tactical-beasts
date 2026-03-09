@@ -172,7 +172,7 @@ export function MatchmakingPage() {
       </Heading>
       <Spinner size="lg" color="green.400" />
       <Text fontSize="sm" color="text.secondary">
-        Esperando oponente...
+        Waiting for opponent...
       </Text>
       {gameId && (
         <Text fontSize="xs" color="text.muted" mt={2}>

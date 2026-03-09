@@ -204,17 +204,17 @@ export interface PassiveInfo {
 export function getPassiveInfo(subclass: Subclass): PassiveInfo {
   switch (subclass) {
     case Subclass.Juggernaut:
-      return { name: "Fortify", shortLabel: "FRT", description: "-10% dano recibido si no se movio turno anterior", color: "#8BAE9C" };
+      return { name: "Fortify", shortLabel: "FRT", description: "-10% damage taken if didn't move last turn", color: "#8BAE9C" };
     case Subclass.Berserker:
       return { name: "Rage", shortLabel: "RGE", description: "+12% dmg if HP < 50%", color: "#C78989" };
     case Subclass.Stalker:
-      return { name: "1st Strike", shortLabel: "1ST", description: "+15% dano contra enemigos con 100% HP", color: "#CDAE79" };
+      return { name: "1st Strike", shortLabel: "1ST", description: "+15% damage against enemies with 100% HP", color: "#CDAE79" };
     case Subclass.Warlock:
       return { name: "Siphon", shortLabel: "SPN", description: "Heal 15% of dmg dealt", color: "#9EBCAD" };
     case Subclass.Enchanter:
       return { name: "Regen", shortLabel: "RGN", description: "+8% max HP", color: "#A7D5BF" };
     case Subclass.Ranger:
-      return { name: "Exposed", shortLabel: "EXP", description: "Recibe +30% dano de enemigos adyacentes", color: "#D1A071" };
+      return { name: "Exposed", shortLabel: "EXP", description: "Takes +30% damage from adjacent enemies", color: "#D1A071" };
   }
 }
 

@@ -64,33 +64,33 @@ interface HomeHowToTopic {
 
 const HOW_TO_LEADERBOARD: HomeHowToTopic = {
   title: "Leaderboard",
-  description: "Como se calcula la posicion de cada jugador en el ranking.",
+  description: "How each player's ranking position is calculated.",
   items: [
-    { label: "Formula de score", text: "Score = (wins x 500) + (total_kills x 50)." },
-    { label: "Filtro de jugadores", text: "Solo aparecen perfiles con al menos 1 partida jugada." },
-    { label: "Empates", text: "Si hay score igual, el orden final depende del orden recibido del backend." },
+    { label: "Score formula", text: "Score = (wins x 500) + (total_kills x 50)." },
+    { label: "Player filter", text: "Only profiles with at least 1 game played are shown." },
+    { label: "Tiebreakers", text: "If scores are equal, the final order depends on backend response order." },
   ],
 };
 
 const HOW_TO_SETTINGS: HomeHowToTopic = {
   title: "Settings",
-  description: "Que configura cada parametro y como impacta en el gameplay.",
+  description: "What each parameter configures and how it impacts gameplay.",
   items: [
-    { label: "Min Tier / Max Tier", text: "Define el rango de tier permitido para elegir bestias en la partida." },
-    { label: "Max T2 per team", text: "Limita cuantas bestias tier 2 puede llevar cada equipo." },
-    { label: "Max T3 per team", text: "Limita cuantas bestias tier 3 puede llevar cada equipo." },
-    { label: "Beasts/Player", text: "Define la cantidad total de bestias por lado en el combate." },
-    { label: "Settings ID", text: "Cada preset se guarda con un ID y ese ID se usa al crear/invitar partidas." },
+    { label: "Min Tier / Max Tier", text: "Defines the allowed tier range for selecting beasts in a match." },
+    { label: "Max T2 per team", text: "Limits how many tier 2 beasts each team can bring." },
+    { label: "Max T3 per team", text: "Limits how many tier 3 beasts each team can bring." },
+    { label: "Beasts/Player", text: "Defines the total number of beasts per side in combat." },
+    { label: "Settings ID", text: "Each preset is saved with an ID used when creating/inviting matches." },
   ],
 };
 
 const HOW_TO_TOKENS: HomeHowToTopic = {
   title: "My Tokens",
-  description: "Como leer los tokens de partida y sus estados.",
+  description: "How to read game tokens and their statuses.",
   items: [
-    { label: "Que representa un token", text: "Cada token representa una sesion/partida registrada." },
-    { label: "ACTIVE vs COMPLETED", text: "ACTIVE: la partida sigue en curso. COMPLETED: la partida termino." },
-    { label: "Settings", text: "Muestra el ID de settings usado para esa partida." },
+    { label: "What a token represents", text: "Each token represents a registered game session." },
+    { label: "ACTIVE vs COMPLETED", text: "ACTIVE: the match is still in progress. COMPLETED: the match has ended." },
+    { label: "Settings", text: "Shows the settings ID used for that match." },
   ],
 };
 
@@ -801,6 +801,7 @@ export function HomePage() {
           justify="center"
           position="relative"
           overflow="hidden"
+          pb="120px"
         >
           {heroBeasts.map((name, i) => (
             <Image
@@ -950,6 +951,68 @@ export function HomePage() {
           </ModalBody>
         </ModalContent>
       </Modal>
+
+      {/* No Beasts Found toast */}
+      <Box
+        position="fixed"
+        bottom="16px"
+        right="16px"
+        zIndex={20}
+        bg="linear-gradient(180deg, #1e342b 0%, #172a22 60%, #101d18 100%)"
+        border="2px solid #5d816e"
+        borderRadius="12px"
+        px={5}
+        py={4}
+        w="280px"
+        boxShadow="0 8px 24px rgba(0, 0, 0, 0.5)"
+        textAlign="center"
+      >
+        <Text
+          fontFamily="heading"
+          fontSize="md"
+          fontWeight="800"
+          color="#d4e4d9"
+          textTransform="uppercase"
+          letterSpacing="0.1em"
+          mb={3}
+        >
+          Looking for Beasts?
+        </Text>
+        <Text fontSize="xs" color="#a7c4b3" textTransform="uppercase" letterSpacing="0.08em">
+          Play{" "}
+          <Text
+            as="a"
+            href="https://lootsurvivor.io/survivor"
+            target="_blank"
+            rel="noopener noreferrer"
+            color="#d4e4d9"
+            textDecoration="underline"
+            _hover={{ color: "green.300" }}
+          >
+            Loot Survivor 2
+          </Text>
+          {" "}to collect them
+        </Text>
+        <Flex align="center" my={2} gap={3}>
+          <Box flex={1} h="1px" bg="rgba(167, 196, 179, 0.25)" />
+          <Text fontSize="xs" color="#a7c4b3" textTransform="uppercase">or</Text>
+          <Box flex={1} h="1px" bg="rgba(167, 196, 179, 0.25)" />
+        </Flex>
+        <Text fontSize="xs" color="#a7c4b3" textTransform="uppercase" letterSpacing="0.08em">
+          Get them on the{" "}
+          <Text
+            as="a"
+            href="https://beastdex.app/marketplace"
+            target="_blank"
+            rel="noopener noreferrer"
+            color="#d4e4d9"
+            textDecoration="underline"
+            _hover={{ color: "green.300" }}
+          >
+            Marketplace
+          </Text>
+        </Text>
+      </Box>
     </Flex>
   );
 }

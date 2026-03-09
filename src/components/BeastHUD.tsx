@@ -95,6 +95,8 @@ export function BeastHUD({
       }
       boxShadow={isSelected ? "glow" : "none"}
       minW="156px"
+      maxW="100%"
+      overflow="hidden"
       position="relative"
       className={isSelected ? "beast-selected-glow" : !alive ? "beast-ko" : undefined}
     >

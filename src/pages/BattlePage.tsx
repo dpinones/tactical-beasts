@@ -14,7 +14,7 @@ import {
   ModalCloseButton,
   useDisclosure,
 } from "@chakra-ui/react";
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDojo } from "../dojo/DojoContext";
 import { useGameActions } from "../hooks/useGameActions";
@@ -40,6 +40,7 @@ import {
   hexDistance,
 } from "../domain/hexGrid";
 import { getMoveRange, getAttackRange } from "../domain/combat";
+import { getProfile } from "../services/supabase";
 
 function normalizeAddr(addr: string): string {
   if (!addr) return ZERO_ADDR;
@@ -71,6 +72,24 @@ export function BattlePage() {
   const abandonModal = useDisclosure();
 
   const myAddress = account?.address || "";
+
+  // Resolve player usernames
+  const [myName, setMyName] = useState("You");
+  const [enemyName, setEnemyName] = useState("Enemy");
+  const namesResolved = useRef(false);
+  useEffect(() => {
+    if (!game || namesResolved.current) return;
+    const enemyAddr = isSameAddress(game.player1, myAddress) ? game.player2 : game.player1;
+    namesResolved.current = true;
+    getProfile(myAddress).then((p) => {
+      if (p?.display_name) setMyName(p.display_name);
+    });
+    if (enemyAddr && enemyAddr !== ZERO_ADDR) {
+      getProfile(enemyAddr).then((p) => {
+        if (p?.display_name) setEnemyName(p.display_name);
+      });
+    }
+  }, [game, myAddress]);
 
   // Determine player index
   const myPlayerIndex = useMemo(() => {
@@ -299,9 +318,11 @@ export function BattlePage() {
     try {
       const res = await executeTurn(gameId, orderedActions);
       if (res) {
+        const txHash = (res as any)?.transaction_hash;
         addBattleEvent({
           type: "attack",
           message: `Turn executed (Round ${game?.round || "?"})`,
+          txHash,
         });
         refetchGame();
         refetchBeasts();
@@ -333,11 +354,11 @@ export function BattlePage() {
     if (enemyAliveCount === 0) return "Enemy team defeated";
     if (aliveCount === 0) return "Your team was defeated";
     if (!isMyTurn) return "Waiting for opponent...";
-    if (isConfirmLocked) return "acciones enviadas...";
-    if (actions.size >= 3) return "toca el boton confirmar";
-    if (actions.size > 0) return "hace otra accion o confirma que estas listo";
-    if (selectedBeastIndex === null) return "selecciona una bestia o pulsa confirmar";
-    return "elegi donde atacar o moverte";
+    if (isConfirmLocked) return "Actions submitted...";
+    if (actions.size >= 3) return "Press confirm";
+    if (actions.size > 0) return "Plan another action or press confirm";
+    if (selectedBeastIndex === null) return "Select a beast or press confirm";
+    return "Choose where to attack or move";
   }, [enemyAliveCount, aliveCount, isMyTurn, isConfirmLocked, selectedBeastIndex, actions.size]);
 
   const hasBattleStateReady = useMemo(() => {
@@ -405,19 +426,6 @@ export function BattlePage() {
       {/* === TOP HUD === */}
       <Box className="battle-hud-top" px={4} pt={0}>
         <Flex w="100%" maxW="700px" align="flex-start" justify="center" gap={5}>
-          {/* Player tag - left */}
-          <Box className="player-tag player-tag--me" mt={2}>
-            <Box
-              w="28px" h="28px" borderRadius="6px"
-              bg="linear-gradient(135deg, #1d3128, #2a4337)"
-              border="2px solid #6A8F7C"
-              display="flex" alignItems="center" justifyContent="center"
-            >
-              <Text fontSize="xs" fontWeight="bold" color="#CCE0D5">P1</Text>
-            </Box>
-            <Text>You</Text>
-          </Box>
-
           {/* Round badge - center */}
           <Box className={`round-badge ${!isMyTurn ? "round-badge--waiting" : ""}`}>
             {isMyTurn ? (
@@ -429,24 +437,11 @@ export function BattlePage() {
               <>
                 <HStack justify="center" gap={2} mb={1}>
                   <Spinner size="sm" color="#D8B4B4" thickness="3px" speed="0.75s" />
-                  <Text className="round-badge__label">Turno del rival</Text>
+                  <Text className="round-badge__label">Opponent's turn</Text>
                 </HStack>
                 <Text className="round-badge__timer">WAITING</Text>
               </>
             )}
-          </Box>
-
-          {/* Enemy tag - right */}
-          <Box className="player-tag player-tag--enemy" mt={2}>
-            <Text>Enemy</Text>
-            <Box
-              w="28px" h="28px" borderRadius="6px"
-              bg="linear-gradient(135deg, #3a2424, #4f3131)"
-              border="2px solid #9B7171"
-              display="flex" alignItems="center" justifyContent="center"
-            >
-              <Text fontSize="xs" fontWeight="bold" color="#E2C7C7">AI</Text>
-            </Box>
           </Box>
         </Flex>
       </Box>
@@ -483,14 +478,14 @@ export function BattlePage() {
         />
       </Box>
 
-      {isMyTurn && (
+      {isMyTurn && !isConfirmLocked && (
         <Box className="battle-confirm-dock">
           <Button
             variant="unstyled"
             className="battle-confirm-btn"
             onClick={handleConfirmActions}
             isDisabled={!canConfirm}
-            isLoading={isLoading || isConfirmLocked}
+            isLoading={isLoading}
           >
             Confirm Actions
           </Button>
@@ -516,17 +511,18 @@ export function BattlePage() {
         top="80px"
         left="12px"
         zIndex={10}
-        w="220px"
-        gap={2}
+        w="240px"
+        maxW="240px"
+        gap={3}
         align="stretch"
         display={{ base: "none", lg: "flex" }}
       >
         <Box className="battle-panel" flexShrink={0}>
           <Box className="battle-panel__header">
-            <Text className="battle-panel__title">Your Beasts</Text>
+            <Text className="battle-panel__title">{myName}</Text>
           </Box>
           <Box className="battle-panel__body">
-            <VStack gap={1.5} align="stretch">
+            <VStack gap={2} align="stretch">
               {myBeasts.map((beast) => (
                 <BeastHUD
                   key={Number(beast.beast_index)}
@@ -550,26 +546,25 @@ export function BattlePage() {
 
         {/* Planned Actions - below my beasts */}
         {isMyTurn && (
-          <>
-            <Box
-              className={`battle-panel ${actions.size > 0 && canConfirm ? "battle-panel--ready" : ""}`}
-              flexShrink={0}
-            >
-              <Box className="battle-panel__header">
-                <Text className="battle-panel__title">Tus acciones</Text>
-              </Box>
-              <Box className="battle-panel__body">
-                <PlannedActions
-                  myBeasts={myBeasts}
-                  enemyBeasts={enemyBeasts}
-                  actions={actions}
-                  actionHistory={actionHistory}
-                  onUndoLast={handleUndoLast}
-                  onClearAll={handleClearAll}
-                />
-              </Box>
+          <Box
+            className={`battle-panel ${actions.size > 0 && canConfirm ? "battle-panel--ready" : ""}`}
+            mt={3}
+            h="160px"
+          >
+            <Box className="battle-panel__header">
+              <Text className="battle-panel__title">Your Actions</Text>
             </Box>
-          </>
+            <Box className="battle-panel__body" h="calc(100% - 36px)" overflowY="auto">
+              <PlannedActions
+                myBeasts={myBeasts}
+                enemyBeasts={enemyBeasts}
+                actions={actions}
+                actionHistory={actionHistory}
+                onUndoLast={handleUndoLast}
+                onClearAll={handleClearAll}
+              />
+            </Box>
+          </Box>
         )}
       </VStack>
 
@@ -579,14 +574,15 @@ export function BattlePage() {
         top="80px"
         right="12px"
         zIndex={10}
-        w="220px"
+        w="240px"
+        maxW="240px"
         gap={3}
         align="stretch"
-        display={{ base: "none", lg: "block" }}
+        display={{ base: "none", lg: "flex" }}
       >
         <Box className="battle-panel battle-panel--enemy">
           <Box className="battle-panel__header">
-            <Text className="battle-panel__title">Enemy Beasts</Text>
+            <Text className="battle-panel__title">{enemyName}</Text>
           </Box>
           <Box className="battle-panel__body">
             <VStack gap={2} align="stretch">
@@ -601,11 +597,11 @@ export function BattlePage() {
           </Box>
         </Box>
 
-        <Box className="battle-panel" mt={3}>
+        <Box className="battle-panel" mt={3} h="160px">
           <Box className="battle-panel__header">
             <Text className="battle-panel__title">Battle Log</Text>
           </Box>
-          <Box className="battle-panel__body" maxH="160px" overflowY="auto">
+          <Box className="battle-panel__body" h="calc(100% - 36px)" overflowY="auto">
             <BattleLog events={battleLog} />
           </Box>
         </Box>

@@ -92,6 +92,7 @@ export interface BattleEvent {
   attackerPlayer?: number;
   defenderPlayer?: number;
   message: string;
+  txHash?: string;
 }
 
 // Onchain game model

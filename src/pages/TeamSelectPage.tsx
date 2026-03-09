@@ -899,6 +899,7 @@ export function TeamSelectPage() {
           </ModalBody>
         </ModalContent>
       </Modal>
+
     </Flex>
   );
 }

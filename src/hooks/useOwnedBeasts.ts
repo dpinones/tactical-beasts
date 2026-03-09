@@ -34,7 +34,14 @@ export function useOwnedBeasts() {
   );
 
   // Filter out T1 and T5 beasts — only T2-T4 allowed in tactical combat
-  const allBeasts = isLocal ? LOCAL_BEASTS : (data ?? []);
+  const chain = import.meta.env.VITE_CHAIN?.trim() || "";
+  const isSepolia = chain === "sepolia";
+  const fetched = data ?? [];
+  const allBeasts = isLocal
+    ? LOCAL_BEASTS
+    : isSepolia && fetched.length === 0
+      ? LOCAL_BEASTS
+      : fetched;
   const validBeasts = allBeasts.filter((b) => isValidTier(b.tier));
 
   return {

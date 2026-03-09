@@ -64,12 +64,18 @@ export function TeamSelectPage() {
   const timerRef = useRef<number | null>(null);
   const [tierFilter, setTierFilter] = useState<number | null>(null);
   const [subclassFilter, setSubclassFilter] = useState<Subclass | null>(null);
+  const [activeSlot, setActiveSlot] = useState(0);
+
+  // Tier restriction per slot: slot 1 → T2+, slot 2 → T3+, slot 3 → T4+
+  const SLOT_MIN_TIER: Record<number, number> = { 0: 2, 1: 3, 2: 4 };
+  const getSlotMinTier = (slotIndex: number) => SLOT_MIN_TIER[slotIndex] ?? 5;
   const [search, setSearch] = useState("");
   const [statusMsg, setStatusMsg] = useState("");
   const [coinResultVisible, setCoinResultVisible] = useState(false);
   const [coinIGoFirst, setCoinIGoFirst] = useState(false);
   const [coinMyName, setCoinMyName] = useState("You");
   const [coinEnemyName, setCoinEnemyName] = useState("Opponent");
+  const [opponentName, setOpponentName] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>(
     isMatchMode ? "select" : isCreateMode ? "creating" : "joining"
   );
@@ -149,11 +155,14 @@ export function TeamSelectPage() {
     return s?.max_t3_per_team ?? MAX_T3_PER_TEAM;
   }, [polledGame, allSettings]);
 
-  // Tier-limited toggle: respect settings for max per tier and team size
+  // Tier-limited toggle: respect slot tier restrictions
   const handleToggleBeast = useCallback((tokenId: number) => {
     // Always allow deselecting
     if (selectedBeasts.includes(tokenId)) {
+      const removedIndex = selectedBeasts.indexOf(tokenId);
       toggleBeast(tokenId);
+      // Set active slot to the removed slot
+      setActiveSlot(removedIndex);
       return;
     }
     // Enforce team size limit
@@ -163,20 +172,20 @@ export function TeamSelectPage() {
     }
     const beast = catalog.find((b) => b.tokenId === tokenId);
     if (!beast) return;
-    const currentTiers = selectedBeasts
-      .map((id) => catalog.find((b) => b.tokenId === id))
-      .filter(Boolean)
-      .map((b) => b!.tier);
-    if (beast.tier === 2 && currentTiers.filter((t) => t === 2).length >= maxT2) {
-      toast.error(`Max ${maxT2} T2 beast(s) per team`);
-      return;
-    }
-    if (beast.tier === 3 && currentTiers.filter((t) => t === 3).length >= maxT3) {
-      toast.error(`Max ${maxT3} T3 beast(s) per team`);
+    // Enforce slot tier restriction
+    const slotMinTier = getSlotMinTier(activeSlot);
+    if (beast.tier < slotMinTier) {
+      toast.error(`Slot ${activeSlot + 1} only allows Tier ${slotMinTier} or worse`);
       return;
     }
     toggleBeast(tokenId);
-  }, [selectedBeasts, catalog, toggleBeast, beatsPerPlayer, maxT2, maxT3]);
+    // Auto-advance to next empty slot
+    const nextBeasts = [...selectedBeasts, tokenId];
+    const nextEmpty = Array.from({ length: beatsPerPlayer }, (_, i) => i).find((i) => !nextBeasts[i]);
+    if (nextEmpty !== undefined) {
+      setActiveSlot(nextEmpty);
+    }
+  }, [selectedBeasts, catalog, toggleBeast, beatsPerPlayer, activeSlot]);
 
   // Check if a beast's tier slot is full (for disabling cards)
   const isTierFull = useCallback((tier: number): boolean => {
@@ -189,9 +198,12 @@ export function TeamSelectPage() {
     return false;
   }, [selectedBeasts, catalog, maxT2, maxT3]);
 
-  // Apply filters to a beast list
+  // Apply filters to a beast list (includes slot tier restriction)
+  const slotMinTier = getSlotMinTier(activeSlot);
   const applyFilters = useCallback((beasts: CatalogBeast[], skipTypeFilter = false): CatalogBeast[] => {
     let result = beasts;
+    // Slot tier restriction: only show beasts eligible for active slot
+    result = result.filter((b) => b.tier >= slotMinTier);
     if (!skipTypeFilter) {
       if (filter === "default") {
         result = result.filter((b) => defaultTokenIds.has(b.tokenId));
@@ -214,21 +226,22 @@ export function TeamSelectPage() {
       result = result.filter((b) => String(b.tokenId).startsWith(search));
     }
     return result;
-  }, [filter, tierFilter, subclassFilter, search]);
+  }, [filter, tierFilter, subclassFilter, search, slotMinTier]);
 
-  // Defaults always shown at top (unless filter hides them)
+  // Defaults always shown at top (unless filter hides them), respect slot tier
   const filteredDefaults = useMemo(() => {
-    if (filter === "default") return applyFilters(DEFAULT_BEASTS, true);
+    let defaults = DEFAULT_BEASTS.filter((b) => b.tier >= slotMinTier);
+    if (filter === "default") return applyFilters(defaults, true);
     if (filter !== "all") {
       const typeMap: Record<string, BeastType> = {
         Magical: BeastType.Magical,
         Hunter: BeastType.Hunter,
         Brute: BeastType.Brute,
       };
-      return DEFAULT_BEASTS.filter((b) => b.type === typeMap[filter]);
+      defaults = defaults.filter((b) => b.type === typeMap[filter]);
     }
-    return DEFAULT_BEASTS;
-  }, [filter, applyFilters]);
+    return defaults;
+  }, [filter, applyFilters, slotMinTier]);
 
   // Owned beasts filtered (exclude defaults from this list)
   const filteredOwned = useMemo(() => {
@@ -306,6 +319,14 @@ export function TeamSelectPage() {
   }, [polledGame, myAddress]);
 
   const { profile: opponentProfile } = usePlayerProfile(opponentAddress);
+
+  // Resolve opponent display name from Supabase
+  useEffect(() => {
+    if (!opponentAddress) return;
+    getProfile(opponentAddress).then((p) => {
+      if (p?.display_name) setOpponentName(p.display_name);
+    });
+  }, [opponentAddress]);
 
   // Lobby: wait for opponent to join, then move to team select
   useEffect(() => {
@@ -443,13 +464,19 @@ export function TeamSelectPage() {
     };
   }, [phase]);
 
-  // Auto-confirm when timer expires
+  // TODO: Auto-confirm when timer expires — disabled for now
+  // useEffect(() => {
+  //   if (timer !== 0 || phase !== "select") return;
+  //   const team = getAutoFilledTeam(selectedBeasts);
+  //   setSelectedBeasts(team);
+  //   handleConfirmTeam(team);
+  // }, [timer, phase]);
+
+  // Auto-confirm when all slots are filled
   useEffect(() => {
-    if (timer !== 0 || phase !== "select") return;
-    const team = getAutoFilledTeam(selectedBeasts);
-    setSelectedBeasts(team);
-    handleConfirmTeam(team);
-  }, [timer, phase]);
+    if (phase !== "select" || selectedBeasts.length !== beatsPerPlayer) return;
+    handleConfirmTeam();
+  }, [selectedBeasts, phase, beatsPerPlayer]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // --- Creating / Joining ---
   if (phase === "creating" || phase === "joining") {
@@ -533,52 +560,67 @@ export function TeamSelectPage() {
     );
   }
 
-  // --- Team selection (2-panel layout) ---
+  // --- Team selection (2-panel layout with battle-panel styling) ---
   return (
-    <Flex
-      direction="column"
-      h="100vh"
-      w="100vw"
-      overflow="hidden"
-      p={4}
-    >
-      {/* Header */}
-      <Flex justify="space-between" align="center" mb={4}>
-        <Heading size="md" fontFamily="heading" color="green.300" textTransform="uppercase">
-          Select Your Team — Game #{gameId}
-        </Heading>
-        <Button size="sm" variant="ghost" onClick={leaveModal.onOpen}>Leave</Button>
-      </Flex>
+    <Box className="team-select">
+      {/* Header bar */}
+      <Box className="team-select__header">
+        <Flex align="center" gap={3}>
+          <Text className="team-select__title">Select Your Team</Text>
+          <Text className="team-select__game-id">Game #{gameId}</Text>
+        </Flex>
+        <Flex align="center" gap={3}>
+          {/* Timer in header */}
+          {phase === "select" && (
+            <Flex align="center" gap={2}>
+              <Box w="80px" h="3px" bg="rgba(255,255,255,0.1)" borderRadius="3px" overflow="hidden">
+                <Box
+                  h="100%"
+                  w={`${(timer / 30) * 100}%`}
+                  className="team-select__timer-bar"
+                  bg={timer <= 10 ? "#B36E6E" : "#87B49B"}
+                />
+              </Box>
+              <Text fontFamily="mono" fontSize="sm" fontWeight="700" color={timer <= 10 ? "#B36E6E" : "#87B49B"}>
+                {timer}s
+              </Text>
+            </Flex>
+          )}
+          <Button
+            variant="unstyled"
+            className="battle-confirm-btn battle-leave-btn"
+            onClick={leaveModal.onOpen}
+            display="inline-flex"
+          >
+            Leave
+          </Button>
+        </Flex>
+      </Box>
 
-
-      {/* Two-panel layout */}
-      <Flex direction={{ base: "column", lg: "row" }} gap={4} flex={1} minH={0} overflow="hidden">
-        {/* Left panel: Filters + Beast catalog (only scrollable area) */}
-        <Box
-          flex={3}
-          minH={0}
-          overflowY="auto"
-          pr={1}
-        >
+      {/* Main content */}
+      <Flex flex={1} minH={0} overflow="hidden">
+        {/* LEFT — Beast catalog panel */}
+        <Box flex={3} minH={0} overflowY="auto" p={3}>
           {/* Filters */}
-          <Flex gap={2} mb={3} flexWrap="wrap" align="center">
+          <Box className="team-select__filters">
             <Input
               placeholder="Token ID..."
               size="sm"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              maxW="180px"
+              maxW="140px"
+              bg="rgba(0,0,0,0.25)"
+              borderColor="rgba(93,129,110,0.3)"
+              _focus={{ borderColor: "#87B49B" }}
+              fontSize="xs"
             />
             <Select
               size="sm"
-              maxW="130px"
+              maxW="120px"
               value={filter}
-              onChange={(e) => {
-                setFilter(e.target.value as any);
-                setSubclassFilter(null);
-              }}
-              bg="surface.panel"
-              borderColor="surface.border"
+              onChange={(e) => { setFilter(e.target.value as any); setSubclassFilter(null); }}
+              bg="rgba(0,0,0,0.25)"
+              borderColor="rgba(93,129,110,0.3)"
               fontSize="xs"
             >
               <option value="all">All Types</option>
@@ -589,11 +631,11 @@ export function TeamSelectPage() {
             </Select>
             <Select
               size="sm"
-              maxW="140px"
+              maxW="130px"
               value={subclassFilter === null ? "all" : String(subclassFilter)}
               onChange={(e) => setSubclassFilter(e.target.value === "all" ? null : Number(e.target.value) as Subclass)}
-              bg="surface.panel"
-              borderColor="surface.border"
+              bg="rgba(0,0,0,0.25)"
+              borderColor="rgba(93,129,110,0.3)"
               fontSize="xs"
             >
               <option value="all">All Subclasses</option>
@@ -618,112 +660,196 @@ export function TeamSelectPage() {
             </Select>
             <Select
               size="sm"
-              maxW="100px"
+              maxW="110px"
               value={tierFilter === null ? "all" : String(tierFilter)}
               onChange={(e) => setTierFilter(e.target.value === "all" ? null : Number(e.target.value))}
-              bg="surface.panel"
-              borderColor="surface.border"
+              bg="rgba(0,0,0,0.25)"
+              borderColor="rgba(93,129,110,0.3)"
               fontSize="xs"
             >
-              <option value="all">All Tiers</option>
-              <option value="2">T2</option>
-              <option value="3">T3</option>
-              <option value="4">T4</option>
+              <option value="all">{slotMinTier === 4 ? "T4" : `T${slotMinTier}–T4`}</option>
+              {slotMinTier <= 2 && <option value="2">T2</option>}
+              {slotMinTier <= 3 && <option value="3">T3</option>}
+              {slotMinTier <= 4 && <option value="4">T4</option>}
             </Select>
-          </Flex>
+          </Box>
 
           {/* Beast catalog */}
-          <Box mb={4}>
-            {beastsLoading ? (
-              <Flex justify="center" py={8}>
-                <Spinner color="green.400" size="lg" />
-              </Flex>
-            ) : filteredDefaults.length === 0 && filteredOwned.length === 0 ? (
-              <Flex direction="column" align="center" py={8} gap={2}>
-                <Text color="text.secondary" fontSize="sm">No beasts match filters</Text>
-                <Text color="text.muted" fontSize="xs">Try changing your filters or use Default beasts</Text>
-              </Flex>
-            ) : (
-              <>
-                {/* Default Beasts section */}
-                {filteredDefaults.length > 0 && (
-                  <Box mb={4}>
-                    <Text fontSize="10px" color="text.muted" textTransform="uppercase" letterSpacing="0.1em" mb={2}>
-                      Default Beasts
-                    </Text>
-                    <SimpleGrid columns={{ base: 2, md: 3, lg: 3 }} gap={3}>
-                      {filteredDefaults.map((beast) => (
-                        <BeastCard
-                          key={beast.tokenId}
-                          beast={beast}
-                          isSelected={selectedBeasts.includes(beast.tokenId)}
-                          onToggle={handleToggleBeast}
-                          disabled={!selectedBeasts.includes(beast.tokenId) && (selectedBeasts.length >= beatsPerPlayer || isTierFull(beast.tier))}
-                          isDefault={true}
-                        />
-                      ))}
-                    </SimpleGrid>
-                  </Box>
-                )}
-
-                {/* Owned Beasts section */}
-                {filteredOwned.length > 0 && (
-                  <Box>
-                    <Text fontSize="10px" color="text.muted" textTransform="uppercase" letterSpacing="0.1em" mb={2}>
-                      Your Beasts
-                    </Text>
-                    <SimpleGrid columns={{ base: 2, md: 3, lg: 3 }} gap={3}>
-                      {filteredOwned.map((beast) => (
-                        <BeastCard
-                          key={beast.tokenId}
-                          beast={beast}
-                          isSelected={selectedBeasts.includes(beast.tokenId)}
-                          onToggle={handleToggleBeast}
-                          disabled={!selectedBeasts.includes(beast.tokenId) && (selectedBeasts.length >= beatsPerPlayer || isTierFull(beast.tier))}
-                          isDefault={false}
-                        />
-                      ))}
-                    </SimpleGrid>
-                  </Box>
-                )}
-              </>
-            )}
-          </Box>
+          {beastsLoading ? (
+            <Flex justify="center" py={8}>
+              <Spinner color="green.400" size="lg" />
+            </Flex>
+          ) : filteredDefaults.length === 0 && filteredOwned.length === 0 ? (
+            <Flex direction="column" align="center" py={8} gap={2}>
+              <Text color="#9AA99B" fontSize="sm">No beasts match filters</Text>
+              <Text color="#6F7F72" fontSize="xs">Try changing your filters or use Default beasts</Text>
+            </Flex>
+          ) : (
+            <>
+              {filteredDefaults.length > 0 && (
+                <Box mb={4}>
+                  <Text fontFamily="heading" fontSize="xs" color="#9AA99B" textTransform="uppercase" letterSpacing="0.12em" mb={2}>
+                    Default Beasts
+                  </Text>
+                  <SimpleGrid columns={{ base: 2, md: 3, lg: 3 }} gap={3}>
+                    {filteredDefaults.map((beast) => (
+                      <BeastCard
+                        key={beast.tokenId}
+                        beast={beast}
+                        isSelected={selectedBeasts.includes(beast.tokenId)}
+                        onToggle={handleToggleBeast}
+                        disabled={!selectedBeasts.includes(beast.tokenId) && (selectedBeasts.length >= beatsPerPlayer || isTierFull(beast.tier))}
+                        isDefault={true}
+                      />
+                    ))}
+                  </SimpleGrid>
+                </Box>
+              )}
+              {filteredOwned.length > 0 && (
+                <Box>
+                  <Text fontFamily="heading" fontSize="xs" color="#9AA99B" textTransform="uppercase" letterSpacing="0.12em" mb={2}>
+                    Your Beasts
+                  </Text>
+                  <SimpleGrid columns={{ base: 2, md: 3, lg: 3 }} gap={3}>
+                    {filteredOwned.map((beast) => (
+                      <BeastCard
+                        key={beast.tokenId}
+                        beast={beast}
+                        isSelected={selectedBeasts.includes(beast.tokenId)}
+                        onToggle={handleToggleBeast}
+                        disabled={!selectedBeasts.includes(beast.tokenId) && (selectedBeasts.length >= beatsPerPlayer || isTierFull(beast.tier))}
+                        isDefault={false}
+                      />
+                    ))}
+                  </SimpleGrid>
+                </Box>
+              )}
+            </>
+          )}
         </Box>
 
-        {/* Right panel: Opponent profile + Map preview */}
-        <Box flex={2} minH={0} overflow="hidden">
-          {/* Opponent profile */}
-          {opponentProfile && (
-            <Box bg="surface.panel" border="1px solid" borderColor="danger.700" borderRadius="12px" p={3} mb={4}>
-              <Flex justify="space-between" align="center" mb={2}>
-                <Text fontSize="9px" color="danger.300" textTransform="uppercase" letterSpacing="0.1em">
-                  Opponent
-                </Text>
-                <Text fontSize="9px" color="text.muted" fontFamily="mono">
-                  {opponentAddress ? opponentAddress.slice(0, 6) + "..." + opponentAddress.slice(-4) : ""}
-                </Text>
+        {/* RIGHT — Team + Map + Opponent (battle-panel style) */}
+        <Box flex={2} minH={0} overflowY="auto" p={3} display="flex" flexDirection="column" gap={3} justifyContent="center">
+          {/* Your Team panel */}
+          <Box className="battle-panel" flexShrink={0}>
+            <Box className="battle-panel__header">
+              <Flex justify="space-between" align="center">
+                <Flex align="center" gap={2}>
+                  <Text className="battle-panel__title">Your Team</Text>
+                  <Badge
+                    bg="rgba(189,145,84,0.2)"
+                    border="1px solid"
+                    borderColor="rgba(189,145,84,0.55)"
+                    color="#DEC398"
+                    fontSize="10px"
+                    px={2}
+                    py={0.5}
+                    borderRadius="8px"
+                  >
+                    {selectedBeasts.length}/{beatsPerPlayer}
+                  </Badge>
+                </Flex>
+                <Box
+                  className="team-slot__remove"
+                  fontSize="xs"
+                  fontFamily="mono"
+                  letterSpacing="0.06em"
+                  onClick={() => { clearSelectedBeasts(); setActiveSlot(0); }}
+                >
+                  Clear
+                </Box>
               </Flex>
-              <HStack gap={4} fontSize="xs" fontFamily="mono" color="text.secondary" flexWrap="wrap">
-                <Text>Games: <Text as="span" color="text.gold">{opponentProfile.games_played}</Text></Text>
-                <Text>W: <Text as="span" color="green.300">{opponentProfile.wins}</Text></Text>
-                <Text>L: <Text as="span" color="danger.300">{opponentProfile.losses}</Text></Text>
-                <Text>Abandons: <Text as="span" color="text.muted">{opponentProfile.abandons}</Text></Text>
-                <Text>K/D: <Text as="span" color="text.primary">
-                  {opponentProfile.total_deaths === 0
-                    ? opponentProfile.total_kills > 0 ? `${opponentProfile.total_kills}/0` : "--"
-                    : `${opponentProfile.total_kills}/${opponentProfile.total_deaths}`}
-                </Text></Text>
-              </HStack>
+            </Box>
+            <Box className="battle-panel__body">
+              <Flex direction="column" gap={2}>
+                {Array.from({ length: beatsPerPlayer }, (_, i) => {
+                  const tokenId = selectedBeasts[i];
+                  const beast = tokenId ? catalog.find((b) => b.tokenId === tokenId) : null;
+                  const isActive = activeSlot === i;
+                  const minTier = getSlotMinTier(i);
+                  if (!beast || !tokenId) {
+                    return (
+                      <Box
+                        key={`empty-slot-${i}`}
+                        className={`team-slot ${isActive ? "team-slot--active" : ""}`}
+                        onClick={() => setActiveSlot(i)}
+                      >
+                        <span className="team-slot__number">{i + 1}</span>
+                        <span className="team-slot__tier">{minTier === 4 ? "T4" : `T${minTier} – T4`}</span>
+                        {isActive && <span className="team-slot__selecting">selecting</span>}
+                      </Box>
+                    );
+                  }
+                  const subclass = getSubclass(beast.beastId);
+                  return (
+                    <Flex
+                      key={tokenId}
+                      className={`team-slot team-slot--filled ${isActive ? "team-slot--active" : ""}`}
+                    >
+                      <Text className="team-slot__number">{i + 1}</Text>
+                      <Image
+                        src={`/beasts/${beast.beast.toLowerCase()}.png`}
+                        alt={beast.beast}
+                        w="36px"
+                        h="36px"
+                        objectFit="contain"
+                        borderRadius="8px"
+                        border="1px solid rgba(93,129,110,0.3)"
+                        bg="rgba(0,0,0,0.3)"
+                      />
+                      <Text fontSize="sm" fontWeight="700" color="#E5DED0" noOfLines={1} fontFamily="heading" textTransform="uppercase" letterSpacing="0.04em" flex={1} minW={0}>
+                        {beast.beast}
+                      </Text>
+                      <HStack gap={2} flexShrink={0} fontSize="xs" fontFamily="mono" color="#9AA99B">
+                        <Badge variant={beast.type === BeastType.Magical ? "magical" : beast.type === BeastType.Hunter ? "hunter" : "brute"} fontSize="9px">
+                          {beast.typeName}
+                        </Badge>
+                        <Text>{getSubclassName(subclass)}</Text>
+                        <Text>T{beast.tier}</Text>
+                        <Text color="#CDAE79" fontWeight="600">Lv{beast.level}</Text>
+                        <Text color="#CDAE79" fontWeight="600">HP {beast.health}</Text>
+                        <Text color="#6F7F72">#{beast.tokenId}</Text>
+                      </HStack>
+                      <Box className="team-slot__remove" onClick={() => handleToggleBeast(tokenId)}>✕</Box>
+                    </Flex>
+                  );
+                })}
+              </Flex>
+
+              {statusMsg && (
+                <Text fontSize="xs" color="#9AA99B" mt={2} textAlign="center">{statusMsg}</Text>
+              )}
+            </Box>
+          </Box>
+
+          {/* Opponent panel */}
+          {opponentProfile && (
+            <Box className="battle-panel battle-panel--enemy" flexShrink={0}>
+              <Box className="battle-panel__header">
+                <Text className="battle-panel__title">Opponent: {opponentName || "..."}</Text>
+              </Box>
+              <Box className="battle-panel__body">
+                <HStack gap={5} fontSize="sm" fontFamily="mono" color="#9AA99B" flexWrap="wrap" justify="center">
+                  <Text>Games: <Text as="span" color="#CDAE79" fontWeight="700">{opponentProfile.games_played}</Text></Text>
+                  <Text>W: <Text as="span" color="#A7D5BF" fontWeight="700">{opponentProfile.wins}</Text></Text>
+                  <Text>L: <Text as="span" color="#B36E6E" fontWeight="700">{opponentProfile.losses}</Text></Text>
+                  <Text>Abandons: <Text as="span" color="#6F7F72" fontWeight="700">{opponentProfile.abandons}</Text></Text>
+                  <Text>K/D: <Text as="span" color="#E5DED0" fontWeight="700">
+                    {opponentProfile.total_deaths === 0
+                      ? opponentProfile.total_kills > 0 ? `${opponentProfile.total_kills}/0` : "--"
+                      : `${opponentProfile.total_kills}/${opponentProfile.total_deaths}`}
+                  </Text></Text>
+                </HStack>
+              </Box>
             </Box>
           )}
 
-          {/* Map preview */}
-          <Box bg="surface.panel" border="1px solid" borderColor="surface.border" borderRadius="12px" p={2}>
-            <Text fontSize="9px" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em" mb={2}>
-              Arena Map
-            </Text>
-            <Box pointerEvents="none">
+          {/* Map preview panel */}
+          <Box className="battle-panel" flexShrink={0}>
+            <Box className="battle-panel__header">
+              <Text className="battle-panel__title">Arena Map</Text>
+            </Box>
+            <Box className="battle-panel__body" pointerEvents="none">
               <HexGrid
                 hexSize={17}
                 myBeasts={[]}
@@ -736,177 +862,34 @@ export function TeamSelectPage() {
               />
             </Box>
           </Box>
-
-          {/* Timer */}
-          {phase === "select" && (
-            <Box mt={4} mb={2}>
-              <Flex justify="space-between" align="center" mb={1}>
-                <Text fontSize="9px" color={timer <= 10 ? "danger.300" : "text.secondary"} textTransform="uppercase" letterSpacing="0.1em">
-                  Time Remaining
-                </Text>
-                <Text fontSize="sm" fontFamily="mono" fontWeight="bold" color={timer <= 10 ? "danger.300" : "green.300"}>
-                  {timer}s
-                </Text>
-              </Flex>
-              <Box
-                h="4px"
-                bg="rgba(255,255,255,0.1)"
-                borderRadius="6px"
-                overflow="hidden"
-              >
-                <Box
-                  h="100%"
-                  w={`${(timer / 30) * 100}%`}
-                  bg={timer <= 10 ? "danger.400" : "green.400"}
-                  borderRadius="6px"
-                  transition="width 1s linear"
-                />
-              </Box>
-            </Box>
-          )}
-
-          {/* Selected beasts */}
-          <Box mt={phase === "select" ? 0 : 4} bg="surface.panel" border="1px solid" borderColor="surface.border" borderRadius="12px" p={2}>
-            <Flex align="center" justify="space-between" mb={2}>
-              <Text fontSize="9px" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em">
-                Your Team
-              </Text>
-              <Badge
-                bg="rgba(189,145,84,0.2)"
-                border="1px solid"
-                borderColor="rgba(189,145,84,0.55)"
-                color="#DEC398"
-                fontSize="10px"
-                px={2}
-                py={0.5}
-                borderRadius="8px"
-              >
-                {selectedBeasts.length}/{beatsPerPlayer}
-              </Badge>
-            </Flex>
-            <Flex direction="column" gap={1.5}>
-              {Array.from({ length: beatsPerPlayer }, (_, i) => {
-                const tokenId = selectedBeasts[i];
-                const beast = tokenId ? catalog.find((b) => b.tokenId === tokenId) : null;
-                if (!beast || !tokenId) {
-                  return (
-                    <Flex
-                      key={`empty-slot-${i}`}
-                      border="1px dashed"
-                      borderColor="surface.border"
-                      borderRadius="10px"
-                      p={1.5}
-                      align="center"
-                      gap={3}
-                      h="44px"
-                      bg="rgba(0, 0, 0, 0.14)"
-                    >
-                      <Text fontSize="xs" color="text.muted" fontWeight="bold" w="16px">
-                        {i + 1}
-                      </Text>
-                      <Text fontSize="xs" color="text.muted">
-                        Empty slot
-                      </Text>
-                    </Flex>
-                  );
-                }
-                const subclass = getSubclass(beast.beastId);
-                return (
-                  <Flex
-                    key={tokenId}
-                    bg="rgba(135, 180, 155, 0.16)"
-                    border="1px solid"
-                    borderColor="green.600"
-                    borderRadius="10px"
-                    p={1.5}
-                    align="center"
-                    gap={3}
-                  >
-                    <Text fontSize="xs" color="green.400" fontWeight="bold" w="16px">
-                      {i + 1}
-                    </Text>
-                    <Image
-                      src={`/beasts/${beast.beast.toLowerCase()}.png`}
-                      alt={beast.beast}
-                      w="34px"
-                      h="34px"
-                      objectFit="contain"
-                      borderRadius="8px"
-                      bg="surface.card"
-                    />
-                    <Box flex={1} minW={0}>
-                      <Text fontSize="xs" fontWeight="600" color="text.primary" noOfLines={1}>
-                        {beast.beast}
-                      </Text>
-                      <HStack gap={1.5} fontSize="8px" color="text.secondary">
-                        <Badge variant={beast.type === BeastType.Magical ? "magical" : beast.type === BeastType.Hunter ? "hunter" : "brute"} fontSize="8px">
-                          {beast.typeName}
-                        </Badge>
-                        <Text>{getSubclassName(subclass)}</Text>
-                        <Text>T{beast.tier}</Text>
-                      </HStack>
-                    </Box>
-                    <Flex direction="column" align="flex-end" gap={0.5}>
-                      <Text fontSize="8px" color="text.gold" fontFamily="mono">
-                        Lv{beast.level} · HP {beast.health}
-                      </Text>
-                      <Text fontSize="8px" color="text.muted" fontFamily="mono">
-                        #{beast.tokenId}
-                      </Text>
-                    </Flex>
-                    <Button
-                      size="xs"
-                      variant="ghost"
-                      color="danger.300"
-                      onClick={() => handleToggleBeast(tokenId)}
-                      px={1}
-                    >
-                      ✕
-                    </Button>
-                  </Flex>
-                );
-              })}
-            </Flex>
-          </Box>
-
-          {/* Confirm button */}
-          <Flex gap={3} align="center" mt={4}>
-            <Button
-              variant="primary"
-              size="lg"
-              onClick={() => handleConfirmTeam()}
-              isDisabled={selectedBeasts.length !== beatsPerPlayer}
-              isLoading={phase === "confirming"}
-              flex={1}
-            >
-              Confirm Team ({selectedBeasts.length}/{beatsPerPlayer})
-            </Button>
-            <Button variant="ghost" size="sm" onClick={clearSelectedBeasts}>Clear</Button>
-          </Flex>
-
-          {statusMsg && (
-            <Text fontSize="xs" color="text.secondary" mt={2} textAlign="center">{statusMsg}</Text>
-          )}
         </Box>
       </Flex>
 
       {/* Leave confirmation modal */}
       <Modal isOpen={leaveModal.isOpen} onClose={leaveModal.onClose} isCentered>
-        <ModalOverlay />
-        <ModalContent bg="surface.overlay" border="1px solid" borderColor="danger.500">
-          <ModalHeader fontSize="md" color="danger.200">Leave Game</ModalHeader>
-          <ModalCloseButton />
+        <ModalOverlay bg="rgba(0,0,0,0.7)" />
+        <ModalContent
+          bg="linear-gradient(180deg, #3b2222 0%, #2d1919 60%, #1f1212 100%)"
+          border="2px solid #8f6262"
+          borderRadius="var(--radius-lg)"
+          boxShadow="0 8px 24px rgba(0, 0, 0, 0.42)"
+        >
+          <ModalHeader fontFamily="heading" fontSize="md" color="#d7b3b3" textTransform="uppercase" letterSpacing="0.1em">
+            Leave Game
+          </ModalHeader>
+          <ModalCloseButton color="#8f6262" />
           <ModalBody pb={6}>
-            <Text fontSize="sm" color="text.secondary" mb={4}>
+            <Text fontSize="sm" color="#9AA99B" mb={4}>
               Are you sure you want to leave? This will count as a loss and your opponent wins.
             </Text>
             <HStack justify="flex-end" gap={3}>
-              <Button size="sm" variant="ghost" color="text.secondary" onClick={leaveModal.onClose}>
+              <Button size="sm" variant="ghost" color="#9AA99B" onClick={leaveModal.onClose}>
                 Cancel
               </Button>
               <Button
                 size="sm"
-                variant="danger"
+                variant="unstyled"
+                className="battle-confirm-btn battle-leave-btn"
                 isLoading={isLoading}
                 onClick={async () => {
                   if (gameId) await abandonGame(gameId);
@@ -920,7 +903,6 @@ export function TeamSelectPage() {
           </ModalBody>
         </ModalContent>
       </Modal>
-
-    </Flex>
+    </Box>
   );
 }

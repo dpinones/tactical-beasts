@@ -4,11 +4,11 @@ PvP 1v1 turn-based tactical game on Starknet. Build a team of 3 beast NFTs from 
 
 Part of the [Provable Games](https://docs.provable.games/) ecosystem — beasts, combat formulas, and tournament integration come from shared onchain infrastructure. All game logic runs fully onchain via Dojo.
 
-> **Sepolia demo**: everything functional except mainnet beast fetching — uses predefined test beasts. Create game configurations via EGS, play 1v1 with friends, and explore custom settings.
+> **The main playable demo is on Sepolia** — everything is fully functional: matchmaking, friends, custom game settings via EGS, battles, and leaderboard. Uses predefined test beasts instead of mainnet NFTs, so anyone can try it without owning beast NFTs.
 
 ---
 
-**[Demo Video](https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=RDdQw4w9WgXcQ&start_radio=1)** | **[Sepolia Demo](https://tactical-beasts-sepolia.vercel.app/)** | **[Mainnet Demo](https://tactical-beasts.vercel.app/)**
+### **[Play the Demo (Sepolia)](https://tactical-beasts-sepolia.vercel.app/)** | [Demo Video](https://youtu.be/xJ5iF3fTE1Y) | [Mainnet](https://tactical-beasts.vercel.app/)
 
 ---
 

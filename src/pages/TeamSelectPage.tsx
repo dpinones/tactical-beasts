@@ -464,19 +464,14 @@ export function TeamSelectPage() {
     };
   }, [phase]);
 
-  // TODO: Auto-confirm when timer expires — disabled for now
-  // useEffect(() => {
-  //   if (timer !== 0 || phase !== "select") return;
-  //   const team = getAutoFilledTeam(selectedBeasts);
-  //   setSelectedBeasts(team);
-  //   handleConfirmTeam(team);
-  // }, [timer, phase]);
-
-  // Auto-confirm when all slots are filled
+  // Auto-confirm when timer expires
   useEffect(() => {
-    if (phase !== "select" || selectedBeasts.length !== beatsPerPlayer) return;
-    handleConfirmTeam();
-  }, [selectedBeasts, phase, beatsPerPlayer]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (timer !== 0 || phase !== "select") return;
+    const team = getAutoFilledTeam(selectedBeasts);
+    setSelectedBeasts(team);
+    handleConfirmTeam(team);
+  }, [timer, phase]); // eslint-disable-line react-hooks/exhaustive-deps
+
 
   // --- Creating / Joining ---
   if (phase === "creating" || phase === "joining") {
@@ -602,6 +597,9 @@ export function TeamSelectPage() {
         {/* LEFT — Beast catalog panel */}
         <Box flex={3} minH={0} overflowY="auto" p={3}>
           {/* Filters */}
+          <Text fontSize="xs" color="#6F7F72" fontFamily="mono" mb={1}>
+            T1 and T5 beasts are excluded for game balance.
+          </Text>
           <Box className="team-select__filters">
             <Input
               placeholder="Token ID..."

@@ -39,8 +39,10 @@ import {
   Friendship,
   GameInvite,
   PlayerConfig,
+  updateDisplayName,
 } from "../services/supabase";
 import { getUniqueBeastSpecies } from "../data/beasts";
+import { controller } from "../dojo/controller/controller";
 import { usePlayerProfile, useGameSettings } from "../hooks/useGameQuery";
 import { Select } from "@chakra-ui/react";
 
@@ -127,6 +129,7 @@ export function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<PlayerConfig[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
   const [friendProfiles, setFriendProfiles] = useState<Record<string, PlayerConfig>>({});
   const [inviteSettingsId, setInviteSettingsId] = useState<number>(0);
   const { settings: gameSettingsList } = useGameSettings();
@@ -151,10 +154,15 @@ export function HomePage() {
   useEffect(() => {
     if (!walletAddress) return;
     (async () => {
+      await getOrCreateProfile(walletAddress);
+      if (accountType === "controller" && controller) {
+        const username = await controller.username();
+        if (username) await updateDisplayName(walletAddress, username);
+      }
       const p = await getOrCreateProfile(walletAddress);
       if (p) setProfile(p);
     })();
-  }, [walletAddress]);
+  }, [walletAddress, accountType]);
 
   // Load friends data
   const refreshFriendsData = useCallback(async () => {
@@ -220,14 +228,22 @@ export function HomePage() {
     };
   }, [walletAddress, refreshFriendsData, navigate]);
 
-  // Search players
-  const handleSearch = async () => {
-    if (!searchQuery.trim() || !walletAddress) return;
-    setIsSearching(true);
-    const results = await searchPlayers(searchQuery.trim(), walletAddress);
-    setSearchResults(results);
-    setIsSearching(false);
-  };
+  // Search players — auto-search on keystroke with debounce
+  useEffect(() => {
+    if (!searchQuery.trim() || !walletAddress) {
+      setSearchResults([]);
+      setHasSearched(false);
+      return;
+    }
+    const timeout = setTimeout(async () => {
+      setIsSearching(true);
+      const results = await searchPlayers(searchQuery.trim(), walletAddress);
+      setSearchResults(results);
+      setHasSearched(true);
+      setIsSearching(false);
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [searchQuery, walletAddress]);
 
   // Send friend request
   const handleSendFriendRequest = async (receiverWallet: string) => {
@@ -469,18 +485,15 @@ export function HomePage() {
                 <Text fontSize="9px" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em">
                   Search Player
                 </Text>
-                <HStack gap={2}>
-                  <Input
-                    placeholder="Name or wallet..."
-                    size="sm"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  />
-                  <Button size="sm" variant="primary" onClick={handleSearch} isLoading={isSearching}>
-                    Search
-                  </Button>
-                </HStack>
+                <Input
+                  placeholder="Name or wallet..."
+                  size="sm"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                {hasSearched && searchResults.length === 0 && (
+                  <Text fontSize="xs" color="danger.300">User not found</Text>
+                )}
                 {searchResults.length > 0 && (
                   <VStack align="stretch" gap={1}>
                     {searchResults.map((p) => (
@@ -856,9 +869,34 @@ export function HomePage() {
               </Flex>
             ) : (
               <VStack align="stretch" gap={3}>
+                {profile?.display_name && (
+                  <Box>
+                    <Text fontSize="xs" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em">Username</Text>
+                    <Text fontSize="sm" fontWeight="700" color="green.300">{profile.display_name}</Text>
+                  </Box>
+                )}
                 <Box>
                   <Text fontSize="xs" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em">Address</Text>
-                  <Text fontSize="sm" fontFamily="mono">{truncateAddr(finalAccount?.address || "")}</Text>
+                  <HStack gap={2} align="center">
+                    <Text fontSize="sm" fontFamily="mono" wordBreak="break-all">{finalAccount?.address || ""}</Text>
+                    <Box
+                      as="button"
+                      onClick={() => navigator.clipboard.writeText(finalAccount?.address || "")}
+                      px={2}
+                      py={1}
+                      fontSize="9px"
+                      color="text.secondary"
+                      bg="surface.card"
+                      border="1px solid"
+                      borderColor="surface.border"
+                      borderRadius="6px"
+                      cursor="pointer"
+                      _hover={{ borderColor: "green.400", color: "green.300" }}
+                      flexShrink={0}
+                    >
+                      Copy
+                    </Box>
+                  </HStack>
                 </Box>
                 <HStack gap={6}>
                   <Box>

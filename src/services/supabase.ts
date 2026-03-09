@@ -61,6 +61,13 @@ export async function updateRecentBeasts(
     .eq("wallet_address", wallet);
 }
 
+export async function updateDisplayName(wallet: string, displayName: string) {
+  await supabase
+    .from("player_config")
+    .update({ display_name: displayName, updated_at: new Date().toISOString() })
+    .eq("wallet_address", wallet);
+}
+
 // --- Friendships ---
 
 export interface Friendship {

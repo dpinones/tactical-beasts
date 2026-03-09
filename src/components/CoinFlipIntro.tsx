@@ -14,9 +14,6 @@ export function CoinFlipIntro({ revealResult, iGoFirst, myName, enemyName }: Coi
       align="center"
       justify="center"
       minH="100vh"
-      bgImage="url('/seleccion%20de%20bestias.png')"
-      bgSize="cover"
-      bgPosition="center"
       className="coin-flip-screen"
       px={4}
     >

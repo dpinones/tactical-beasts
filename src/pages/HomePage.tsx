@@ -421,10 +421,6 @@ export function HomePage() {
       minH="100vh"
       position="relative"
       overflow="hidden"
-      bgImage="url('/bg_home.png')"
-      bgSize="cover"
-      bgPosition="center"
-      bgRepeat="no-repeat"
     >
       {/* ===== TOP BAR ===== */}
       <Flex

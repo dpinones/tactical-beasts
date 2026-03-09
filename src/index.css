@@ -68,7 +68,7 @@ body {
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: var(--color-bg);
+  background: var(--color-bg) url('/bg_battle.png') center / cover no-repeat fixed !important;
   color: var(--color-text);
   min-height: 100vh;
 }
@@ -251,7 +251,6 @@ body {
    --------------------------------------------------------------------------- */
 .arena-background {
   position: relative;
-  background: url('/bg_battle.png?v=1') center center / cover no-repeat;
   overflow: hidden;
   border-radius: var(--radius-xl);
 }

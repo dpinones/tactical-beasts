@@ -461,7 +461,7 @@ export function BattlePage() {
         right={0}
         bottom={0}
         zIndex={3}
-        transform={{ base: "none", lg: "translateX(44px)" }}
+        transform={{ base: "none", lg: "translateX(60px)" }}
       >
         <HexGrid
           hexSize={50}
@@ -511,8 +511,8 @@ export function BattlePage() {
         top="80px"
         left="12px"
         zIndex={10}
-        w="240px"
-        maxW="240px"
+        w="260px"
+        maxW="260px"
         gap={3}
         align="stretch"
         display={{ base: "none", lg: "flex" }}
@@ -574,8 +574,8 @@ export function BattlePage() {
         top="80px"
         right="12px"
         zIndex={10}
-        w="240px"
-        maxW="240px"
+        w="260px"
+        maxW="260px"
         gap={3}
         align="stretch"
         display={{ base: "none", lg: "flex" }}

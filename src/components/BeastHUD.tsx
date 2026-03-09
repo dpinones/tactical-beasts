@@ -134,35 +134,31 @@ export function BeastHUD({
         </Box>
 
         <Box flex={1} minW={0}>
-          {/* Name + Type */}
-          <Flex justify="space-between" align="center" mb={0.5}>
-            <Text
-              fontSize="xs"
-              fontWeight="700"
-              color={alive ? "#fff" : "rgba(255,255,255,0.4)"}
-              fontFamily="heading"
-              textTransform="uppercase"
-              noOfLines={1}
-            >
-              {speciesName}
-            </Text>
-            <Badge variant={badgeVariant} fontSize="9px">
-              {typeName}
-            </Badge>
-          </Flex>
+          {/* Name */}
+          <Text
+            fontSize="sm"
+            fontWeight="700"
+            color={alive ? "#fff" : "rgba(255,255,255,0.4)"}
+            fontFamily="heading"
+            textTransform="uppercase"
+            noOfLines={1}
+            mb={0.5}
+          >
+            {speciesName}
+          </Text>
 
           {/* Subclass + Token ID */}
-          <Text fontSize="9px" color={accentSoft} fontFamily="mono" opacity={0.7} mb={0.5} noOfLines={1}>
+          <Text fontSize="11px" color={accentSoft} fontFamily="mono" opacity={0.7} mb={0.5} noOfLines={1}>
             {subclassName}#{tokenId}
           </Text>
 
           {/* HP Bar */}
           <Box mb={0.5}>
             <Flex justify="space-between" mb="1px">
-              <Text fontSize="9px" color={accentSoft} fontFamily="mono" textTransform="uppercase" opacity={0.7}>
+              <Text fontSize="11px" color={accentSoft} fontFamily="mono" textTransform="uppercase" opacity={0.7}>
                 HP
               </Text>
-              <Text fontSize="xs" color="#fff" fontFamily="mono" fontWeight="700">
+              <Text fontSize="sm" color="#fff" fontFamily="mono" fontWeight="700">
                 {hp}/{hpMax}
               </Text>
             </Flex>
@@ -174,24 +170,27 @@ export function BeastHUD({
             />
           </Box>
 
-          {/* Stats row */}
-          <Flex justify="flex-start" gap={3}>
+          {/* Stats row: LVL, TIER, TYPE */}
+          <Flex justify="flex-start" align="center" gap={3}>
             <Flex direction="column" align="flex-start">
-              <Text fontSize="8px" color={accentSoft} textTransform="uppercase" opacity={0.6}>
+              <Text fontSize="10px" color={accentSoft} textTransform="uppercase" opacity={0.6}>
                 LVL
               </Text>
-              <Text fontSize="xs" color="#fff" fontFamily="mono" fontWeight="700">
+              <Text fontSize="sm" color="#fff" fontFamily="mono" fontWeight="700">
                 {Number(beast.level)}
               </Text>
             </Flex>
             <Flex direction="column" align="flex-start">
-              <Text fontSize="8px" color={accentSoft} textTransform="uppercase" opacity={0.6}>
+              <Text fontSize="10px" color={accentSoft} textTransform="uppercase" opacity={0.6}>
                 TIER
               </Text>
-              <Text fontSize="xs" color="#fff" fontFamily="mono" fontWeight="700">
+              <Text fontSize="sm" color="#fff" fontFamily="mono" fontWeight="700">
                 T{Number(beast.tier)}
               </Text>
             </Flex>
+            <Badge variant={badgeVariant} fontSize="11px" ml="auto">
+              {typeName}
+            </Badge>
           </Flex>
         </Box>
       </Flex>
@@ -210,47 +209,17 @@ export function BeastHUD({
         gap={1}
       >
         <Text
-          fontSize="9px"
+          fontSize="11px"
           color={passiveColor}
           fontFamily="mono"
           opacity={0.92}
-          lineHeight={1.2}
+          lineHeight={1.3}
+          minH="2.6em"
         >
           {passive.description}
         </Text>
       </Flex>
 
-      {alive && (
-        <Box
-          mt={1}
-          minH="18px"
-          bg={plannedAction ? "rgba(45,216,138,0.1)" : "transparent"}
-          border="1px solid"
-          borderColor={plannedAction ? actionColor(plannedAction.actionType) : "transparent"}
-          borderRadius="6px"
-          px={1.5}
-          py={0.5}
-          textAlign="center"
-          boxShadow={
-            plannedAction?.actionType === ActionType.CONSUMABLE_ATTACK_POTION
-              ? "glowGold"
-              : "none"
-          }
-          visibility={plannedAction ? "visible" : "hidden"}
-        >
-          {plannedAction && (
-            <Text
-              fontSize="10px"
-              color={actionColor(plannedAction.actionType)}
-              fontWeight="700"
-              fontFamily="mono"
-              textTransform="uppercase"
-            >
-              {actionShortLabel(plannedAction.actionType)}
-            </Text>
-          )}
-        </Box>
-      )}
     </Box>
   );
 }

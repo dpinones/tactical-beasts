@@ -45,6 +45,7 @@ import { getUniqueBeastSpecies } from "../data/beasts";
 import { controller } from "../dojo/controller/controller";
 import { usePlayerProfile, useGameSettings } from "../hooks/useGameQuery";
 import { Select } from "@chakra-ui/react";
+import { startMusic, playClick, useAudioStore } from "../stores/audioStore";
 
 const CHAIN = import.meta.env.VITE_CHAIN;
 
@@ -119,6 +120,17 @@ export function HomePage() {
   const configsModal = useDisclosure();
   const profileModal = useDisclosure();
   const howToModal = useDisclosure();
+  const { musicVolume, sfxVolume, musicMuted, sfxMuted, setMusicVolume, setSfxVolume, toggleMusicMute, toggleSfxMute } = useAudioStore();
+
+  // Start music on first user click
+  useEffect(() => {
+    const handler = () => {
+      startMusic();
+      document.removeEventListener("click", handler);
+    };
+    document.addEventListener("click", handler);
+    return () => document.removeEventListener("click", handler);
+  }, []);
 
   // Supabase state
   const [profile, setProfile] = useState<PlayerConfig | null>(null);
@@ -369,10 +381,10 @@ export function HomePage() {
       >
         <VStack gap={2}>
           <Heading
-            size="2xl"
+            size="4xl"
             fontFamily="heading"
             textTransform="uppercase"
-            letterSpacing="0.12em"
+            letterSpacing="0.14em"
             color="green.300"
             textShadow="0 0 30px rgba(135,180,155,0.3)"
           >
@@ -392,6 +404,7 @@ export function HomePage() {
                 variant="primary"
                 size="lg"
                 onClick={() => {
+                  playClick();
                   setConnectionStatus("connecting_controller");
                   switchToController();
                 }}
@@ -399,7 +412,7 @@ export function HomePage() {
                 Login
               </Button>
               {allowGuest && (
-                <Button variant="secondary" size="lg" onClick={connectAsGuest}>
+                <Button variant="secondary" size="lg" onClick={() => { playClick(); connectAsGuest(); }}>
                   Guest
                 </Button>
               )}
@@ -639,8 +652,8 @@ export function HomePage() {
           border="1px solid"
           borderColor="surface.border"
           borderRadius="10px"
+          h="40px"
           px={3}
-          py={2}
           mr={2}
           cursor="pointer"
           onClick={profileModal.onOpen}
@@ -774,6 +787,7 @@ export function HomePage() {
           />
         </Flex>
 
+
         {statusMsg && (
           <Code
             p={3}
@@ -854,16 +868,84 @@ export function HomePage() {
           <ModalBody pb={6}>
             <VStack align="stretch" gap={4}>
               <Box>
-                <Text fontSize="xs" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em" mb={1}>Account</Text>
-                <Text fontSize="sm">{accountType === "controller" ? "Controller" : "Guest"} | {truncateAddr(finalAccount?.address || "")}</Text>
-              </Box>
-              <Box>
                 <Text fontSize="xs" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em" mb={1}>Chain</Text>
                 <Text fontSize="sm">{CHAIN || "Slot (local)"}</Text>
               </Box>
               <Box>
-                <Text fontSize="xs" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em" mb={1}>Sound</Text>
-                <Text fontSize="sm" color="text.muted">Coming soon</Text>
+                <Text fontSize="xs" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em" mb={2}>Music</Text>
+                <Flex align="center" gap={2}>
+                  <Box
+                    as="button"
+                    onClick={toggleMusicMute}
+                    w="28px"
+                    h="28px"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    borderRadius="4px"
+                    bg={musicMuted ? "rgba(224,96,96,0.15)" : "rgba(135,180,155,0.15)"}
+                    border="1px solid"
+                    borderColor={musicMuted ? "#e06060" : "#5d816e"}
+                    color={musicMuted ? "#e06060" : "#87B49B"}
+                    fontSize="14px"
+                    cursor="pointer"
+                    flexShrink={0}
+                    _hover={{ bg: musicMuted ? "rgba(224,96,96,0.25)" : "rgba(135,180,155,0.25)" }}
+                    title={musicMuted ? "Unmute music" : "Mute music"}
+                  >
+                    {musicMuted ? "\u{1F507}" : "\u{1F50A}"}
+                  </Box>
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={musicVolume}
+                    onChange={(e) => setMusicVolume(Number(e.target.value))}
+                    style={{ flex: 1, accentColor: musicMuted ? "#666" : "#87B49B", height: "6px", cursor: "pointer", opacity: musicMuted ? 0.4 : 1 }}
+                  />
+                  <Text fontSize="xs" fontFamily="mono" color={musicMuted ? "#666" : "text.gold"} fontWeight="700" minW="36px" textAlign="right">
+                    {musicMuted ? "OFF" : `${Math.round(musicVolume * 100)}%`}
+                  </Text>
+                </Flex>
+              </Box>
+              <Box>
+                <Text fontSize="xs" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em" mb={2}>Sound Effects</Text>
+                <Flex align="center" gap={2}>
+                  <Box
+                    as="button"
+                    onClick={toggleSfxMute}
+                    w="28px"
+                    h="28px"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    borderRadius="4px"
+                    bg={sfxMuted ? "rgba(224,96,96,0.15)" : "rgba(135,180,155,0.15)"}
+                    border="1px solid"
+                    borderColor={sfxMuted ? "#e06060" : "#5d816e"}
+                    color={sfxMuted ? "#e06060" : "#87B49B"}
+                    fontSize="14px"
+                    cursor="pointer"
+                    flexShrink={0}
+                    _hover={{ bg: sfxMuted ? "rgba(224,96,96,0.25)" : "rgba(135,180,155,0.25)" }}
+                    title={sfxMuted ? "Unmute SFX" : "Mute SFX"}
+                  >
+                    {sfxMuted ? "\u{1F507}" : "\u{1F50A}"}
+                  </Box>
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={sfxVolume}
+                    onChange={(e) => setSfxVolume(Number(e.target.value))}
+                    style={{ flex: 1, accentColor: sfxMuted ? "#666" : "#87B49B", height: "6px", cursor: "pointer", opacity: sfxMuted ? 0.4 : 1 }}
+                  />
+                  <Text fontSize="xs" fontFamily="mono" color={sfxMuted ? "#666" : "text.gold"} fontWeight="700" minW="36px" textAlign="right">
+                    {sfxMuted ? "OFF" : `${Math.round(sfxVolume * 100)}%`}
+                  </Text>
+                </Flex>
               </Box>
             </VStack>
           </ModalBody>
@@ -947,6 +1029,7 @@ export function HomePage() {
           </ModalBody>
         </ModalContent>
       </Modal>
+
 
       {/* No Beasts Found toast */}
       <Box
@@ -1051,7 +1134,7 @@ function MenuCard({
   return (
     <Box
       as="button"
-      onClick={onClick}
+      onClick={() => { playClick(); onClick(); }}
       position="relative"
       w={isFullWidth ? "100%" : "calc(50% - 8px)"}
       minW="150px"

@@ -35,6 +35,7 @@ import { updateRecentBeasts, getProfile } from "../services/supabase";
 import { getSubclass, getSubclassName, DEFAULT_BEASTS } from "../data/beasts";
 import { MAX_T2_PER_TEAM, MAX_T3_PER_TEAM } from "../domain/combat";
 import { toast } from "sonner";
+import { playClick } from "../stores/audioStore";
 
 type Phase = "creating" | "joining" | "lobby" | "select" | "confirming" | "coin" | "waiting" | "error";
 
@@ -157,6 +158,7 @@ export function TeamSelectPage() {
 
   // Tier-limited toggle: respect slot tier restrictions
   const handleToggleBeast = useCallback((tokenId: number) => {
+    playClick();
     // Always allow deselecting
     if (selectedBeasts.includes(tokenId)) {
       const removedIndex = selectedBeasts.indexOf(tokenId);

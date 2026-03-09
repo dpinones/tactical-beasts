@@ -15,6 +15,7 @@ import { useMemo } from "react";
 import { useDojo } from "../dojo/DojoContext";
 import { useGameQuery, useBeastStates } from "../hooks/useGameQuery";
 import { useGameStore } from "../stores/gameStore";
+import { usePlayerTokens } from "../hooks/useDenshokan";
 import { GameStatus, ZERO_ADDR, BeastType } from "../domain/types";
 import { getTypeName, getTypeColor } from "../domain/combat";
 import { getBeastImagePath } from "../data/beasts";
@@ -263,6 +264,16 @@ export function ResultPage() {
           </HStack>
         </VStack>
       </Box>
+
+      {/* Denshokan link */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => navigate("/leaderboard")}
+        color="text.gold"
+      >
+        View Leaderboard
+      </Button>
 
       {/* Actions */}
       <HStack gap={4}>

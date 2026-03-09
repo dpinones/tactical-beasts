@@ -40,8 +40,11 @@ export function useGameActions() {
     return null;
   }, [client, account, execute]);
 
-  const createFriendlyGame = useCallback(async (): Promise<number | null> => {
-    const response = await execute(client.game_system.createFriendlyGame, [account]);
+  const createFriendlyGame = useCallback(async (settingsId?: number): Promise<number | null> => {
+    const useSettings = settingsId && settingsId > 0;
+    const response = useSettings
+      ? await execute(client.game_system.createFriendlyGameWithSettings, [account, settingsId])
+      : await execute(client.game_system.createFriendlyGame, [account]);
     if (!response) return null;
 
     const txHash = (response as any)?.transaction_hash;

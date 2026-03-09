@@ -4,11 +4,14 @@ import { BrowserRouter } from "react-router-dom";
 import { Toaster } from "sonner";
 import { ChakraBaseProvider, extendTheme } from "@chakra-ui/react";
 
+import { DenshokanProvider } from "@provable-games/denshokan-sdk/react";
+
 import { dojoConfig } from "../dojoConfig";
 import { setup } from "./dojo/setup";
 import { DojoProvider } from "./dojo/DojoContext";
 import { WalletProvider } from "./dojo/WalletContext";
 import { StarknetProvider } from "./providers/StarknetProvider";
+import { denshokanConfig } from "./config/denshokan";
 import customTheme from "./theme/theme";
 import App from "./App";
 import "./index.css";
@@ -28,14 +31,16 @@ async function init() {
       <StarknetProvider>
         <QueryClientProvider client={queryClient}>
           <ChakraBaseProvider theme={theme}>
-            <WalletProvider value={setupResult}>
-              <DojoProvider value={setupResult}>
-                <BrowserRouter>
-                  <Toaster />
-                  <App />
-                </BrowserRouter>
-              </DojoProvider>
-            </WalletProvider>
+            <DenshokanProvider config={denshokanConfig}>
+              <WalletProvider value={setupResult}>
+                <DojoProvider value={setupResult}>
+                  <BrowserRouter>
+                    <Toaster />
+                    <App />
+                  </BrowserRouter>
+                </DojoProvider>
+              </WalletProvider>
+            </DenshokanProvider>
           </ChakraBaseProvider>
         </QueryClientProvider>
       </StarknetProvider>

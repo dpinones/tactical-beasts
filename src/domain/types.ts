@@ -162,5 +162,14 @@ export interface PlayerProfileModel {
   abandons: number;
 }
 
+export interface GameSettingsModel {
+  settings_id: number;
+  min_tier: number;
+  max_tier: number;
+  max_t2_per_team: number;
+  max_t3_per_team: number;
+  beasts_per_player: number;
+}
+
 export const ZERO_ADDR =
   "0x0000000000000000000000000000000000000000000000000000000000000000";

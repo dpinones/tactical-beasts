@@ -6,6 +6,8 @@ import {
   GET_ALL_BEAST_STATES,
   GET_PLAYER_STATE,
   GET_PLAYER_PROFILE,
+  GET_LEADERBOARD,
+  GET_ALL_SETTINGS,
   GET_MAP_STATE,
 } from "../queries/gameQueries";
 import type {
@@ -13,6 +15,7 @@ import type {
   BeastStateModel,
   PlayerStateModel,
   PlayerProfileModel,
+  GameSettingsModel,
   MapStateModel,
   HexCoord,
 } from "../domain/types";
@@ -201,6 +204,69 @@ export function usePlayerState(
   }, [gameId, player, fetchState, pollInterval]);
 
   return { playerState, refetch: fetchState };
+}
+
+function parseSettingsNode(node: any): GameSettingsModel {
+  return {
+    settings_id: Number(node.settings_id),
+    min_tier: Number(node.min_tier),
+    max_tier: Number(node.max_tier),
+    max_t2_per_team: Number(node.max_t2_per_team),
+    max_t3_per_team: Number(node.max_t3_per_team),
+    beasts_per_player: Number(node.beasts_per_player),
+  };
+}
+
+export function useGameSettings() {
+  const [settings, setSettings] = useState<GameSettingsModel[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchSettings = useCallback(async () => {
+    try {
+      const result: any = await graphQLClient.request(GET_ALL_SETTINGS);
+      const key = `${NS}GameSettingsModels`;
+      const edges = result?.[key]?.edges;
+      if (edges) {
+        setSettings(edges.map((e: any) => parseSettingsNode(e.node)));
+      }
+    } catch (e) {
+      console.error("Failed to fetch game settings:", e);
+    }
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchSettings().finally(() => setLoading(false));
+  }, [fetchSettings]);
+
+  return { settings, loading, refetch: fetchSettings };
+}
+
+export function useLeaderboard(pollInterval = 10000) {
+  const [players, setPlayers] = useState<PlayerProfileModel[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchLeaderboard = useCallback(async () => {
+    try {
+      const result: any = await graphQLClient.request(GET_LEADERBOARD);
+      const key = `${NS}PlayerProfileModels`;
+      const edges = result?.[key]?.edges;
+      if (edges) {
+        setPlayers(edges.map((e: any) => parseProfileNode(e.node)));
+      }
+    } catch (e) {
+      console.error("Failed to fetch leaderboard:", e);
+    }
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchLeaderboard().finally(() => setLoading(false));
+    const interval = setInterval(fetchLeaderboard, pollInterval);
+    return () => clearInterval(interval);
+  }, [fetchLeaderboard, pollInterval]);
+
+  return { players, loading, refetch: fetchLeaderboard };
 }
 
 export function usePlayerProfile(player: string | null) {

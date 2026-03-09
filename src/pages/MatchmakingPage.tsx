@@ -16,6 +16,7 @@ export function MatchmakingPage() {
   const waitingForFriend = (location.state as any)?.waitingForFriend || false;
   const inviteId = (location.state as any)?.inviteId || null;
   const friendName = (location.state as any)?.friendName || "friend";
+  const settingsId = (location.state as any)?.settingsId as number | undefined;
 
   const [phase, setPhase] = useState<Phase>(waitingForFriend ? "waiting-friend" : "searching");
   const [gameId, setGameId] = useState<number | null>(null);
@@ -28,7 +29,7 @@ export function MatchmakingPage() {
     calledRef.current = true;
 
     (async () => {
-      const id = await createFriendlyGame();
+      const id = await createFriendlyGame(settingsId);
       if (!id) {
         setPhase("error");
         setErrorMsg("Failed to create game");

@@ -68,6 +68,27 @@ export function setupWorld(provider: DojoProvider) {
 		}
 	};
 
+	const build_game_system_createFriendlyGameWithSettings_calldata = (settingsId: BigNumberish): DojoCall => {
+		return {
+			contractName: "game_system",
+			entrypoint: "create_friendly_game_with_settings",
+			calldata: [settingsId],
+		};
+	};
+
+	const game_system_createFriendlyGameWithSettings = async (snAccount: Account | AccountInterface, settingsId: BigNumberish) => {
+		try {
+			return await provider.execute(
+				snAccount,
+				build_game_system_createFriendlyGameWithSettings_calldata(settingsId),
+				DOJO_NAMESPACE,
+			);
+		} catch (error) {
+			console.error(error);
+			throw error;
+		}
+	};
+
 	const build_game_system_createGame_calldata = (): DojoCall => {
 		return {
 			contractName: "game_system",
@@ -334,6 +355,27 @@ export function setupWorld(provider: DojoProvider) {
 		}
 	};
 
+	const build_game_system_setDenshokanAddress_calldata = (denshokanAddress: string): DojoCall => {
+		return {
+			contractName: "game_system",
+			entrypoint: "set_denshokan_address",
+			calldata: [denshokanAddress],
+		};
+	};
+
+	const game_system_setDenshokanAddress = async (snAccount: Account | AccountInterface, denshokanAddress: string) => {
+		try {
+			return await provider.execute(
+				snAccount,
+				build_game_system_setDenshokanAddress_calldata(denshokanAddress),
+				DOJO_NAMESPACE,
+			);
+		} catch (error) {
+			console.error(error);
+			throw error;
+		}
+	};
+
 	const build_game_system_setTeam_calldata = (gameId: BigNumberish, beast1: BigNumberish, beast2: BigNumberish, beast3: BigNumberish): DojoCall => {
 		return {
 			contractName: "game_system",
@@ -505,6 +547,8 @@ export function setupWorld(provider: DojoProvider) {
 			buildCancelMatchmakingCalldata: build_game_system_cancelMatchmaking_calldata,
 			createFriendlyGame: game_system_createFriendlyGame,
 			buildCreateFriendlyGameCalldata: build_game_system_createFriendlyGame_calldata,
+			createFriendlyGameWithSettings: game_system_createFriendlyGameWithSettings,
+			buildCreateFriendlyGameWithSettingsCalldata: build_game_system_createFriendlyGameWithSettings_calldata,
 			createGame: game_system_createGame,
 			buildCreateGameCalldata: build_game_system_createGame_calldata,
 			createGameWithSettings: game_system_createGameWithSettings,
@@ -533,6 +577,8 @@ export function setupWorld(provider: DojoProvider) {
 			buildScoreBatchCalldata: build_game_system_scoreBatch_calldata,
 			setBeastConfig: game_system_setBeastConfig,
 			buildSetBeastConfigCalldata: build_game_system_setBeastConfig_calldata,
+			setDenshokanAddress: game_system_setDenshokanAddress,
+			buildSetDenshokanAddressCalldata: build_game_system_setDenshokanAddress_calldata,
 			setTeam: game_system_setTeam,
 			buildSetTeamCalldata: build_game_system_setTeam_calldata,
 			setTeamDynamic: game_system_setTeamDynamic,

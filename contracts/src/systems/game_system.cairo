@@ -9,6 +9,7 @@ pub trait IGameSystem<T> {
     fn create_game(ref self: T) -> u32;
     fn create_game_with_settings(ref self: T, settings_id: u32) -> u32;
     fn create_friendly_game(ref self: T) -> u32;
+    fn create_friendly_game_with_settings(ref self: T, settings_id: u32) -> u32;
     fn join_game(ref self: T, game_id: u32);
     fn set_team(ref self: T, game_id: u32, beast_1: u32, beast_2: u32, beast_3: u32);
     fn set_team_dynamic(ref self: T, game_id: u32, beasts: Array<u32>);
@@ -49,12 +50,11 @@ pub mod game_system {
     use starknet::ContractAddress;
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
     use crate::constants::{
-        ACTION_ATTACK, ACTION_CONSUMABLE_ATTACK, ACTION_MOVE, BEASTS_PER_PLAYER, BEAST_NFT_ADDRESS,
-        COUNTER_ATTACK_PCT, DEFAULT_BEAST_TOKEN_MIN, DEFAULT_EXTRA_LIVES, DEFAULT_MAX_T2_PER_TEAM,
-        DEFAULT_MAX_T3_PER_TEAM, GAME_STATUS_FINISHED, GAME_STATUS_PLAYING, GAME_STATUS_WAITING,
-        MAINNET_CHAIN_ID, MAX_BEASTS_PER_PLAYER, MIN_DAMAGE, MIN_TIER, MAX_TIER, NAMESPACE,
-        PASSIVE_EXPOSED_PENALTY, PASSIVE_FIRST_STRIKE_BONUS, PASSIVE_FORTIFY_REDUCTION,
-        PASSIVE_RAGE_BONUS, PASSIVE_REGEN_BONUS_HP, PASSIVE_SIPHON_HEAL, SUBCLASS_BERSERKER,
+        ACTION_ATTACK, ACTION_CONSUMABLE_ATTACK, ACTION_MOVE, BEASTS_PER_PLAYER, BEAST_NFT_ADDRESS, COUNTER_ATTACK_PCT,
+        DEFAULT_BEAST_TOKEN_MIN, DEFAULT_EXTRA_LIVES, DEFAULT_MAX_T2_PER_TEAM, DEFAULT_MAX_T3_PER_TEAM,
+        GAME_STATUS_FINISHED, GAME_STATUS_PLAYING, GAME_STATUS_WAITING, MAINNET_CHAIN_ID, MAX_BEASTS_PER_PLAYER,
+        MAX_TIER, MIN_DAMAGE, MIN_TIER, NAMESPACE, PASSIVE_EXPOSED_PENALTY, PASSIVE_FIRST_STRIKE_BONUS,
+        PASSIVE_FORTIFY_REDUCTION, PASSIVE_RAGE_BONUS, PASSIVE_REGEN_BONUS_HP, PASSIVE_SIPHON_HEAL, SUBCLASS_BERSERKER,
         SUBCLASS_ENCHANTER, SUBCLASS_JUGGERNAUT, SUBCLASS_RANGER, SUBCLASS_STALKER, SUBCLASS_WARLOCK,
     };
     use crate::events::index::{GameCreated, GameFinished, PlayerJoined};
@@ -73,7 +73,11 @@ pub mod game_system {
 
     /// Resolves settings_id to GameSettings. settings_id=0 maps to default (1).
     fn get_settings(ref world: WorldStorage, settings_id: u32) -> GameSettings {
-        let resolved = if settings_id == 0 { 1 } else { settings_id };
+        let resolved = if settings_id == 0 {
+            1
+        } else {
+            settings_id
+        };
         world.read_model(resolved)
     }
 
@@ -107,11 +111,7 @@ pub mod game_system {
         SRC5Event: SRC5Component::Event,
     }
 
-    fn dojo_init(
-        ref self: ContractState,
-        creator_address: ContractAddress,
-        denshokan_address: ContractAddress,
-    ) {
+    fn dojo_init(ref self: ContractState, creator_address: ContractAddress, denshokan_address: ContractAddress) {
         self.owner.write(creator_address);
         self.denshokan_address.write(denshokan_address);
 
@@ -123,8 +123,8 @@ pub mod game_system {
                     creator_address,
                     "Tactical Beasts",
                     "Tactical turn-based grid combat game on Starknet",
-                    "Provable Games",
-                    "Provable Games",
+                    "Pilosaurio",
+                    "Pilosaurio",
                     "Strategy",
                     "",
                     Option::None,
@@ -168,7 +168,11 @@ pub mod game_system {
             let mut world = self.world(@NAMESPACE());
             let denshokan = self.denshokan_address.read();
             let caller = starknet::get_caller_address();
-            let resolved = if settings_id == 0 { 1 } else { settings_id };
+            let resolved = if settings_id == 0 {
+                1
+            } else {
+                settings_id
+            };
             let config: GameConfig = world.read_model(0);
             assert!(resolved <= config.settings_count, "Settings do not exist");
             _create_game(ref world, denshokan, caller, false, resolved)
@@ -179,6 +183,20 @@ pub mod game_system {
             let denshokan = self.denshokan_address.read();
             let caller = starknet::get_caller_address();
             _create_game(ref world, denshokan, caller, true, 1)
+        }
+
+        fn create_friendly_game_with_settings(ref self: ContractState, settings_id: u32) -> u32 {
+            let mut world = self.world(@NAMESPACE());
+            let denshokan = self.denshokan_address.read();
+            let caller = starknet::get_caller_address();
+            let resolved = if settings_id == 0 {
+                1
+            } else {
+                settings_id
+            };
+            let config: GameConfig = world.read_model(0);
+            assert!(resolved <= config.settings_count, "Settings do not exist");
+            _create_game(ref world, denshokan, caller, true, resolved)
         }
 
         fn join_game(ref self: ContractState, game_id: u32) {
@@ -269,11 +287,13 @@ pub mod game_system {
                     } else {
                         2
                     };
-                    let winner_kills = count_dead_beasts(ref world, game_id, if winner_index == 1 {
-                        2
-                    } else {
-                        1
-                    }, bpp);
+                    let winner_kills = count_dead_beasts(
+                        ref world, game_id, if winner_index == 1 {
+                            2
+                        } else {
+                            1
+                        }, bpp,
+                    );
                     let winner_deaths = count_dead_beasts(ref world, game_id, winner_index, bpp);
 
                     let mut winner_profile: PlayerProfile = world.read_model(winner);
@@ -339,7 +359,9 @@ pub mod game_system {
             let settings_id = config.settings_count;
             world.write_model(@config);
 
-            let settings = GameSettings { settings_id, min_tier, max_tier, max_t2_per_team, max_t3_per_team, beasts_per_player };
+            let settings = GameSettings {
+                settings_id, min_tier, max_tier, max_t2_per_team, max_t3_per_team, beasts_per_player,
+            };
             world.write_model(@settings);
 
             settings_id
@@ -388,10 +410,26 @@ pub mod game_system {
 
             world.write_model(@game);
 
-            let beast_1 = if beasts.len() > 0 { *beasts.at(0) } else { 0 };
-            let beast_2 = if beasts.len() > 1 { *beasts.at(1) } else { 0 };
-            let beast_3 = if beasts.len() > 2 { *beasts.at(2) } else { 0 };
-            let beast_4 = if beasts.len() > 3 { *beasts.at(3) } else { 0 };
+            let beast_1 = if beasts.len() > 0 {
+                *beasts.at(0)
+            } else {
+                0
+            };
+            let beast_2 = if beasts.len() > 1 {
+                *beasts.at(1)
+            } else {
+                0
+            };
+            let beast_3 = if beasts.len() > 2 {
+                *beasts.at(2)
+            } else {
+                0
+            };
+            let beast_4 = if beasts.len() > 3 {
+                *beasts.at(3)
+            } else {
+                0
+            };
 
             let player_state = PlayerState {
                 game_id, player: caller, player_index, beast_1, beast_2, beast_3, beast_4, potion_used: false,
@@ -402,7 +440,7 @@ pub mod game_system {
             while i < beasts.len() {
                 create_beast(ref world, game_id, player_index, i.try_into().unwrap(), *beasts.at(i), caller, @settings);
                 i += 1;
-            };
+            }
 
             validate_team_tiers(ref world, game_id, player_index, @settings);
 
@@ -461,14 +499,11 @@ pub mod game_system {
                     if k >= actions.len() {
                         break;
                     }
-                    assert!(
-                        (*actions.at(j)).beast_index != (*actions.at(k)).beast_index,
-                        "Duplicate beast action",
-                    );
+                    assert!((*actions.at(j)).beast_index != (*actions.at(k)).beast_index, "Duplicate beast action");
                     k += 1;
-                };
+                }
                 j += 1;
-            };
+            }
 
             // Resolve actions in order
             let mut i: u32 = 0;
@@ -494,14 +529,14 @@ pub mod game_system {
                             acted = true;
                         }
                         ai += 1;
-                    };
+                    }
                     if !acted {
                         beast_s.last_moved = false;
                         world.write_model(@beast_s);
                     }
                 }
                 bi += 1;
-            };
+            }
 
             // Check victory
             let winner = check_victory(ref world, game_id, settings.beasts_per_player);
@@ -599,7 +634,7 @@ pub mod game_system {
             let mut scores = array![];
             for id in token_ids {
                 scores.append(self.score(*id));
-            };
+            }
             scores
         }
 
@@ -607,7 +642,7 @@ pub mod game_system {
             let mut results = array![];
             for id in token_ids {
                 results.append(self.game_over(*id));
-            };
+            }
             results
         }
     }
@@ -629,7 +664,7 @@ pub mod game_system {
             let mut results = array![];
             for settings_id in settings_ids {
                 results.append(self.settings_exist(*settings_id));
-            };
+            }
             results
         }
     }
@@ -637,7 +672,11 @@ pub mod game_system {
     // --- Internal helpers ---
 
     fn _create_game(
-        ref world: WorldStorage, denshokan: ContractAddress, caller: ContractAddress, is_friendly: bool, settings_id: u32,
+        ref world: WorldStorage,
+        denshokan: ContractAddress,
+        caller: ContractAddress,
+        is_friendly: bool,
+        settings_id: u32,
     ) -> u32 {
         let mut config: GameConfig = world.read_model(0);
         config.game_count += 1;
@@ -695,9 +734,7 @@ pub mod game_system {
         game_id
     }
 
-    fn _join_game(
-        ref world: WorldStorage, denshokan: ContractAddress, caller: ContractAddress, game_id: u32,
-    ) {
+    fn _join_game(ref world: WorldStorage, denshokan: ContractAddress, caller: ContractAddress, game_id: u32) {
         let mut game: Game = world.read_model(game_id);
         assert!(game.status == GAME_STATUS_WAITING, "Game is not waiting");
         assert!(game.player1 != caller, "Cannot join your own game");
@@ -770,8 +807,7 @@ pub mod game_system {
         };
 
         let is_default_beast = beast_id >= DEFAULT_BEAST_TOKEN_MIN;
-        let (species_id, beast_type, tier, level, hp) = if !is_default_beast
-            && beast_nft_addr != zero_address() {
+        let (species_id, beast_type, tier, level, hp) = if !is_default_beast && beast_nft_addr != zero_address() {
             let beast_dispatcher = IBeastsDispatcher { contract_address: beast_nft_addr };
             let erc721_dispatcher = IERC721Dispatcher { contract_address: beast_nft_addr };
 
@@ -835,7 +871,7 @@ pub mod game_system {
                 t3_count += 1;
             }
             i += 1;
-        };
+        }
         assert!(t2_count <= *settings.max_t2_per_team, "Too many T2 beasts per team");
         assert!(t3_count <= *settings.max_t3_per_team, "Too many T3 beasts per team");
     }
@@ -934,11 +970,13 @@ pub mod game_system {
             if atk_subclass == SUBCLASS_WARLOCK {
                 let heal: u16 = (damage.into() * PASSIVE_SIPHON_HEAL / 100).try_into().unwrap();
                 if heal > 0 {
-                    attacker_beast.hp = if attacker_beast.hp + heal > attacker_beast.hp_max {
-                        attacker_beast.hp_max
-                    } else {
-                        attacker_beast.hp + heal
-                    };
+                    attacker_beast
+                        .hp =
+                            if attacker_beast.hp + heal > attacker_beast.hp_max {
+                                attacker_beast.hp_max
+                            } else {
+                                attacker_beast.hp + heal
+                            };
                 }
             }
 
@@ -955,10 +993,14 @@ pub mod game_system {
                     attacker_beast.beast_type,
                     false,
                     counter_crit,
-                ).into();
-                let counter_damage: u16 = ((full_counter * COUNTER_ATTACK_PCT) / 100)
-                    .try_into().unwrap();
-                let counter_damage = if counter_damage < MIN_DAMAGE { MIN_DAMAGE } else { counter_damage };
+                )
+                    .into();
+                let counter_damage: u16 = ((full_counter * COUNTER_ATTACK_PCT) / 100).try_into().unwrap();
+                let counter_damage = if counter_damage < MIN_DAMAGE {
+                    MIN_DAMAGE
+                } else {
+                    counter_damage
+                };
 
                 apply_damage(ref attacker_beast, counter_damage);
             }
@@ -1058,7 +1100,7 @@ pub mod game_system {
                 alive += 1;
             }
             i += 1;
-        };
+        }
         alive
     }
 
@@ -1072,7 +1114,11 @@ pub mod game_system {
         loser_token: felt252,
         beasts_per_player: u8,
     ) {
-        let loser_index: u8 = if winner_index == 1 { 2 } else { 1 };
+        let loser_index: u8 = if winner_index == 1 {
+            2
+        } else {
+            1
+        };
 
         let winner_kills = count_dead_beasts(ref world, game_id, loser_index, beasts_per_player);
         let winner_deaths = count_dead_beasts(ref world, game_id, winner_index, beasts_per_player);
@@ -1145,12 +1191,17 @@ pub mod game_system {
                 dead += 1;
             }
             i += 1;
-        };
+        }
         dead
     }
 
     fn update_profiles(
-        ref world: WorldStorage, game_id: u32, winner: ContractAddress, loser: ContractAddress, winner_index: u8, beasts_per_player: u8,
+        ref world: WorldStorage,
+        game_id: u32,
+        winner: ContractAddress,
+        loser: ContractAddress,
+        winner_index: u8,
+        beasts_per_player: u8,
     ) {
         let loser_index: u8 = if winner_index == 1 {
             2

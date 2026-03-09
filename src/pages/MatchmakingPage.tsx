@@ -70,7 +70,7 @@ export function MatchmakingPage() {
     // If player2 is set, match found (both normal and friend mode)
     if (polledGame.player2 && polledGame.player2 !== "0x0") {
       setPhase("matched");
-      navigate(`/team-select/match/${gameId}`);
+      navigate(`/team-select/match/${gameId}`, { state: { fromMatchmaking: !waitingForFriend } });
     }
   }, [phase, polledGame, gameId, navigate]);
 

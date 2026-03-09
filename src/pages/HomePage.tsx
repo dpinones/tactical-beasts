@@ -200,7 +200,10 @@ export function HomePage() {
   }, [walletAddress]);
 
   useEffect(() => {
-    if (walletAddress) refreshFriendsData();
+    if (!walletAddress) return;
+    refreshFriendsData();
+    const interval = setInterval(refreshFriendsData, 10000);
+    return () => clearInterval(interval);
   }, [walletAddress, refreshFriendsData]);
 
   // Realtime subscriptions
@@ -247,10 +250,24 @@ export function HomePage() {
 
   // Send friend request
   const handleSendFriendRequest = async (receiverWallet: string) => {
-    await sendFriendRequest(walletAddress, receiverWallet);
+    const ok = await sendFriendRequest(walletAddress, receiverWallet);
     setSearchResults([]);
     setSearchQuery("");
-    refreshFriendsData();
+    setHasSearched(false);
+    if (ok) {
+      // Optimistic update — show immediately in Sent list
+      setSentRequests((prev) => [
+        ...prev,
+        {
+          id: `temp-${Date.now()}`,
+          sender: walletAddress,
+          receiver: receiverWallet,
+          status: "pending",
+          created_at: new Date().toISOString(),
+        },
+      ]);
+    }
+    await refreshFriendsData();
   };
 
   // Respond to friend request

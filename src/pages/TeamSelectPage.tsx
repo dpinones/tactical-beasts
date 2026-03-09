@@ -31,7 +31,7 @@ import { HexGrid } from "../components/HexGrid";
 import { CoinFlipIntro } from "../components/CoinFlipIntro";
 import { OBSTACLES } from "../domain/hexGrid";
 import { GameStatus, BeastType, Subclass, CatalogBeast, ZERO_ADDR } from "../domain/types";
-import { updateRecentBeasts } from "../services/supabase";
+import { updateRecentBeasts, getProfile } from "../services/supabase";
 import { getSubclass, getSubclassName, DEFAULT_BEASTS } from "../data/beasts";
 import { MAX_T2_PER_TEAM, MAX_T3_PER_TEAM } from "../domain/combat";
 import { toast } from "sonner";
@@ -45,6 +45,7 @@ export function TeamSelectPage() {
 
   const isCreateMode = location.pathname === "/team-select/create";
   const isMatchMode = location.pathname.startsWith("/team-select/match");
+  const isFromMatchmaking = !!(location.state as any)?.fromMatchmaking;
   const joinGameId = gameIdParam ? parseInt(gameIdParam) : null;
 
   const { account: { account } } = useDojo();
@@ -64,6 +65,21 @@ export function TeamSelectPage() {
     isMatchMode ? "select" : isCreateMode ? "creating" : "joining"
   );
   const [gameId, setGameId] = useState<number | null>(joinGameId);
+
+  // On mount: load recent beasts for matchmaking, clear for friend invite
+  useEffect(() => {
+    if (isFromMatchmaking && account?.address) {
+      getProfile(account.address).then((profile) => {
+        if (profile?.recent_beasts?.length) {
+          setSelectedBeasts(profile.recent_beasts.map((b) => b.id));
+        } else {
+          clearSelectedBeasts();
+        }
+      });
+    } else {
+      clearSelectedBeasts();
+    }
+  }, []);
 
   const { beasts: ownedBeasts, isLoading: beastsLoading } = useOwnedBeasts();
 
@@ -354,8 +370,8 @@ export function TeamSelectPage() {
       ? await setTeam(gameId, team[0], team[1], team[2])
       : await setTeamDynamic(gameId, team);
     if (res) {
-      // Save recent beasts to Supabase (only for matchmaking, not friend invites)
-      if (!isMatchMode) {
+      // Save recent beasts to Supabase (only for matchmaking)
+      if (isFromMatchmaking) {
         const walletAddress = account?.address || "";
         if (walletAddress) {
           const beastsToSave = team.map((tokenId) => {

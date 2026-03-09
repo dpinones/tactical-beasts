@@ -541,9 +541,6 @@ export function TeamSelectPage() {
       w="100vw"
       overflow="hidden"
       p={4}
-      bgImage="url('/seleccion%20de%20bestias.png')"
-      bgSize="cover"
-      bgPosition="center"
     >
       {/* Header */}
       <Flex justify="space-between" align="center" mb={4}>

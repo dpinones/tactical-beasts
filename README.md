@@ -11,7 +11,7 @@ Juego tactico PvP por turnos en Starknet, construido con Dojo + React. Cada juga
 - Integraciones: onchain game state + Supabase para social/friends/invites.
 
 ---
-
+ 
 ## 2. Demo
 
 - Video: `PENDIENTE_LINK_VIDEO`

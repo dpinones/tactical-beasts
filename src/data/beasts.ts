@@ -152,7 +152,7 @@ export function getSpeciesNameByTokenId(tokenId: number): string {
 export function getBeastImagePath(beastId: number, facing: "right" | "left" = "right"): string {
   // Try tokenId first, then fall back to species beastId
   const species = getSpeciesNameByTokenId(beastId) || getSpeciesNameById(beastId);
-  const name = species.toLowerCase();
+  const name = species.toLowerCase().replace(/\s/g, "");
   return facing === "left" ? `/beasts/left/${name}.png` : `/beasts/${name}.png`;
 }
 

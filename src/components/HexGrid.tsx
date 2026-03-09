@@ -1,4 +1,5 @@
 import { Box } from "@chakra-ui/react";
+import { useRef, useEffect, useState } from "react";
 import {
   ARENA_ROWS,
   OBSTACLES,
@@ -151,6 +152,73 @@ export function HexGrid({
     return pts.join(" ");
   }
 
+  // Track delayed HP for drain animation + floating damage numbers
+  const prevHpRef = useRef<Map<string, number>>(new Map());
+  const [delayedHp, setDelayedHp] = useState<Map<string, number>>(new Map());
+  const [damageNumbers, setDamageNumbers] = useState<Map<string, { amount: number; timestamp: number }>>(new Map());
+
+  useEffect(() => {
+    const allB = [...myBeasts, ...enemyBeasts];
+    const newDelayed = new Map(delayedHp);
+    const newDamage = new Map(damageNumbers);
+    let needsUpdate = false;
+    const now = Date.now();
+
+    for (const b of allB) {
+      const key = `${b.player_index}-${b.beast_index}`;
+      const currentHp = Number(b.hp);
+      const prev = prevHpRef.current.get(key);
+
+      if (prev === undefined) {
+        newDelayed.set(key, currentHp);
+        prevHpRef.current.set(key, currentHp);
+      } else if (currentHp < prev) {
+        // Took damage — show floating number and keep delayed bar at old value
+        const dmg = prev - currentHp;
+        newDamage.set(key, { amount: dmg, timestamp: now });
+        newDelayed.set(key, prev);
+        prevHpRef.current.set(key, currentHp);
+        needsUpdate = true;
+      } else {
+        newDelayed.set(key, currentHp);
+        prevHpRef.current.set(key, currentHp);
+      }
+    }
+
+    setDelayedHp(newDelayed);
+    setDamageNumbers(newDamage);
+
+    if (needsUpdate) {
+      // Start draining the yellow bar after damage number is visible
+      const drainTimer = setTimeout(() => {
+        setDelayedHp((prev) => {
+          const updated = new Map(prev);
+          for (const b of allB) {
+            const key = `${b.player_index}-${b.beast_index}`;
+            updated.set(key, Number(b.hp));
+          }
+          return updated;
+        });
+      }, 2000);
+
+      // Clear damage numbers after animation completes
+      const clearTimer = setTimeout(() => {
+        setDamageNumbers((prev) => {
+          const updated = new Map(prev);
+          for (const [key, val] of updated) {
+            if (val.timestamp === now) updated.delete(key);
+          }
+          return updated;
+        });
+      }, 3000);
+
+      return () => {
+        clearTimeout(drainTimer);
+        clearTimeout(clearTimer);
+      };
+    }
+  }, [myBeasts, enemyBeasts]);
+
   function renderBeast(beast: BeastStateModel, cx: number, cy: number) {
     const isMine = Number(beast.player_index) === myPlayerIndex;
     const beastIdx = Number(beast.beast_index);
@@ -186,9 +254,12 @@ export function HexGrid({
     const beastImgSrc = getBeastImagePath(Number(beast.beast_id), isMine ? "right" : "left");
 
     // HP bar dimensions
-    const hpBarWidth = hexSize * 1.12;
-    const hpBarHeight = 7;
-    const hpBarY = cy - imgSize - 8;
+    const hpBarWidth = hexSize * 1.5;
+    const hpBarHeight = 11;
+    const hpBarY = cy - imgSize - 16;
+    const beastKey = `${beast.player_index}-${beast.beast_index}`;
+    const delayedHpVal = delayedHp.get(beastKey) ?? hp;
+    const delayedPct = hpMax > 0 ? delayedHpVal / hpMax : 0;
 
     return (
       <g
@@ -283,6 +354,18 @@ export function HexGrid({
             stroke="rgba(0,0,0,0.4)"
             strokeWidth={0.5}
           />
+          {/* Delayed drain bar (yellow lag behind actual HP) */}
+          {delayedPct > hpPct && (
+            <rect
+              x={cx - hpBarWidth / 2 + 0.5}
+              y={hpBarY + 0.5}
+              width={Math.max(0, (hpBarWidth - 1) * delayedPct)}
+              height={hpBarHeight - 1}
+              rx={1.5}
+              fill="#CDAE79"
+              style={{ transition: "width 2s ease-in-out" }}
+            />
+          )}
           {/* Bar fill */}
           <rect
             x={cx - hpBarWidth / 2 + 0.5}
@@ -306,7 +389,7 @@ export function HexGrid({
             y={hpBarY - 3}
             textAnchor="middle"
             fill="#FFFFFF"
-            fontSize={7}
+            fontSize={10}
             fontWeight="bold"
             fontFamily="'JetBrains Mono', monospace"
             style={{ textShadow: "0 1px 2px rgba(0,0,0,0.8)" } as React.CSSProperties}
@@ -314,6 +397,49 @@ export function HexGrid({
             {hp}/{hpMax}
           </text>
         </g>
+
+        {/* Floating damage number — big black, floats up then fades */}
+        {damageNumbers.has(beastKey) && (() => {
+          const dmgY = cy - hexSize * 0.5;
+          const dmgText = `-${damageNumbers.get(beastKey)!.amount}`;
+          return (
+            <g style={{ pointerEvents: "none" }}>
+              {/* Black stroke outline */}
+              <text
+                x={cx}
+                y={dmgY}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fill="none"
+                stroke="#000000"
+                strokeWidth={5}
+                strokeLinejoin="round"
+                fontSize={34}
+                fontWeight="900"
+                fontFamily="'JetBrains Mono', monospace"
+              >
+                <animate attributeName="y" from={dmgY} to={dmgY - 30} dur="2.5s" fill="freeze" />
+                <animate attributeName="opacity" values="1;1;1;0" keyTimes="0;0.5;0.75;1" dur="2.5s" fill="freeze" />
+                {dmgText}
+              </text>
+              {/* Dark fill on top */}
+              <text
+                x={cx}
+                y={dmgY}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fill="#1A1A1A"
+                fontSize={34}
+                fontWeight="900"
+                fontFamily="'JetBrains Mono', monospace"
+              >
+                <animate attributeName="y" from={dmgY} to={dmgY - 30} dur="2.5s" fill="freeze" />
+                <animate attributeName="opacity" values="1;1;1;0" keyTimes="0;0.5;0.75;1" dur="2.5s" fill="freeze" />
+                {dmgText}
+              </text>
+            </g>
+          );
+        })()}
 
         {/* Planned action badge */}
         {actionBadge && (

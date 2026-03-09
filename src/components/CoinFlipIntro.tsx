@@ -2,9 +2,12 @@ import { Box, Flex, Text, VStack } from "@chakra-ui/react";
 
 interface CoinFlipIntroProps {
   revealResult: boolean;
+  iGoFirst?: boolean;
+  myName?: string;
+  enemyName?: string;
 }
 
-export function CoinFlipIntro({ revealResult }: CoinFlipIntroProps) {
+export function CoinFlipIntro({ revealResult, iGoFirst, myName, enemyName }: CoinFlipIntroProps) {
   return (
     <Flex
       direction="column"
@@ -49,11 +52,13 @@ export function CoinFlipIntro({ revealResult }: CoinFlipIntroProps) {
         className={`coin-result ${revealResult ? "coin-result--visible" : ""}`}
         textAlign="center"
       >
-        <Text fontFamily="heading" fontSize={{ base: "md", md: "xl" }} color="#E7E0D3" letterSpacing="0.06em">
-          Heads Wins
+        <Text fontFamily="heading" fontSize={{ base: "md", md: "xl" }} color={iGoFirst ? "#A7D5BF" : "#C78989"} letterSpacing="0.06em">
+          {iGoFirst ? "You go first!" : "Opponent goes first!"}
         </Text>
         <Text fontSize={{ base: "sm", md: "md" }} color="#D4C6AD" fontFamily="mono">
-          Player 1 attacks first · Player 2 defends
+          {iGoFirst
+            ? `${myName || "You"} attacks · ${enemyName || "Opponent"} defends`
+            : `${enemyName || "Opponent"} attacks · ${myName || "You"} defends`}
         </Text>
       </VStack>
     </Flex>

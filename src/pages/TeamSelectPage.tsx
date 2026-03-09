@@ -38,6 +38,12 @@ import { toast } from "sonner";
 
 type Phase = "creating" | "joining" | "lobby" | "select" | "confirming" | "coin" | "waiting" | "error";
 
+function normalizeAddr(addr: string): string {
+  if (!addr) return "";
+  const hex = addr.replace("0x", "").toLowerCase();
+  return "0x" + hex.padStart(64, "0");
+}
+
 export function TeamSelectPage() {
   const { gameId: gameIdParam } = useParams<{ gameId: string }>();
   const navigate = useNavigate();
@@ -61,6 +67,9 @@ export function TeamSelectPage() {
   const [search, setSearch] = useState("");
   const [statusMsg, setStatusMsg] = useState("");
   const [coinResultVisible, setCoinResultVisible] = useState(false);
+  const [coinIGoFirst, setCoinIGoFirst] = useState(false);
+  const [coinMyName, setCoinMyName] = useState("You");
+  const [coinEnemyName, setCoinEnemyName] = useState("Opponent");
   const [phase, setPhase] = useState<Phase>(
     isMatchMode ? "select" : isCreateMode ? "creating" : "joining"
   );
@@ -315,9 +324,24 @@ export function TeamSelectPage() {
   // After confirming team: wait until both teams are set, then show coin toss
   useEffect(() => {
     if (phase === "waiting" && polledGame && polledGame.status === GameStatus.PLAYING && gameId) {
+      // Determine who goes first
+      const myAddr = normalizeAddr(account?.address || "");
+      const isPlayer1 = normalizeAddr(polledGame.player1) === myAddr;
+      const myIndex = isPlayer1 ? 1 : 2;
+      setCoinIGoFirst(polledGame.current_attacker === myIndex);
+
+      // Resolve usernames
+      const enemyAddr = isPlayer1 ? polledGame.player2 : polledGame.player1;
+      getProfile(account?.address || "").then((p) => {
+        if (p?.display_name) setCoinMyName(p.display_name);
+      });
+      getProfile(enemyAddr).then((p) => {
+        if (p?.display_name) setCoinEnemyName(p.display_name);
+      });
+
       setPhase("coin");
     }
-  }, [phase, polledGame, gameId]);
+  }, [phase, polledGame, gameId, account]);
 
   // Coin toss intro before entering waiting/battle
   useEffect(() => {
@@ -326,7 +350,7 @@ export function TeamSelectPage() {
 
     const revealTimer = window.setTimeout(() => {
       setCoinResultVisible(true);
-    }, 2400);
+    }, 3000);
 
     const finishTimer = window.setTimeout(() => {
       if (gameId) {
@@ -334,7 +358,7 @@ export function TeamSelectPage() {
       } else {
         setPhase("waiting");
       }
-    }, 4200);
+    }, 8000);
 
     return () => {
       window.clearTimeout(revealTimer);
@@ -492,7 +516,7 @@ export function TeamSelectPage() {
 
   // --- Coin toss intro ---
   if (phase === "coin") {
-    return <CoinFlipIntro revealResult={coinResultVisible} />;
+    return <CoinFlipIntro revealResult={coinResultVisible} iGoFirst={coinIGoFirst} myName={coinMyName} enemyName={coinEnemyName} />;
   }
 
   // --- Waiting for opponent's team ---

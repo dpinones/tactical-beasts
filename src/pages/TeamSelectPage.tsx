@@ -354,14 +354,16 @@ export function TeamSelectPage() {
       ? await setTeam(gameId, team[0], team[1], team[2])
       : await setTeamDynamic(gameId, team);
     if (res) {
-      // Save recent beasts to Supabase
-      const walletAddress = account?.address || "";
-      if (walletAddress) {
-        const beastsToSave = team.map((tokenId) => {
-          const beast = catalog.find((b) => b.tokenId === tokenId);
-          return { id: tokenId, name: beast?.name || `Beast #${tokenId}` };
-        });
-        updateRecentBeasts(walletAddress, beastsToSave).catch(console.error);
+      // Save recent beasts to Supabase (only for matchmaking, not friend invites)
+      if (!isMatchMode) {
+        const walletAddress = account?.address || "";
+        if (walletAddress) {
+          const beastsToSave = team.map((tokenId) => {
+            const beast = catalog.find((b) => b.tokenId === tokenId);
+            return { id: tokenId, name: beast?.name || `Beast #${tokenId}` };
+          });
+          updateRecentBeasts(walletAddress, beastsToSave).catch(console.error);
+        }
       }
       setPhase("waiting");
       setStatusMsg("");

@@ -2,8 +2,33 @@ import { useCallback } from "react";
 import { useDojo } from "../dojo/DojoContext";
 import { useContractActions } from "./useContractActions";
 import { GameAction } from "../domain/types";
+import { waitForTx } from "../utils/waitForTx";
 
 const EVENT_EMITTED = "0x1c93f6e4703ae90f75338f29bffbe9c1662200cee981f49afeec26e892debcd";
+
+/** Extract gameId from tx receipt events. */
+function parseGameIdFromReceipt(receipt: any): number | null {
+  const events = receipt?.events || [];
+  for (const event of events) {
+    if (event.keys?.[0] === EVENT_EMITTED && event.data && event.data.length >= 2) {
+      const gameId = parseInt(event.data[1], 16);
+      if (gameId > 0 && gameId < 100000) {
+        return gameId;
+      }
+    }
+  }
+  return null;
+}
+
+/** Wait for tx and return receipt, logging errors without throwing. */
+async function confirmTx(account: any, txHash: string, label: string): Promise<any> {
+  try {
+    return await waitForTx(account, txHash);
+  } catch (e) {
+    console.error(`Failed to confirm ${label}:`, e);
+    return null;
+  }
+}
 
 export function useGameActions() {
   const {
@@ -18,23 +43,12 @@ export function useGameActions() {
 
     const txHash = (response as any)?.transaction_hash;
     if (txHash) {
-      try {
-        const receipt: any = await account.waitForTransaction(txHash, {
-          retryInterval: 100,
-        });
-        const events = receipt?.events || [];
-        for (const event of events) {
-          if (event.keys?.[0] === EVENT_EMITTED && event.data && event.data.length >= 2) {
-            const gameId = parseInt(event.data[1], 16);
-            console.log("[TB] parsed gameId:", gameId);
-            if (gameId > 0 && gameId < 100000) {
-              return gameId;
-            }
-          }
-        }
-        console.warn("[TB] no gameId found in events");
-      } catch (e) {
-        console.error("Failed to get receipt:", e);
+      const receipt = await confirmTx(account, txHash, "createGame");
+      if (receipt) {
+        const gameId = parseGameIdFromReceipt(receipt);
+        console.log("[TB] parsed gameId:", gameId);
+        if (!gameId) console.warn("[TB] no gameId found in events");
+        return gameId;
       }
     }
     return null;
@@ -49,23 +63,12 @@ export function useGameActions() {
 
     const txHash = (response as any)?.transaction_hash;
     if (txHash) {
-      try {
-        const receipt: any = await account.waitForTransaction(txHash, {
-          retryInterval: 100,
-        });
-        const events = receipt?.events || [];
-        for (const event of events) {
-          if (event.keys?.[0] === EVENT_EMITTED && event.data && event.data.length >= 2) {
-            const gameId = parseInt(event.data[1], 16);
-            console.log("[TB] parsed friendly gameId:", gameId);
-            if (gameId > 0 && gameId < 100000) {
-              return gameId;
-            }
-          }
-        }
-        console.warn("[TB] no gameId found in events (friendly)");
-      } catch (e) {
-        console.error("Failed to get receipt:", e);
+      const receipt = await confirmTx(account, txHash, "createFriendlyGame");
+      if (receipt) {
+        const gameId = parseGameIdFromReceipt(receipt);
+        console.log("[TB] parsed friendly gameId:", gameId);
+        if (!gameId) console.warn("[TB] no gameId found in events (friendly)");
+        return gameId;
       }
     }
     return null;
@@ -79,13 +82,7 @@ export function useGameActions() {
       ]);
       if (response) {
         const txHash = (response as any)?.transaction_hash;
-        if (txHash) {
-          try {
-            await account.waitForTransaction(txHash, { retryInterval: 100 });
-          } catch (e) {
-            console.error("Failed to confirm join:", e);
-          }
-        }
+        if (txHash) await confirmTx(account, txHash, "joinGame");
       }
       return response;
     },
@@ -103,13 +100,7 @@ export function useGameActions() {
       ]);
       if (response) {
         const txHash = (response as any)?.transaction_hash;
-        if (txHash) {
-          try {
-            await account.waitForTransaction(txHash, { retryInterval: 100 });
-          } catch (e) {
-            console.error("Failed to confirm set_team:", e);
-          }
-        }
+        if (txHash) await confirmTx(account, txHash, "setTeam");
       }
       return response;
     },
@@ -125,13 +116,7 @@ export function useGameActions() {
       ]);
       if (response) {
         const txHash = (response as any)?.transaction_hash;
-        if (txHash) {
-          try {
-            await account.waitForTransaction(txHash, { retryInterval: 100 });
-          } catch (e) {
-            console.error("Failed to confirm set_team_dynamic:", e);
-          }
-        }
+        if (txHash) await confirmTx(account, txHash, "setTeamDynamic");
       }
       return response;
     },
@@ -154,13 +139,7 @@ export function useGameActions() {
       ]);
       if (response) {
         const txHash = (response as any)?.transaction_hash;
-        if (txHash) {
-          try {
-            await account.waitForTransaction(txHash, { retryInterval: 100 });
-          } catch (e) {
-            console.error("Failed to confirm execute_turn:", e);
-          }
-        }
+        if (txHash) await confirmTx(account, txHash, "executeTurn");
       }
       return response;
     },
@@ -173,23 +152,12 @@ export function useGameActions() {
 
     const txHash = (response as any)?.transaction_hash;
     if (txHash) {
-      try {
-        const receipt: any = await account.waitForTransaction(txHash, {
-          retryInterval: 100,
-        });
-        const events = receipt?.events || [];
-        for (const event of events) {
-          if (event.keys?.[0] === EVENT_EMITTED && event.data && event.data.length >= 2) {
-            const gameId = parseInt(event.data[1], 16);
-            console.log("[TB] findMatch parsed gameId:", gameId);
-            if (gameId > 0 && gameId < 100000) {
-              return gameId;
-            }
-          }
-        }
-        console.warn("[TB] findMatch: no gameId found in events");
-      } catch (e) {
-        console.error("Failed to get findMatch receipt:", e);
+      const receipt = await confirmTx(account, txHash, "findMatch");
+      if (receipt) {
+        const gameId = parseGameIdFromReceipt(receipt);
+        console.log("[TB] findMatch parsed gameId:", gameId);
+        if (!gameId) console.warn("[TB] findMatch: no gameId found in events");
+        return gameId;
       }
     }
     return null;
@@ -199,13 +167,7 @@ export function useGameActions() {
     const response = await execute(client.game_system.cancelMatchmaking, [account]);
     if (response) {
       const txHash = (response as any)?.transaction_hash;
-      if (txHash) {
-        try {
-          await account.waitForTransaction(txHash, { retryInterval: 100 });
-        } catch (e) {
-          console.error("Failed to confirm cancelMatchmaking:", e);
-        }
-      }
+      if (txHash) await confirmTx(account, txHash, "cancelMatchmaking");
     }
     return response;
   }, [client, account, execute]);
@@ -218,13 +180,7 @@ export function useGameActions() {
       ]);
       if (response) {
         const txHash = (response as any)?.transaction_hash;
-        if (txHash) {
-          try {
-            await account.waitForTransaction(txHash, { retryInterval: 100 });
-          } catch (e) {
-            console.error("Failed to confirm abandonGame:", e);
-          }
-        }
+        if (txHash) await confirmTx(account, txHash, "abandonGame");
       }
       return response;
     },

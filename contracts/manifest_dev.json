@@ -33,23 +33,25 @@
   },
   "contracts": [
     {
-      "address": "0x1b593318001128690ad33c01cff611a40b87dd1787b2f4caab70f2d3c2ea542",
-      "class_hash": "0x402414f622646d85bc826b7536d1ef70ad774acb850e9e96bf2a4e0a4854c7d",
+      "address": "0x4265bb1b063bc9aa6dde54b9e741150198a11551dff5e7f6a357d90bed852d1",
+      "class_hash": "0x540338e24ccd8822f687c47e325268d7da528d96b63818bbd1aafd8e287ca3d",
       "init_calldata": [
         "0x6677fe62ee39c7b07401f754138502bab7fac99d2d3c5d37df7d1c6fab10819",
         "0x0"
       ],
-      "tag": "TB3-game_system",
-      "selector": "0x27c80a1046acbd00ba0057c877509e0a1312550de870ec7bb7ef2017fe96738",
+      "tag": "TB5-game_system",
+      "selector": "0x49d072544482e51a57b9915365a930eff11c3ea665b4c61adeaf3a25c4e7184",
       "systems": [
         "dojo_init",
         "create_game",
         "create_game_with_settings",
         "create_friendly_game",
+        "create_friendly_game_with_settings",
         "join_game",
         "set_team",
         "set_team_dynamic",
         "set_beast_config",
+        "set_denshokan_address",
         "execute_turn",
         "find_match",
         "cancel_matchmaking",
@@ -75,8 +77,8 @@
         }
       ],
       "class_hash": "0x1238e6a08a8497328ad2a5b7b9e15dc4c57b9f193b107754b7d139d53e07036",
-      "tag": "TB3-BeastConfig",
-      "selector": "0x62fe8811908572eaa3551394f076349048ecfd7e1df8033b0b79fd218514079"
+      "tag": "TB5-BeastConfig",
+      "selector": "0x1c3dfe6368c97283259ab580cc09a5310cc0b2a668227ad1f803fd99a1f8545"
     },
     {
       "members": [
@@ -157,8 +159,8 @@
         }
       ],
       "class_hash": "0x6e0fc09cfffa5284d9b88111d9c0f0e4494cbec7ab45d13add53ffe8f96fabd",
-      "tag": "TB3-BeastState",
-      "selector": "0x361b3c3655206fd4f411d2d726f026e3e69c07d74fe96bbe82031e7614d0653"
+      "tag": "TB5-BeastState",
+      "selector": "0x6ad27c3f1141a93c33c2d1457da5d04bad8d8777498af4390c9bd26833d8226"
     },
     {
       "members": [
@@ -219,8 +221,8 @@
         }
       ],
       "class_hash": "0x169079f72b7d25422f12bc2b4c7fab96529b5c9903c94992e1f98d7c4d2f886",
-      "tag": "TB3-Game",
-      "selector": "0x3fd0d86f0ff19b96fb0b2b96981ea688ffa17d5d01ea77f34645cdca42c2193"
+      "tag": "TB5-Game",
+      "selector": "0x422e85033bfe71a52484a6e5549a31b8d76b2bbcedb7646c31fd6652b26f6bd"
     },
     {
       "members": [
@@ -246,8 +248,8 @@
         }
       ],
       "class_hash": "0x68556d7f73d3a951fd331cbb17b439ab558636b9b86cd71aaeb34aafbe327d2",
-      "tag": "TB3-GameConfig",
-      "selector": "0xcfbfe5ced60e05177faea1e221c38dea13e3fe02ad92e24106352916cd593e"
+      "tag": "TB5-GameConfig",
+      "selector": "0x10905b3ad47af4acc0d9958df3ee6fc184406915a09924c1ed5e1a5fba5f30d"
     },
     {
       "members": [
@@ -283,8 +285,8 @@
         }
       ],
       "class_hash": "0x577d9db790689d8638fd2f4489730a8cb1823adfd92704368d14e4c4228d3b9",
-      "tag": "TB3-GameSettings",
-      "selector": "0x78c1547a36e6876893d310712938aabd9615b9c69c650533865011f688afb23"
+      "tag": "TB5-GameSettings",
+      "selector": "0x2a900047030b6bfe0ebc9732f3e2b81de0daf6b6c3af8128baa3a717e296fbd"
     },
     {
       "members": [
@@ -310,8 +312,8 @@
         }
       ],
       "class_hash": "0x3528f7fcee65794a7540afce3c015ea7334c1b7887b9296abb76b1b8548f02c",
-      "tag": "TB3-GameToken",
-      "selector": "0x72dba2618f5803b84608f531f659dc788c19fcab26952cdaf8676ab24b31472"
+      "tag": "TB5-GameToken",
+      "selector": "0x7d80851e194eacd94d17761ae6f9539a4da701ebe9870bd02132e6c55e685d5"
     },
     {
       "members": [
@@ -332,8 +334,8 @@
         }
       ],
       "class_hash": "0x2939d4fea8c29634caa69d7528e0014ed0a064f37a70a1f9e8703cad15c4533",
-      "tag": "TB3-GameTokens",
-      "selector": "0x716311b478610913cc86ef14a4cc013ab273779d18d2d6d2ea30f2105134b4a"
+      "tag": "TB5-GameTokens",
+      "selector": "0x1f5652e62d2496da9e3cfc985124b8cb05f3f2ee87f557d94208d436eac4d17"
     },
     {
       "members": [
@@ -404,8 +406,8 @@
         }
       ],
       "class_hash": "0x9dc21d2c29b74312ab66966dcd739e7f1d79d5d1cb6f87ae8759b162b9fb8a",
-      "tag": "TB3-MapState",
-      "selector": "0x6f3451315d3c982d7e18ba9c9061243f2483b84b2b6c7c05c3422a66cfa4783"
+      "tag": "TB5-MapState",
+      "selector": "0xbf01ebeaabe7de31ed34af757051eee5c06c841a6f63556385051a100beaba"
     },
     {
       "members": [
@@ -426,8 +428,8 @@
         }
       ],
       "class_hash": "0x73fd887a2fd77649eb58dfab6745786334b6967b96e4e762eefba699ebc34a5",
-      "tag": "TB3-MatchmakingQueue",
-      "selector": "0x4945df1fbf63fab1b76dae0f3e3c7f743689e6fd7a58582260da188a6a10a2e"
+      "tag": "TB5-MatchmakingQueue",
+      "selector": "0x549e24dfae3fc461d5fa66f62ed8fa01e76a70108cae5b5b5ffece4d3d92a23"
     },
     {
       "members": [
@@ -468,8 +470,8 @@
         }
       ],
       "class_hash": "0x46d94361d5a37e0c69c388be6762689a38461a7ac645c694514f1ca536bf4e5",
-      "tag": "TB3-PlayerProfile",
-      "selector": "0x429bd24d7a932e3ef93ebee973a20807b658ed721a60b16c03d26694d4cd86f"
+      "tag": "TB5-PlayerProfile",
+      "selector": "0x5c34d5dc6ab3c5262461873df0d76dc24df4b38bf11f938d894e2ea3e389348"
     },
     {
       "members": [
@@ -515,8 +517,8 @@
         }
       ],
       "class_hash": "0x520cea37b6e609dfb01e6efc8f15b081a1416cac55b390a583d0eafb9e05b8f",
-      "tag": "TB3-PlayerState",
-      "selector": "0x1783a3bf56a803c162fe3698b481a00c832267d76c46bcf0b9e8caff406b0b8"
+      "tag": "TB5-PlayerState",
+      "selector": "0x20908c0374e022af145865d758f7f6e93f8ca48c45293cd94fe0a18b45f7650"
     },
     {
       "members": [
@@ -557,8 +559,8 @@
         }
       ],
       "class_hash": "0xb0c0d6e495a34bb0929fa973352d0339a76edcd071e3011db10b3681f81655",
-      "tag": "TB3-TokenScore",
-      "selector": "0x39785eda22e35bf650bb9d8a0703fbd27a2a6114c4a167aab02d3657d698a24"
+      "tag": "TB5-TokenScore",
+      "selector": "0x7e0e1576d07b66d19e34eb84f344801df0fa7c19a014a39c495851b03a3ebca"
     }
   ],
   "events": [
@@ -581,8 +583,8 @@
         }
       ],
       "class_hash": "0x788ea5c7cf465762569bbc3b285f5f7a67e08c68bee5b3ec108c76e60398b57",
-      "tag": "TB3-GameCreated",
-      "selector": "0x24c5dae285e33fc1a76772216ea9385fe27a6931a560fbf9320d1734a4b51a0"
+      "tag": "TB5-GameCreated",
+      "selector": "0x8494920467d744d20d01d39e1a0bdd71cc715d2155cd148a1858f54883d04b"
     },
     {
       "members": [
@@ -608,8 +610,8 @@
         }
       ],
       "class_hash": "0xa50f7b2c55d53de68cfbd7f7339de88e23cd5347f6381bc713d77d934986af",
-      "tag": "TB3-GameFinished",
-      "selector": "0xb4d854b495cf0d51e72f850a21b8118c89d361fc23f14d19e508414f1b6acc"
+      "tag": "TB5-GameFinished",
+      "selector": "0x67bb33b23d3fdd78102d240eb3a9dc7c1283f2f0026a9b8710bdd150261696b"
     },
     {
       "members": [
@@ -630,8 +632,8 @@
         }
       ],
       "class_hash": "0x2e6939bbf78cf04d6840c672258eeff8939a1742b0b08c21acb86aecb8d0406",
-      "tag": "TB3-PlayerJoined",
-      "selector": "0x762626358e0a840104a45722891d12bbd149721015aa3632c14dae512d5e2eb"
+      "tag": "TB5-PlayerJoined",
+      "selector": "0x2080d7078c08a57e3bffaaf81f724361f7d607e52e90026cb25cf1d02be5e22"
     }
   ],
   "external_contracts": [],
@@ -3930,6 +3932,22 @@
         },
         {
           "type": "function",
+          "name": "create_friendly_game_with_settings",
+          "inputs": [
+            {
+              "name": "settings_id",
+              "type": "core::integer::u32"
+            }
+          ],
+          "outputs": [
+            {
+              "type": "core::integer::u32"
+            }
+          ],
+          "state_mutability": "external"
+        },
+        {
+          "type": "function",
           "name": "join_game",
           "inputs": [
             {
@@ -3986,6 +4004,18 @@
           "inputs": [
             {
               "name": "beast_nft_address",
+              "type": "core::starknet::contract_address::ContractAddress"
+            }
+          ],
+          "outputs": [],
+          "state_mutability": "external"
+        },
+        {
+          "type": "function",
+          "name": "set_denshokan_address",
+          "inputs": [
+            {
+              "name": "denshokan_address",
               "type": "core::starknet::contract_address::ContractAddress"
             }
           ],
@@ -4101,6 +4131,163 @@
           "outputs": [
             {
               "type": "tactical_beats::models::index::GameSettings"
+            }
+          ],
+          "state_mutability": "view"
+        },
+        {
+          "type": "function",
+          "name": "get_game",
+          "inputs": [
+            {
+              "name": "game_id",
+              "type": "core::integer::u32"
+            }
+          ],
+          "outputs": [
+            {
+              "type": "tactical_beats::models::index::Game"
+            }
+          ],
+          "state_mutability": "view"
+        },
+        {
+          "type": "function",
+          "name": "get_game_config",
+          "inputs": [],
+          "outputs": [
+            {
+              "type": "tactical_beats::models::index::GameConfig"
+            }
+          ],
+          "state_mutability": "view"
+        },
+        {
+          "type": "function",
+          "name": "get_beast_state",
+          "inputs": [
+            {
+              "name": "game_id",
+              "type": "core::integer::u32"
+            },
+            {
+              "name": "player_index",
+              "type": "core::integer::u8"
+            },
+            {
+              "name": "beast_index",
+              "type": "core::integer::u8"
+            }
+          ],
+          "outputs": [
+            {
+              "type": "tactical_beats::models::index::BeastState"
+            }
+          ],
+          "state_mutability": "view"
+        },
+        {
+          "type": "function",
+          "name": "get_all_beast_states",
+          "inputs": [
+            {
+              "name": "game_id",
+              "type": "core::integer::u32"
+            }
+          ],
+          "outputs": [
+            {
+              "type": "core::array::Array::<tactical_beats::models::index::BeastState>"
+            }
+          ],
+          "state_mutability": "view"
+        },
+        {
+          "type": "function",
+          "name": "get_player_state",
+          "inputs": [
+            {
+              "name": "game_id",
+              "type": "core::integer::u32"
+            },
+            {
+              "name": "player",
+              "type": "core::starknet::contract_address::ContractAddress"
+            }
+          ],
+          "outputs": [
+            {
+              "type": "tactical_beats::models::index::PlayerState"
+            }
+          ],
+          "state_mutability": "view"
+        },
+        {
+          "type": "function",
+          "name": "get_map_state",
+          "inputs": [
+            {
+              "name": "game_id",
+              "type": "core::integer::u32"
+            }
+          ],
+          "outputs": [
+            {
+              "type": "tactical_beats::models::index::MapState"
+            }
+          ],
+          "state_mutability": "view"
+        },
+        {
+          "type": "function",
+          "name": "get_player_profile",
+          "inputs": [
+            {
+              "name": "player",
+              "type": "core::starknet::contract_address::ContractAddress"
+            }
+          ],
+          "outputs": [
+            {
+              "type": "tactical_beats::models::index::PlayerProfile"
+            }
+          ],
+          "state_mutability": "view"
+        },
+        {
+          "type": "function",
+          "name": "get_matchmaking_queue",
+          "inputs": [],
+          "outputs": [
+            {
+              "type": "tactical_beats::models::index::MatchmakingQueue"
+            }
+          ],
+          "state_mutability": "view"
+        },
+        {
+          "type": "function",
+          "name": "get_open_games",
+          "inputs": [
+            {
+              "name": "max",
+              "type": "core::integer::u32"
+            }
+          ],
+          "outputs": [
+            {
+              "type": "core::array::Array::<tactical_beats::models::index::Game>"
+            }
+          ],
+          "state_mutability": "view"
+        },
+        {
+          "type": "function",
+          "name": "get_all_settings",
+          "inputs": [],
+          "outputs": [
+            {
+              "type": "core::array::Array::<tactical_beats::models::index::GameSettings>"
             }
           ],
           "state_mutability": "view"

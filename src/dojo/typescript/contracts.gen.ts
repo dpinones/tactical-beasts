@@ -3,10 +3,6 @@ import { DojoProvider, DojoCall } from "@dojoengine/core";
 import { Account, AccountInterface, BigNumberish, CairoOption, CairoCustomEnum } from "starknet";
 import * as models from "./models.gen";
 
-type Action = models.Action;
-type GameContextDetails = models.GameContextDetails;
-type MintGameParams = models.MintGameParams;
-
 export function setupWorld(provider: DojoProvider) {
 
 	const build_game_system_abandonGame_calldata = (gameId: BigNumberish): DojoCall => {
@@ -226,6 +222,176 @@ export function setupWorld(provider: DojoProvider) {
 	const game_system_gameOverBatch = async (tokenIds: Array<BigNumberish>) => {
 		try {
 			return await provider.call(DOJO_NAMESPACE, build_game_system_gameOverBatch_calldata(tokenIds));
+		} catch (error) {
+			console.error(error);
+			throw error;
+		}
+	};
+
+	const build_game_system_getAllBeastStates_calldata = (gameId: BigNumberish): DojoCall => {
+		return {
+			contractName: "game_system",
+			entrypoint: "get_all_beast_states",
+			calldata: [gameId],
+		};
+	};
+
+	const game_system_getAllBeastStates = async (gameId: BigNumberish) => {
+		try {
+			return await provider.call(DOJO_NAMESPACE, build_game_system_getAllBeastStates_calldata(gameId));
+		} catch (error) {
+			console.error(error);
+			throw error;
+		}
+	};
+
+	const build_game_system_getAllSettings_calldata = (): DojoCall => {
+		return {
+			contractName: "game_system",
+			entrypoint: "get_all_settings",
+			calldata: [],
+		};
+	};
+
+	const game_system_getAllSettings = async () => {
+		try {
+			return await provider.call(DOJO_NAMESPACE, build_game_system_getAllSettings_calldata());
+		} catch (error) {
+			console.error(error);
+			throw error;
+		}
+	};
+
+	const build_game_system_getBeastState_calldata = (gameId: BigNumberish, playerIndex: BigNumberish, beastIndex: BigNumberish): DojoCall => {
+		return {
+			contractName: "game_system",
+			entrypoint: "get_beast_state",
+			calldata: [gameId, playerIndex, beastIndex],
+		};
+	};
+
+	const game_system_getBeastState = async (gameId: BigNumberish, playerIndex: BigNumberish, beastIndex: BigNumberish) => {
+		try {
+			return await provider.call(DOJO_NAMESPACE, build_game_system_getBeastState_calldata(gameId, playerIndex, beastIndex));
+		} catch (error) {
+			console.error(error);
+			throw error;
+		}
+	};
+
+	const build_game_system_getGame_calldata = (gameId: BigNumberish): DojoCall => {
+		return {
+			contractName: "game_system",
+			entrypoint: "get_game",
+			calldata: [gameId],
+		};
+	};
+
+	const game_system_getGame = async (gameId: BigNumberish) => {
+		try {
+			return await provider.call(DOJO_NAMESPACE, build_game_system_getGame_calldata(gameId));
+		} catch (error) {
+			console.error(error);
+			throw error;
+		}
+	};
+
+	const build_game_system_getGameConfig_calldata = (): DojoCall => {
+		return {
+			contractName: "game_system",
+			entrypoint: "get_game_config",
+			calldata: [],
+		};
+	};
+
+	const game_system_getGameConfig = async () => {
+		try {
+			return await provider.call(DOJO_NAMESPACE, build_game_system_getGameConfig_calldata());
+		} catch (error) {
+			console.error(error);
+			throw error;
+		}
+	};
+
+	const build_game_system_getMapState_calldata = (gameId: BigNumberish): DojoCall => {
+		return {
+			contractName: "game_system",
+			entrypoint: "get_map_state",
+			calldata: [gameId],
+		};
+	};
+
+	const game_system_getMapState = async (gameId: BigNumberish) => {
+		try {
+			return await provider.call(DOJO_NAMESPACE, build_game_system_getMapState_calldata(gameId));
+		} catch (error) {
+			console.error(error);
+			throw error;
+		}
+	};
+
+	const build_game_system_getMatchmakingQueue_calldata = (): DojoCall => {
+		return {
+			contractName: "game_system",
+			entrypoint: "get_matchmaking_queue",
+			calldata: [],
+		};
+	};
+
+	const game_system_getMatchmakingQueue = async () => {
+		try {
+			return await provider.call(DOJO_NAMESPACE, build_game_system_getMatchmakingQueue_calldata());
+		} catch (error) {
+			console.error(error);
+			throw error;
+		}
+	};
+
+	const build_game_system_getOpenGames_calldata = (max: BigNumberish): DojoCall => {
+		return {
+			contractName: "game_system",
+			entrypoint: "get_open_games",
+			calldata: [max],
+		};
+	};
+
+	const game_system_getOpenGames = async (max: BigNumberish) => {
+		try {
+			return await provider.call(DOJO_NAMESPACE, build_game_system_getOpenGames_calldata(max));
+		} catch (error) {
+			console.error(error);
+			throw error;
+		}
+	};
+
+	const build_game_system_getPlayerProfile_calldata = (player: string): DojoCall => {
+		return {
+			contractName: "game_system",
+			entrypoint: "get_player_profile",
+			calldata: [player],
+		};
+	};
+
+	const game_system_getPlayerProfile = async (player: string) => {
+		try {
+			return await provider.call(DOJO_NAMESPACE, build_game_system_getPlayerProfile_calldata(player));
+		} catch (error) {
+			console.error(error);
+			throw error;
+		}
+	};
+
+	const build_game_system_getPlayerState_calldata = (gameId: BigNumberish, player: string): DojoCall => {
+		return {
+			contractName: "game_system",
+			entrypoint: "get_player_state",
+			calldata: [gameId, player],
+		};
+	};
+
+	const game_system_getPlayerState = async (gameId: BigNumberish, player: string) => {
+		try {
+			return await provider.call(DOJO_NAMESPACE, build_game_system_getPlayerState_calldata(gameId, player));
 		} catch (error) {
 			console.error(error);
 			throw error;
@@ -567,6 +733,26 @@ export function setupWorld(provider: DojoProvider) {
 			buildGameOverCalldata: build_game_system_gameOver_calldata,
 			gameOverBatch: game_system_gameOverBatch,
 			buildGameOverBatchCalldata: build_game_system_gameOverBatch_calldata,
+			getAllBeastStates: game_system_getAllBeastStates,
+			buildGetAllBeastStatesCalldata: build_game_system_getAllBeastStates_calldata,
+			getAllSettings: game_system_getAllSettings,
+			buildGetAllSettingsCalldata: build_game_system_getAllSettings_calldata,
+			getBeastState: game_system_getBeastState,
+			buildGetBeastStateCalldata: build_game_system_getBeastState_calldata,
+			getGame: game_system_getGame,
+			buildGetGameCalldata: build_game_system_getGame_calldata,
+			getGameConfig: game_system_getGameConfig,
+			buildGetGameConfigCalldata: build_game_system_getGameConfig_calldata,
+			getMapState: game_system_getMapState,
+			buildGetMapStateCalldata: build_game_system_getMapState_calldata,
+			getMatchmakingQueue: game_system_getMatchmakingQueue,
+			buildGetMatchmakingQueueCalldata: build_game_system_getMatchmakingQueue_calldata,
+			getOpenGames: game_system_getOpenGames,
+			buildGetOpenGamesCalldata: build_game_system_getOpenGames_calldata,
+			getPlayerProfile: game_system_getPlayerProfile,
+			buildGetPlayerProfileCalldata: build_game_system_getPlayerProfile_calldata,
+			getPlayerState: game_system_getPlayerState,
+			buildGetPlayerStateCalldata: build_game_system_getPlayerState_calldata,
 			joinGame: game_system_joinGame,
 			buildJoinGameCalldata: build_game_system_joinGame_calldata,
 			mintGame: game_system_mintGame,

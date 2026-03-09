@@ -136,6 +136,7 @@ export interface PlayerStateModel {
   beast_1: number;
   beast_2: number;
   beast_3: number;
+  beast_4: number;
   potion_used: boolean;
 }
 

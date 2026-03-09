@@ -31,6 +31,22 @@ pub trait IGameSystem<T> {
     ) -> u32;
     fn settings_count(self: @T) -> u32;
     fn settings_details(self: @T, settings_id: u32) -> crate::models::index::GameSettings;
+    fn get_game(self: @T, game_id: u32) -> crate::models::index::Game;
+    fn get_game_config(self: @T) -> crate::models::index::GameConfig;
+    fn get_beast_state(
+        self: @T, game_id: u32, player_index: u8, beast_index: u8,
+    ) -> crate::models::index::BeastState;
+    fn get_all_beast_states(self: @T, game_id: u32) -> Array<crate::models::index::BeastState>;
+    fn get_player_state(
+        self: @T, game_id: u32, player: starknet::ContractAddress,
+    ) -> crate::models::index::PlayerState;
+    fn get_map_state(self: @T, game_id: u32) -> crate::models::index::MapState;
+    fn get_player_profile(
+        self: @T, player: starknet::ContractAddress,
+    ) -> crate::models::index::PlayerProfile;
+    fn get_matchmaking_queue(self: @T) -> crate::models::index::MatchmakingQueue;
+    fn get_open_games(self: @T, max: u32) -> Array<crate::models::index::Game>;
+    fn get_all_settings(self: @T) -> Array<crate::models::index::GameSettings>;
 }
 
 #[dojo::contract]
@@ -379,6 +395,99 @@ pub mod game_system {
             let config: GameConfig = world.read_model(0);
             assert!(settings_id >= 1 && settings_id <= config.settings_count, "Settings do not exist");
             world.read_model(settings_id)
+        }
+
+        fn get_game(self: @ContractState, game_id: u32) -> Game {
+            let world = self.world(@NAMESPACE());
+            world.read_model(game_id)
+        }
+
+        fn get_game_config(self: @ContractState) -> GameConfig {
+            let world = self.world(@NAMESPACE());
+            world.read_model(0)
+        }
+
+        fn get_beast_state(
+            self: @ContractState, game_id: u32, player_index: u8, beast_index: u8,
+        ) -> BeastState {
+            let world = self.world(@NAMESPACE());
+            world.read_model((game_id, player_index, beast_index))
+        }
+
+        fn get_all_beast_states(self: @ContractState, game_id: u32) -> Array<BeastState> {
+            let world = self.world(@NAMESPACE());
+            let game: Game = world.read_model(game_id);
+            let settings = GameSettings {
+                settings_id: game.settings_id,
+                ..world.read_model(game.settings_id)
+            };
+            let beasts_per_player: u8 = settings.beasts_per_player;
+            let mut result: Array<BeastState> = array![];
+            let mut player: u8 = 1;
+            while player <= 2 {
+                let mut beast_idx: u8 = 0;
+                while beast_idx < beasts_per_player {
+                    let state: BeastState = world.read_model((game_id, player, beast_idx));
+                    result.append(state);
+                    beast_idx += 1;
+                };
+                player += 1;
+            };
+            result
+        }
+
+        fn get_player_state(
+            self: @ContractState, game_id: u32, player: ContractAddress,
+        ) -> PlayerState {
+            let world = self.world(@NAMESPACE());
+            world.read_model((game_id, player))
+        }
+
+        fn get_map_state(self: @ContractState, game_id: u32) -> MapState {
+            let world = self.world(@NAMESPACE());
+            world.read_model(game_id)
+        }
+
+        fn get_player_profile(self: @ContractState, player: ContractAddress) -> PlayerProfile {
+            let world = self.world(@NAMESPACE());
+            world.read_model(player)
+        }
+
+        fn get_matchmaking_queue(self: @ContractState) -> MatchmakingQueue {
+            let world = self.world(@NAMESPACE());
+            world.read_model(0)
+        }
+
+        fn get_open_games(self: @ContractState, max: u32) -> Array<Game> {
+            let world = self.world(@NAMESPACE());
+            let config: GameConfig = world.read_model(0);
+            let mut result: Array<Game> = array![];
+            let mut count: u32 = 0;
+            let mut scanned: u32 = 0;
+            let mut game_id = config.game_count;
+            while game_id >= 1 && count < max && scanned < 200 {
+                let game: Game = world.read_model(game_id);
+                if game.status == GAME_STATUS_WAITING {
+                    result.append(game);
+                    count += 1;
+                }
+                scanned += 1;
+                game_id -= 1;
+            };
+            result
+        }
+
+        fn get_all_settings(self: @ContractState) -> Array<GameSettings> {
+            let world = self.world(@NAMESPACE());
+            let config: GameConfig = world.read_model(0);
+            let mut result: Array<GameSettings> = array![];
+            let mut i: u32 = 1;
+            while i <= config.settings_count {
+                let s: GameSettings = world.read_model(i);
+                result.append(s);
+                i += 1;
+            };
+            result
         }
 
         fn set_team(ref self: ContractState, game_id: u32, beast_1: u32, beast_2: u32, beast_3: u32) {

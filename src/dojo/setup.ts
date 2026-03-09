@@ -1,4 +1,5 @@
 import { DojoConfig, DojoProvider } from "@dojoengine/core";
+import { initViewCalls } from "../services/viewCalls";
 import { BurnerManager } from "@dojoengine/create-burner";
 import * as torii from "@dojoengine/torii-client";
 import { Account, ArraySignatureType, RpcProvider } from "starknet";
@@ -30,6 +31,9 @@ export async function setup({ ...config }: DojoConfig) {
 
   // setup world
   const client = await setupWorld(dojoProvider);
+
+  // initialize view call service
+  const viewCalls = initViewCalls(dojoProvider);
 
   // create burner manager (only for local/slot, not for sepolia/mainnet)
   const chain = import.meta.env.VITE_CHAIN?.trim() || "";
@@ -85,5 +89,6 @@ export async function setup({ ...config }: DojoConfig) {
     dojoProvider,
     burnerManager,
     toriiClient,
+    viewCalls,
   };
 }

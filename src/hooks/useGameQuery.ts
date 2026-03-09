@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import graphQLClient from "../graphQLClient";
 import {
   GET_GAME,
@@ -22,17 +22,48 @@ import type {
 
 import { DOJO_NAMESPACE_LOWER as NS } from "../config/namespace";
 
+function toNumber(value: any): number {
+  if (typeof value === "number") return value;
+  if (typeof value === "bigint") return Number(value);
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return 0;
+}
+
+function toBool(value: any): boolean {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value !== 0;
+  if (typeof value === "bigint") return value !== 0n;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (
+      normalized === "" ||
+      normalized === "0" ||
+      normalized === "0x0" ||
+      normalized === "false" ||
+      normalized === "no" ||
+      normalized === "null"
+    ) {
+      return false;
+    }
+    return true;
+  }
+  return Boolean(value);
+}
+
 function parseGameNode(node: any): GameModel {
   return {
-    game_id: Number(node.game_id),
+    game_id: toNumber(node.game_id),
     player1: node.player1,
     player2: node.player2,
-    status: Number(node.status),
-    current_attacker: Number(node.current_attacker),
-    round: Number(node.round),
+    status: toNumber(node.status),
+    current_attacker: toNumber(node.current_attacker),
+    round: toNumber(node.round),
     winner: node.winner,
-    p1_team_set: Boolean(node.p1_team_set),
-    p2_team_set: Boolean(node.p2_team_set),
+    p1_team_set: toBool(node.p1_team_set),
+    p2_team_set: toBool(node.p2_team_set),
     is_friendly: Boolean(node.is_friendly),
     settings_id: Number(node.settings_id ?? 1),
   };
@@ -40,45 +71,45 @@ function parseGameNode(node: any): GameModel {
 
 function parseBeastNode(node: any): BeastStateModel {
   return {
-    game_id: Number(node.game_id),
-    player_index: Number(node.player_index),
-    beast_index: Number(node.beast_index),
-    beast_id: Number(node.beast_id),
-    token_id: Number(node.token_id),
-    beast_type: Number(node.beast_type),
-    tier: Number(node.tier),
-    level: Number(node.level),
-    hp: Number(node.hp),
-    hp_max: Number(node.hp_max),
-    extra_lives: Number(node.extra_lives),
-    position_row: Number(node.position_row),
-    position_col: Number(node.position_col),
-    alive: Boolean(node.alive),
-    last_moved: Boolean(node.last_moved),
+    game_id: toNumber(node.game_id),
+    player_index: toNumber(node.player_index),
+    beast_index: toNumber(node.beast_index),
+    beast_id: toNumber(node.beast_id),
+    token_id: toNumber(node.token_id),
+    beast_type: toNumber(node.beast_type),
+    tier: toNumber(node.tier),
+    level: toNumber(node.level),
+    hp: toNumber(node.hp),
+    hp_max: toNumber(node.hp_max),
+    extra_lives: toNumber(node.extra_lives),
+    position_row: toNumber(node.position_row),
+    position_col: toNumber(node.position_col),
+    alive: toBool(node.alive),
+    last_moved: toBool(node.last_moved),
   };
 }
 
 function parseProfileNode(node: any): PlayerProfileModel {
   return {
     player: node.player,
-    games_played: Number(node.games_played),
-    wins: Number(node.wins),
-    losses: Number(node.losses),
-    total_kills: Number(node.total_kills),
-    total_deaths: Number(node.total_deaths),
-    abandons: Number(node.abandons),
+    games_played: toNumber(node.games_played),
+    wins: toNumber(node.wins),
+    losses: toNumber(node.losses),
+    total_kills: toNumber(node.total_kills),
+    total_deaths: toNumber(node.total_deaths),
+    abandons: toNumber(node.abandons),
   };
 }
 
 function parsePlayerNode(node: any): PlayerStateModel {
   return {
-    game_id: Number(node.game_id),
+    game_id: toNumber(node.game_id),
     player: node.player,
-    player_index: Number(node.player_index),
-    beast_1: Number(node.beast_1),
-    beast_2: Number(node.beast_2),
-    beast_3: Number(node.beast_3),
-    potion_used: Boolean(node.potion_used),
+    player_index: toNumber(node.player_index),
+    beast_1: toNumber(node.beast_1),
+    beast_2: toNumber(node.beast_2),
+    beast_3: toNumber(node.beast_3),
+    potion_used: toBool(node.potion_used),
   };
 }
 
@@ -141,6 +172,9 @@ export function useOpenGames(pollInterval = 5000) {
 
 export function useBeastStates(gameId: number | null, pollInterval = 2000) {
   const [beasts, setBeasts] = useState<BeastStateModel[]>([]);
+  const [rawBeasts, setRawBeasts] = useState<BeastStateModel[]>([]);
+  const prevRawByKeyRef = useRef<Map<string, BeastStateModel>>(new Map());
+  const forcedDeadRef = useRef<Set<string>>(new Set());
 
   const fetchBeasts = useCallback(async () => {
     if (gameId === null) return;
@@ -151,7 +185,41 @@ export function useBeastStates(gameId: number | null, pollInterval = 2000) {
       const key = `${NS}BeastStateModels`;
       const edges = result?.[key]?.edges;
       if (edges) {
-        setBeasts(edges.map((e: any) => parseBeastNode(e.node)));
+        const parsed: BeastStateModel[] = edges.map((e: any) => parseBeastNode(e.node));
+        const nextForcedDead = new Set(forcedDeadRef.current);
+
+        for (const beast of parsed) {
+          const beastKey = `${beast.player_index}-${beast.beast_index}`;
+          const prev = prevRawByKeyRef.current.get(beastKey);
+
+          // Standard death snapshot from backend.
+          if (!beast.alive || beast.hp <= 0) {
+            nextForcedDead.add(beastKey);
+          }
+
+          // Front-only rule: if a revive happened (extra life decreased), keep beast dead.
+          if (prev && beast.extra_lives < prev.extra_lives) {
+            nextForcedDead.add(beastKey);
+          }
+        }
+
+        forcedDeadRef.current = nextForcedDead;
+        setRawBeasts(parsed);
+        setBeasts(
+          parsed.map((beast) => {
+            const beastKey = `${beast.player_index}-${beast.beast_index}`;
+            if (!nextForcedDead.has(beastKey)) return beast;
+            return {
+              ...beast,
+              hp: 0,
+              alive: false,
+              extra_lives: 0,
+            };
+          })
+        );
+        prevRawByKeyRef.current = new Map(
+          parsed.map((beast) => [`${beast.player_index}-${beast.beast_index}`, beast] as const)
+        );
       }
     } catch (e) {
       console.error("Failed to fetch beast states:", e);
@@ -161,6 +229,9 @@ export function useBeastStates(gameId: number | null, pollInterval = 2000) {
   useEffect(() => {
     if (gameId === null) {
       setBeasts([]);
+      setRawBeasts([]);
+      prevRawByKeyRef.current = new Map();
+      forcedDeadRef.current = new Set();
       return;
     }
     fetchBeasts();
@@ -168,7 +239,7 @@ export function useBeastStates(gameId: number | null, pollInterval = 2000) {
     return () => clearInterval(interval);
   }, [gameId, fetchBeasts, pollInterval]);
 
-  return { beasts, refetch: fetchBeasts };
+  return { beasts, rawBeasts, refetch: fetchBeasts };
 }
 
 export function usePlayerState(
@@ -303,19 +374,19 @@ export function usePlayerProfile(player: string | null) {
 
 function parseMapStateNode(node: any): MapStateModel {
   return {
-    game_id: Number(node.game_id),
-    obstacle_1_row: Number(node.obstacle_1_row),
-    obstacle_1_col: Number(node.obstacle_1_col),
-    obstacle_2_row: Number(node.obstacle_2_row),
-    obstacle_2_col: Number(node.obstacle_2_col),
-    obstacle_3_row: Number(node.obstacle_3_row),
-    obstacle_3_col: Number(node.obstacle_3_col),
-    obstacle_4_row: Number(node.obstacle_4_row),
-    obstacle_4_col: Number(node.obstacle_4_col),
-    obstacle_5_row: Number(node.obstacle_5_row),
-    obstacle_5_col: Number(node.obstacle_5_col),
-    obstacle_6_row: Number(node.obstacle_6_row),
-    obstacle_6_col: Number(node.obstacle_6_col),
+    game_id: toNumber(node.game_id),
+    obstacle_1_row: toNumber(node.obstacle_1_row),
+    obstacle_1_col: toNumber(node.obstacle_1_col),
+    obstacle_2_row: toNumber(node.obstacle_2_row),
+    obstacle_2_col: toNumber(node.obstacle_2_col),
+    obstacle_3_row: toNumber(node.obstacle_3_row),
+    obstacle_3_col: toNumber(node.obstacle_3_col),
+    obstacle_4_row: toNumber(node.obstacle_4_row),
+    obstacle_4_col: toNumber(node.obstacle_4_col),
+    obstacle_5_row: toNumber(node.obstacle_5_row),
+    obstacle_5_col: toNumber(node.obstacle_5_col),
+    obstacle_6_row: toNumber(node.obstacle_6_row),
+    obstacle_6_col: toNumber(node.obstacle_6_col),
   };
 }
 

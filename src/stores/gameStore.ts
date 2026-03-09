@@ -7,6 +7,12 @@ interface TBGameStore {
   activeGameId: number | null;
   setActiveGameId: (id: number | null) => void;
 
+  // Denshokan / EGS
+  activeTokenId: string | null;
+  setActiveTokenId: (id: string | null) => void;
+  selectedSettingsId: number | null;
+  setSelectedSettingsId: (id: number | null) => void;
+
   // Selected beasts for team
   selectedBeasts: number[];
   toggleBeast: (tokenId: number) => void;
@@ -37,6 +43,11 @@ export const useGameStore = create<TBGameStore>()(
     (set, get) => ({
       activeGameId: null,
       setActiveGameId: (id) => set({ activeGameId: id }),
+
+      activeTokenId: null,
+      setActiveTokenId: (id) => set({ activeTokenId: id }),
+      selectedSettingsId: null,
+      setSelectedSettingsId: (id) => set({ selectedSettingsId: id }),
 
       selectedBeasts: [],
       toggleBeast: (tokenId) => {
@@ -70,6 +81,8 @@ export const useGameStore = create<TBGameStore>()(
       partialize: (state) => ({
         activeGameId: state.activeGameId,
         selectedBeasts: state.selectedBeasts,
+        activeTokenId: state.activeTokenId,
+        selectedSettingsId: state.selectedSettingsId,
       }),
     }
   )

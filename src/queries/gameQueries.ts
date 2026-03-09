@@ -15,6 +15,8 @@ export const GET_GAME = gql`
           winner
           p1_team_set
           p2_team_set
+          is_friendly
+          settings_id
         }
       }
     }
@@ -130,6 +132,41 @@ export const GET_PLAYER_PROFILE = gql`
           total_kills
           total_deaths
           abandons
+        }
+      }
+    }
+  }
+`;
+
+export const GET_LEADERBOARD = gql`
+  query GetLeaderboard {
+    ${NS}PlayerProfileModels(first: 50, order: { field: WINS, direction: DESC }) {
+      edges {
+        node {
+          player
+          games_played
+          wins
+          losses
+          total_kills
+          total_deaths
+          abandons
+        }
+      }
+    }
+  }
+`;
+
+export const GET_ALL_SETTINGS = gql`
+  query GetAllSettings {
+    ${NS}GameSettingsModels(first: 50, order: { field: SETTINGS_ID, direction: ASC }) {
+      edges {
+        node {
+          settings_id
+          min_tier
+          max_tier
+          max_t2_per_team
+          max_t3_per_team
+          beasts_per_player
         }
       }
     }

@@ -22,6 +22,19 @@ pub struct Game {
     pub p1_team_set: bool,
     pub p2_team_set: bool,
     pub is_friendly: bool,
+    pub settings_id: u32,
+}
+
+#[derive(Copy, Drop, Serde)]
+#[dojo::model]
+pub struct GameSettings {
+    #[key]
+    pub settings_id: u32,
+    pub min_tier: u8,
+    pub max_tier: u8,
+    pub max_t2_per_team: u8,
+    pub max_t3_per_team: u8,
+    pub beasts_per_player: u8,
 }
 
 #[derive(Copy, Drop, Serde)]
@@ -58,6 +71,7 @@ pub struct PlayerState {
     pub beast_1: u32,
     pub beast_2: u32,
     pub beast_3: u32,
+    pub beast_4: u32,
     pub potion_used: bool,
 }
 
@@ -68,6 +82,7 @@ pub struct GameConfig {
     pub id: felt252,
     pub game_count: u32,
     pub token_count: u64,
+    pub settings_count: u32,
 }
 
 #[derive(Copy, Drop, Serde)]
@@ -77,6 +92,20 @@ pub struct GameToken {
     pub token_id: felt252,
     pub match_id: u32,
     pub player: ContractAddress,
+    pub end_time: u64,
+}
+
+#[derive(Copy, Drop, Serde)]
+#[dojo::model]
+pub struct TokenScore {
+    #[key]
+    pub token_id: felt252,
+    pub wins: u32,
+    pub losses: u32,
+    pub kills: u32,
+    pub deaths: u32,
+    pub beasts_alive: u32,
+    pub matches_played: u32,
 }
 
 #[derive(Copy, Drop, Serde)]

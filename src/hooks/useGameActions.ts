@@ -40,8 +40,11 @@ export function useGameActions() {
     return null;
   }, [client, account, execute]);
 
-  const createFriendlyGame = useCallback(async (): Promise<number | null> => {
-    const response = await execute(client.game_system.createFriendlyGame, [account]);
+  const createFriendlyGame = useCallback(async (settingsId?: number): Promise<number | null> => {
+    const useSettings = settingsId && settingsId > 0;
+    const response = useSettings
+      ? await execute(client.game_system.createFriendlyGameWithSettings, [account, settingsId])
+      : await execute(client.game_system.createFriendlyGame, [account]);
     if (!response) return null;
 
     const txHash = (response as any)?.transaction_hash;
@@ -105,6 +108,28 @@ export function useGameActions() {
             await account.waitForTransaction(txHash, { retryInterval: 100 });
           } catch (e) {
             console.error("Failed to confirm set_team:", e);
+          }
+        }
+      }
+      return response;
+    },
+    [client, account, execute]
+  );
+
+  const setTeamDynamic = useCallback(
+    async (gameId: number, beasts: number[]) => {
+      const response = await execute(client.game_system.setTeamDynamic, [
+        account,
+        gameId,
+        beasts,
+      ]);
+      if (response) {
+        const txHash = (response as any)?.transaction_hash;
+        if (txHash) {
+          try {
+            await account.waitForTransaction(txHash, { retryInterval: 100 });
+          } catch (e) {
+            console.error("Failed to confirm set_team_dynamic:", e);
           }
         }
       }
@@ -211,6 +236,7 @@ export function useGameActions() {
     createFriendlyGame,
     joinGame,
     setTeam,
+    setTeamDynamic,
     executeTurn,
     findMatch,
     cancelMatchmaking,

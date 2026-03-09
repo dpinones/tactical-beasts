@@ -42,7 +42,8 @@ import {
   PlayerConfig,
 } from "../services/supabase";
 import { getUniqueBeastSpecies } from "../data/beasts";
-import { usePlayerProfile } from "../hooks/useGameQuery";
+import { usePlayerProfile, useGameSettings } from "../hooks/useGameQuery";
+import { Select } from "@chakra-ui/react";
 
 const CHAIN = import.meta.env.VITE_CHAIN;
 
@@ -85,6 +86,8 @@ export function HomePage() {
   const [searchResults, setSearchResults] = useState<PlayerConfig[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [friendProfiles, setFriendProfiles] = useState<Record<string, PlayerConfig>>({});
+  const [inviteSettingsId, setInviteSettingsId] = useState<number>(0);
+  const { settings: gameSettingsList } = useGameSettings();
 
   const friendPanelRef = useRef<HTMLDivElement>(null);
   const walletAddress = finalAccount?.address || "";
@@ -202,7 +205,14 @@ export function HomePage() {
   const handleInviteFriend = async (friendWallet: string) => {
     const invite = await sendGameInvite(walletAddress, friendWallet);
     if (invite) {
-      navigate("/matchmaking", { state: { waitingForFriend: true, inviteId: invite.id, friendName: friendProfiles[friendWallet]?.display_name || "friend" } });
+      navigate("/matchmaking", {
+        state: {
+          waitingForFriend: true,
+          inviteId: invite.id,
+          friendName: friendProfiles[friendWallet]?.display_name || "friend",
+          settingsId: inviteSettingsId || undefined,
+        },
+      });
     }
   };
 
@@ -489,6 +499,26 @@ export function HomePage() {
                 <Text fontSize="9px" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em">
                   Friends ({friends.length})
                 </Text>
+                {friends.length > 0 && gameSettingsList.length > 0 && (
+                  <Box>
+                    <Text fontSize="9px" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em" mb={1}>
+                      Game Settings
+                    </Text>
+                    <Select
+                      size="xs"
+                      value={inviteSettingsId}
+                      onChange={(e) => setInviteSettingsId(Number(e.target.value))}
+                      bg="surface.card"
+                      borderColor="surface.border"
+                    >
+                      {gameSettingsList.map((s) => (
+                        <option key={s.settings_id} value={s.settings_id}>
+                          #{s.settings_id}{s.settings_id === 1 ? " (Default)" : ""} — T{s.min_tier}-T{s.max_tier}, {s.beasts_per_player}v{s.beasts_per_player}
+                        </option>
+                      ))}
+                    </Select>
+                  </Box>
+                )}
                 {friends.length === 0 ? (
                   <Text fontSize="xs" color="text.muted">No friends yet. Search to add one.</Text>
                 ) : (
@@ -616,16 +646,16 @@ export function HomePage() {
             isFullWidth
           />
 
-          {/* TUTORIAL card */}
+          {/* LEADERBOARD card */}
           <MenuCard
-            title="Tutorial"
-            subtitle="Learn the basics"
+            title="Leaderboard"
+            subtitle="Top scores & rankings"
             beastName={heroBeasts[1]}
             accentColor="#CDAE79"
             gradientFrom="#2E271A"
             gradientTo="#4A3A25"
             borderColor="gold.400"
-            onClick={() => {}}
+            onClick={() => navigate("/leaderboard")}
           />
 
           {/* MY BEASTS card */}
@@ -638,6 +668,30 @@ export function HomePage() {
             gradientTo="#284238"
             borderColor="green.500"
             onClick={() => navigate("/my-beasts")}
+          />
+
+          {/* MY TOKENS card */}
+          <MenuCard
+            title="My Tokens"
+            subtitle="Game session tokens"
+            beastName={heroBeasts[3]}
+            accentColor="#B5C8D8"
+            gradientFrom="#1A2230"
+            gradientTo="#2B3A4D"
+            borderColor="blue.400"
+            onClick={() => navigate("/my-tokens")}
+          />
+
+          {/* SETTINGS card */}
+          <MenuCard
+            title="Settings"
+            subtitle="Game rules & presets"
+            beastName={heroBeasts[4]}
+            accentColor="#C8B5D8"
+            gradientFrom="#251A30"
+            gradientTo="#3D2B4D"
+            borderColor="purple.400"
+            onClick={() => navigate("/settings")}
           />
         </Flex>
 

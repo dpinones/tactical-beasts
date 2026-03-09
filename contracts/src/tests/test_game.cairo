@@ -1,11 +1,14 @@
 use dojo::model::{ModelStorage, ModelStorageTest};
 use starknet::testing::{set_account_contract_address, set_block_timestamp, set_contract_address};
-use crate::constants::{GAME_STATUS_FINISHED, GAME_STATUS_PLAYING, GAME_STATUS_WAITING, MAX_ROUNDS, WIN_BONUS};
+use crate::constants::{GAME_STATUS_FINISHED, GAME_STATUS_PLAYING, GAME_STATUS_WAITING};
 use crate::logic::board;
-use crate::models::index::{BeastState, Game, GameToken, GameTokens, MapState, MatchmakingQueue, PlayerProfile};
+use crate::models::index::{BeastState, Game, GameConfig, GameSettings, GameToken, GameTokens, MapState, MatchmakingQueue, PlayerProfile, TokenScore};
 use crate::systems::game_system::IGameSystemDispatcherTrait;
 use game_components_embeddable_game_standard::minigame::interface::{
     IMinigameTokenDataDispatcher, IMinigameTokenDataDispatcherTrait,
+};
+use game_components_embeddable_game_standard::minigame::extensions::settings::interface::{
+    IMinigameSettingsDispatcher, IMinigameSettingsDispatcherTrait,
 };
 use crate::tests::setup::{PLAYER1, PLAYER2, Systems, spawn_game};
 use crate::types::Action;
@@ -314,10 +317,27 @@ fn test_finish_submits_score() {
         game_tokens.p1_token_id
     };
 
-    // Score = (MAX_ROUNDS - round) * 10 + WIN_BONUS = (50 - 1) * 10 + 100 = 590
-    let expected_score: u64 = (MAX_ROUNDS.into() - 1_u64) * 10 + WIN_BONUS;
+    // Score = wins*500 + kills*50 + beasts_alive*30
+    // Winner: 1 win, 3 kills (all defender beasts dead), 3 beasts alive
+    // = 500 + 150 + 90 = 740
+    let expected_score: u64 = 500 + 3 * 50 + 3 * 30;
     assert!(egs.score(winner_token) == expected_score, "Winner score wrong");
+    // Loser: 0 wins, 0 kills, 0 alive = 0
     assert!(egs.score(loser_token) == 0, "Loser score should be 0");
+
+    // Verify TokenScore model
+    let winner_ts: TokenScore = world.read_model(winner_token);
+    assert!(winner_ts.wins == 1, "Winner should have 1 win");
+    assert!(winner_ts.kills == 3, "Winner should have 3 kills");
+    assert!(winner_ts.deaths == 0, "Winner should have 0 deaths");
+    assert!(winner_ts.beasts_alive == 3, "Winner should have 3 beasts alive");
+    assert!(winner_ts.matches_played == 1, "Winner should have 1 match");
+
+    let loser_ts: TokenScore = world.read_model(loser_token);
+    assert!(loser_ts.losses == 1, "Loser should have 1 loss");
+    assert!(loser_ts.kills == 0, "Loser should have 0 kills");
+    assert!(loser_ts.deaths == 3, "Loser should have 3 deaths");
+    assert!(loser_ts.beasts_alive == 0, "Loser should have 0 beasts alive");
 }
 
 #[test]
@@ -808,4 +828,233 @@ fn test_join_game_generates_obstacles() {
         assert!(board::is_obstacle_in_map(map_state, r, c), "is_obstacle_in_map failed for ({},{})", r, c);
         m += 1;
     };
+}
+
+// --- Game Settings ---
+
+#[test]
+fn test_default_settings_exist() {
+    let (world, systems) = spawn_game();
+
+    // Default settings (id=1) should be created by dojo_init
+    let config: GameConfig = world.read_model(0);
+    assert!(config.settings_count == 1, "Should have 1 default setting");
+
+    let settings: GameSettings = world.read_model(1_u32);
+    assert!(settings.min_tier == 2);
+    assert!(settings.max_tier == 4);
+    assert!(settings.max_t2_per_team == 1);
+    assert!(settings.max_t3_per_team == 2);
+    assert!(settings.beasts_per_player == 3);
+
+    // IMinigameSettings should report settings_id=0 and 1 as existing
+    let egs_settings = IMinigameSettingsDispatcher { contract_address: systems.game.contract_address };
+    assert!(egs_settings.settings_exist(0), "settings_id=0 should exist (default alias)");
+    assert!(egs_settings.settings_exist(1), "settings_id=1 should exist");
+    assert!(!egs_settings.settings_exist(2), "settings_id=2 should not exist");
+}
+
+#[test]
+fn test_create_settings() {
+    let (world, systems) = spawn_game();
+
+    set_player(PLAYER1());
+    let settings_id = systems.game.create_settings(
+        "T3 Only", "Only T3 beasts allowed", 3, 3, 0, 3, 3,
+    );
+
+    assert!(settings_id == 2, "Should be settings_id 2");
+
+    let settings = systems.game.settings_details(settings_id);
+    assert!(settings.min_tier == 3);
+    assert!(settings.max_tier == 3);
+    assert!(settings.max_t2_per_team == 0);
+    assert!(settings.max_t3_per_team == 3);
+    assert!(settings.beasts_per_player == 3);
+
+    let config: GameConfig = world.read_model(0);
+    assert!(config.settings_count == 2);
+
+    assert!(systems.game.settings_count() == 2);
+}
+
+#[test]
+fn test_game_with_custom_settings_2_beasts() {
+    let (_world, systems) = spawn_game();
+
+    set_player(PLAYER1());
+    // Create settings: 2 beasts per player, T2-T4
+    let settings_id = systems.game.create_settings(
+        "Duel", "2v2 beast duel", 2, 4, 1, 2, 2,
+    );
+
+    let game_id = systems.game.create_game_with_settings(settings_id);
+
+    set_player(PLAYER2());
+    systems.game.join_game(game_id);
+
+    // Set teams with 2 beasts each
+    set_player(PLAYER1());
+    systems.game.set_team_dynamic(game_id, array![47101, 62550]); // Gorgon T2, Rakshasa T3
+
+    set_player(PLAYER2());
+    systems.game.set_team_dynamic(game_id, array![601, 45386]); // Wendigo T2, Pegasus T3
+
+    let game: Game = _world.read_model(game_id);
+    assert!(game.status == GAME_STATUS_PLAYING, "Game should be playing");
+    assert!(game.settings_id == settings_id);
+}
+
+#[test]
+fn test_4_beasts_game() {
+    let (world, systems) = spawn_game();
+
+    set_player(PLAYER1());
+    // Create settings: 4 beasts per player
+    let settings_id = systems.game.create_settings(
+        "Full Squad", "4v4 beast battle", 2, 4, 1, 3, 4,
+    );
+
+    let game_id = systems.game.create_game_with_settings(settings_id);
+
+    set_player(PLAYER2());
+    systems.game.join_game(game_id);
+
+    // Set teams with 4 beasts each
+    set_player(PLAYER1());
+    systems.game.set_team_dynamic(game_id, array![47101, 62550, 4394, 37152]); // T2, T3, T4, T4
+
+    set_player(PLAYER2());
+    systems.game.set_team_dynamic(game_id, array![601, 45386, 27863, 9070]); // T2, T3, T4, T4
+
+    let game: Game = world.read_model(game_id);
+    assert!(game.status == GAME_STATUS_PLAYING, "Game should be playing");
+
+    // Verify 4th beast has spawn position
+    let b3_p1: BeastState = world.read_model((game_id, 1_u8, 3_u8));
+    assert!(b3_p1.alive);
+    assert!(b3_p1.position_row == 1 && b3_p1.position_col == 0, "P1 beast 3 spawn wrong");
+
+    let b3_p2: BeastState = world.read_model((game_id, 2_u8, 3_u8));
+    assert!(b3_p2.alive);
+    assert!(b3_p2.position_row == 5 && b3_p2.position_col == 0, "P2 beast 3 spawn wrong");
+}
+
+#[test]
+fn test_custom_tier_restriction() {
+    let (_world, systems) = spawn_game();
+
+    set_player(PLAYER1());
+    // T3 only, 3 beasts, up to 3 T3 allowed
+    let settings_id = systems.game.create_settings(
+        "T3 Only", "T3 only", 3, 3, 0, 3, 3,
+    );
+
+    let game_id = systems.game.create_game_with_settings(settings_id);
+
+    set_player(PLAYER2());
+    systems.game.join_game(game_id);
+
+    // All T3 beasts
+    set_player(PLAYER1());
+    systems.game.set_team(game_id, 62550, 30226, 4508); // Rakshasa T3, Banshee T3, Draugr T3
+
+    set_player(PLAYER2());
+    systems.game.set_team(game_id, 45386, 17790, 39316); // Pegasus T3, Weretiger T3, Oni T3
+
+    let game: Game = _world.read_model(game_id);
+    assert!(game.status == GAME_STATUS_PLAYING);
+}
+
+#[test]
+#[should_panic]
+fn test_custom_tier_rejects_wrong_tier() {
+    let (_world, systems) = spawn_game();
+
+    set_player(PLAYER1());
+    // T3 only
+    let settings_id = systems.game.create_settings(
+        "T3 Only", "T3 only", 3, 3, 0, 3, 3,
+    );
+
+    let game_id = systems.game.create_game_with_settings(settings_id);
+
+    set_player(PLAYER2());
+    systems.game.join_game(game_id);
+
+    // Try to use a T2 beast in T3-only game — should panic
+    set_player(PLAYER1());
+    systems.game.set_team(game_id, 47101, 62550, 4508); // Gorgon T2 is not allowed
+}
+
+#[test]
+#[should_panic]
+fn test_wrong_beast_count_panics() {
+    let (_world, systems) = spawn_game();
+
+    set_player(PLAYER1());
+    // 2 beasts per player
+    let settings_id = systems.game.create_settings(
+        "Duel", "2v2", 2, 4, 1, 2, 2,
+    );
+
+    let game_id = systems.game.create_game_with_settings(settings_id);
+
+    set_player(PLAYER2());
+    systems.game.join_game(game_id);
+
+    // Try to set 3 beasts in a 2-beast game — should panic
+    set_player(PLAYER1());
+    systems.game.set_team(game_id, 47101, 62550, 4394);
+}
+
+#[test]
+fn test_finish_4_beast_game() {
+    let (mut world, systems) = spawn_game();
+    set_block_timestamp(0);
+
+    set_player(PLAYER1());
+    let settings_id = systems.game.create_settings(
+        "Full", "4v4", 2, 4, 1, 3, 4,
+    );
+    let game_id = systems.game.create_game_with_settings(settings_id);
+
+    set_player(PLAYER2());
+    systems.game.join_game(game_id);
+
+    set_player(PLAYER1());
+    systems.game.set_team_dynamic(game_id, array![47101, 62550, 4394, 37152]);
+
+    set_player(PLAYER2());
+    systems.game.set_team_dynamic(game_id, array![601, 45386, 27863, 9070]);
+
+    let game: Game = world.read_model(game_id);
+    let attacker = game.current_attacker;
+    let defender: u8 = if attacker == 1 { 2 } else { 1 };
+    let attacker_addr = if attacker == 1 { PLAYER1() } else { PLAYER2() };
+
+    // Kill all 4 defender beasts
+    let mut i: u8 = 0;
+    while i < 4 {
+        let mut b: BeastState = world.read_model((game_id, defender, i));
+        b.alive = false;
+        b.hp = 0;
+        b.extra_lives = 0;
+        world.write_model_test(@b);
+        i += 1;
+    };
+
+    set_player(attacker_addr);
+    systems.game.execute_turn(game_id, array![]);
+
+    let game_after: Game = world.read_model(game_id);
+    assert!(game_after.status == GAME_STATUS_FINISHED);
+    assert!(game_after.winner == attacker_addr);
+
+    // Score: 1 win(500) + 4 kills(200) + 4 alive(120) = 820
+    let egs = IMinigameTokenDataDispatcher { contract_address: systems.game.contract_address };
+    let game_tokens: GameTokens = world.read_model(game_id);
+    let winner_token = if attacker == 1 { game_tokens.p1_token_id } else { game_tokens.p2_token_id };
+    let expected_score: u64 = 500 + 4 * 50 + 4 * 30;
+    assert!(egs.score(winner_token) == expected_score, "Winner score wrong for 4-beast game");
 }

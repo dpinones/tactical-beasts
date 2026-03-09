@@ -1,7 +1,8 @@
-import { Box, Flex, Heading, Text, VStack, Button, Spinner } from "@chakra-ui/react";
+import { Box, Flex, Heading, Text, VStack, HStack, Button, Spinner } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "../dojo/WalletContext";
 import { usePlayerProfile } from "../hooks/useGameQuery";
+import { usePlayerStats } from "../hooks/useDenshokan";
 
 function truncateAddr(addr: string): string {
   if (!addr) return "---";
@@ -17,6 +18,7 @@ export function ProfilePage() {
   const navigate = useNavigate();
   const { finalAccount } = useWallet();
   const { profile, loading } = usePlayerProfile(finalAccount?.address || null);
+  const { data: denshokanStats } = usePlayerStats(finalAccount?.address);
 
   return (
     <Flex direction="column" minH="100vh" p={6} maxW="600px" mx="auto">
@@ -102,6 +104,42 @@ export function ProfilePage() {
                 {formatKD(profile?.total_kills ?? 0, profile?.total_deaths ?? 0)}
               </Text>
             </Box>
+
+            {/* Denshokan EGS Stats */}
+            {denshokanStats && (
+              <>
+                <Box h="1px" bg="surface.border" />
+                <Text fontSize="xs" color="green.300" textTransform="uppercase" letterSpacing="0.1em" fontFamily="heading">
+                  EGS Token Stats
+                </Text>
+                <HStack gap={6}>
+                  <Box>
+                    <Text fontSize="xs" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em">
+                      Game Tokens
+                    </Text>
+                    <Text fontSize="lg" color="text.gold" fontFamily="mono" fontWeight="700">
+                      {denshokanStats.totalTokens ?? 0}
+                    </Text>
+                  </Box>
+                  <Box>
+                    <Text fontSize="xs" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em">
+                      Active
+                    </Text>
+                    <Text fontSize="lg" color="green.300" fontFamily="mono" fontWeight="700">
+                      {denshokanStats.activeGames ?? 0}
+                    </Text>
+                  </Box>
+                  <Box>
+                    <Text fontSize="xs" color="text.secondary" textTransform="uppercase" letterSpacing="0.1em">
+                      Completed
+                    </Text>
+                    <Text fontSize="lg" color="text.muted" fontFamily="mono" fontWeight="700">
+                      {denshokanStats.completedGames ?? 0}
+                    </Text>
+                  </Box>
+                </HStack>
+              </>
+            )}
           </VStack>
         </Box>
       )}

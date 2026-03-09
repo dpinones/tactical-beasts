@@ -36,16 +36,18 @@ pub fn is_obstacle_in_map(map_state: MapState, row: u8, col: u8) -> bool {
         || (map_state.obstacle_6_row == row && map_state.obstacle_6_col == col)
 }
 
-/// Returns true if the given cell is a spawn position.
+/// Returns true if the given cell is a spawn position (including 4th beast spawns).
 fn is_spawn(row: u8, col: u8) -> bool {
-    // P1 spawns (left): (0,1), (0,3), (0,5)
-    // P2 spawns (right): (6,1), (6,3), (6,5)  — rightmost in 7-wide rows
+    // P1 spawns (left): (0,1), (0,3), (0,5), (1,0)
+    // P2 spawns (right): (6,1), (6,3), (6,5), (5,0)
     (row == 0 && col == 1)
         || (row == 0 && col == 3)
         || (row == 0 && col == 5)
+        || (row == 1 && col == 0)
         || (row == 6 && col == 1)
         || (row == 6 && col == 3)
         || (row == 6 && col == 5)
+        || (row == 5 && col == 0)
 }
 
 /// Generates 6 random obstacle positions for a game.
@@ -213,22 +215,27 @@ pub fn hex_distance(r1: u8, c1: u8, r2: u8, c2: u8) -> u8 {
 
 /// Returns fixed spawn position for a beast.
 /// Player 1 spawns on the left (row 0), Player 2 on the right (row 6, rightmost of 7-wide rows).
+/// beast_index 3 gets a 4th spawn position on an adjacent row.
 pub fn get_spawn_position(player_index: u8, beast_index: u8) -> (u8, u8) {
     if player_index == 1 {
         if beast_index == 0 {
             (0, 1)
         } else if beast_index == 1 {
             (0, 3)
-        } else {
+        } else if beast_index == 2 {
             (0, 5)
+        } else {
+            (1, 0) // 4th beast
         }
     } else {
         if beast_index == 0 {
             (6, 1)
         } else if beast_index == 1 {
             (6, 3)
-        } else {
+        } else if beast_index == 2 {
             (6, 5)
+        } else {
+            (5, 0) // 4th beast
         }
     }
 }

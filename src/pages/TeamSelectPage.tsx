@@ -23,7 +23,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useDojo } from "../dojo/DojoContext";
 import { useGameActions } from "../hooks/useGameActions";
-import { useGameQuery, usePlayerProfile, useMapState, mapStateToObstacles } from "../hooks/useGameQuery";
+import { useGameQuery, useGameSettings, usePlayerProfile, useMapState, mapStateToObstacles } from "../hooks/useGameQuery";
 import { useGameStore } from "../stores/gameStore";
 import { useOwnedBeasts } from "../hooks/useOwnedBeasts";
 import { BeastCard } from "../components/BeastCard";
@@ -48,7 +48,7 @@ export function TeamSelectPage() {
   const joinGameId = gameIdParam ? parseInt(gameIdParam) : null;
 
   const { account: { account } } = useDojo();
-  const { createGame, joinGame, setTeam, abandonGame, isLoading } = useGameActions();
+  const { createGame, joinGame, setTeam, setTeamDynamic, abandonGame, isLoading } = useGameActions();
   const leaveModal = useDisclosure();
   const { selectedBeasts, toggleBeast, clearSelectedBeasts, setSelectedBeasts, setActiveGameId } = useGameStore();
 
@@ -103,11 +103,37 @@ export function TeamSelectPage() {
 
   const defaultTokenIds = new Set(DEFAULT_BEASTS.map((b) => b.tokenId));
 
-  // Tier-limited toggle: max 1 T2 and max 2 T3 per team
+  // Poll game state to detect when opponent joins (lobby) or when game starts (after set_team)
+  const { game: polledGame } = useGameQuery(gameId);
+
+  // Fetch game settings to know beasts_per_player
+  const { settings: allSettings } = useGameSettings();
+  const beatsPerPlayer = useMemo(() => {
+    const sid = polledGame?.settings_id ?? 1;
+    const s = allSettings.find((gs) => gs.settings_id === sid);
+    return s?.beasts_per_player ?? 3;
+  }, [polledGame, allSettings]);
+  const maxT2 = useMemo(() => {
+    const sid = polledGame?.settings_id ?? 1;
+    const s = allSettings.find((gs) => gs.settings_id === sid);
+    return s?.max_t2_per_team ?? MAX_T2_PER_TEAM;
+  }, [polledGame, allSettings]);
+  const maxT3 = useMemo(() => {
+    const sid = polledGame?.settings_id ?? 1;
+    const s = allSettings.find((gs) => gs.settings_id === sid);
+    return s?.max_t3_per_team ?? MAX_T3_PER_TEAM;
+  }, [polledGame, allSettings]);
+
+  // Tier-limited toggle: respect settings for max per tier and team size
   const handleToggleBeast = useCallback((tokenId: number) => {
     // Always allow deselecting
     if (selectedBeasts.includes(tokenId)) {
       toggleBeast(tokenId);
+      return;
+    }
+    // Enforce team size limit
+    if (selectedBeasts.length >= beatsPerPlayer) {
+      toast.error(`Max ${beatsPerPlayer} beasts per team`);
       return;
     }
     const beast = catalog.find((b) => b.tokenId === tokenId);
@@ -116,16 +142,16 @@ export function TeamSelectPage() {
       .map((id) => catalog.find((b) => b.tokenId === id))
       .filter(Boolean)
       .map((b) => b!.tier);
-    if (beast.tier === 2 && currentTiers.filter((t) => t === 2).length >= MAX_T2_PER_TEAM) {
-      toast.error("Max 1 T2 beast per team");
+    if (beast.tier === 2 && currentTiers.filter((t) => t === 2).length >= maxT2) {
+      toast.error(`Max ${maxT2} T2 beast(s) per team`);
       return;
     }
-    if (beast.tier === 3 && currentTiers.filter((t) => t === 3).length >= MAX_T3_PER_TEAM) {
-      toast.error("Max 2 T3 beasts per team");
+    if (beast.tier === 3 && currentTiers.filter((t) => t === 3).length >= maxT3) {
+      toast.error(`Max ${maxT3} T3 beast(s) per team`);
       return;
     }
     toggleBeast(tokenId);
-  }, [selectedBeasts, catalog, toggleBeast]);
+  }, [selectedBeasts, catalog, toggleBeast, beatsPerPlayer, maxT2, maxT3]);
 
   // Check if a beast's tier slot is full (for disabling cards)
   const isTierFull = useCallback((tier: number): boolean => {
@@ -133,10 +159,10 @@ export function TeamSelectPage() {
       .map((id) => catalog.find((b) => b.tokenId === id))
       .filter(Boolean)
       .map((b) => b!.tier);
-    if (tier === 2) return currentTiers.filter((t) => t === 2).length >= MAX_T2_PER_TEAM;
-    if (tier === 3) return currentTiers.filter((t) => t === 3).length >= MAX_T3_PER_TEAM;
+    if (tier === 2) return currentTiers.filter((t) => t === 2).length >= maxT2;
+    if (tier === 3) return currentTiers.filter((t) => t === 3).length >= maxT3;
     return false;
-  }, [selectedBeasts, catalog]);
+  }, [selectedBeasts, catalog, maxT2, maxT3]);
 
   // Apply filters to a beast list
   const applyFilters = useCallback((beasts: CatalogBeast[], skipTypeFilter = false): CatalogBeast[] => {
@@ -234,9 +260,6 @@ export function TeamSelectPage() {
     return () => { cancelled = true; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Poll game state to detect when opponent joins (lobby) or when game starts (after set_team)
-  const { game: polledGame } = useGameQuery(gameId);
-
   // Fetch map state (generated on join)
   const { mapState } = useMapState(gameId);
   const obstacles = useMemo(() => {
@@ -305,21 +328,21 @@ export function TeamSelectPage() {
 
   // Auto-fill empty team slots with default beasts
   const getAutoFilledTeam = useCallback((current: number[]): number[] => {
-    if (current.length >= 3) return current.slice(0, 3);
+    if (current.length >= beatsPerPlayer) return current.slice(0, beatsPerPlayer);
     const team = [...current];
     for (const def of DEFAULT_BEASTS) {
-      if (team.length >= 3) break;
+      if (team.length >= beatsPerPlayer) break;
       if (!team.includes(def.tokenId)) {
         team.push(def.tokenId);
       }
     }
     return team;
-  }, []);
+  }, [beatsPerPlayer]);
 
-  // Confirm team: call set_team onchain + save to supabase
+  // Confirm team: call set_team or set_team_dynamic onchain + save to supabase
   const handleConfirmTeam = useCallback(async (overrideBeasts?: number[]) => {
     const team = overrideBeasts || selectedBeasts;
-    if (team.length !== 3 || !gameId) return;
+    if (team.length !== beatsPerPlayer || !gameId) return;
     // Stop timer
     if (timerRef.current) {
       window.clearInterval(timerRef.current);
@@ -327,7 +350,9 @@ export function TeamSelectPage() {
     }
     setPhase("confirming");
     setStatusMsg("Setting team...");
-    const res = await setTeam(gameId, team[0], team[1], team[2]);
+    const res = beatsPerPlayer === 3
+      ? await setTeam(gameId, team[0], team[1], team[2])
+      : await setTeamDynamic(gameId, team);
     if (res) {
       // Save recent beasts to Supabase
       const walletAddress = account?.address || "";
@@ -344,7 +369,7 @@ export function TeamSelectPage() {
       setPhase("error");
       setStatusMsg("Failed to set team");
     }
-  }, [selectedBeasts, gameId, setTeam, account, catalog]);
+  }, [selectedBeasts, gameId, setTeam, setTeamDynamic, beatsPerPlayer, account, catalog]);
 
   // 30-second countdown timer during selection phase
   useEffect(() => {
@@ -594,7 +619,7 @@ export function TeamSelectPage() {
                           beast={beast}
                           isSelected={selectedBeasts.includes(beast.tokenId)}
                           onToggle={handleToggleBeast}
-                          disabled={!selectedBeasts.includes(beast.tokenId) && (selectedBeasts.length >= 3 || isTierFull(beast.tier))}
+                          disabled={!selectedBeasts.includes(beast.tokenId) && (selectedBeasts.length >= beatsPerPlayer || isTierFull(beast.tier))}
                           isDefault={true}
                         />
                       ))}
@@ -615,7 +640,7 @@ export function TeamSelectPage() {
                           beast={beast}
                           isSelected={selectedBeasts.includes(beast.tokenId)}
                           onToggle={handleToggleBeast}
-                          disabled={!selectedBeasts.includes(beast.tokenId) && (selectedBeasts.length >= 3 || isTierFull(beast.tier))}
+                          disabled={!selectedBeasts.includes(beast.tokenId) && (selectedBeasts.length >= beatsPerPlayer || isTierFull(beast.tier))}
                           isDefault={false}
                         />
                       ))}
@@ -717,11 +742,11 @@ export function TeamSelectPage() {
                 py={0.5}
                 borderRadius="8px"
               >
-                {selectedBeasts.length}/3
+                {selectedBeasts.length}/{beatsPerPlayer}
               </Badge>
             </Flex>
             <Flex direction="column" gap={1.5}>
-              {Array.from({ length: 3 }, (_, i) => {
+              {Array.from({ length: beatsPerPlayer }, (_, i) => {
                 const tokenId = selectedBeasts[i];
                 const beast = tokenId ? catalog.find((b) => b.tokenId === tokenId) : null;
                 if (!beast || !tokenId) {
@@ -811,11 +836,11 @@ export function TeamSelectPage() {
               variant="primary"
               size="lg"
               onClick={() => handleConfirmTeam()}
-              isDisabled={selectedBeasts.length !== 3}
+              isDisabled={selectedBeasts.length !== beatsPerPlayer}
               isLoading={phase === "confirming"}
               flex={1}
             >
-              Confirm Team ({selectedBeasts.length}/3)
+              Confirm Team ({selectedBeasts.length}/{beatsPerPlayer})
             </Button>
             <Button variant="ghost" size="sm" onClick={clearSelectedBeasts}>Clear</Button>
           </Flex>

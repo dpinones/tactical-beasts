@@ -54,10 +54,7 @@ build-sepolia:
 	npm run build:sepolia
 
 torii-sepolia:
-	@WORLD_ADDR=$$(python3 -c "import json; print(json.load(open('$(CONTRACTS_DIR)/manifest_sepolia.json'))['world']['address'])" 2>/dev/null); \
-	if [ -z "$$WORLD_ADDR" ]; then echo "Error: world address not found. Run 'make migrate-sepolia' first."; exit 1; fi; \
-	echo "Starting Torii for Sepolia with world address: $$WORLD_ADDR"; \
-	torii --world $$WORLD_ADDR --rpc https://api.cartridge.gg/x/starknet/sepolia --http.cors_origins "*"
+	torii --config $(CONTRACTS_DIR)/torii_sepolia.toml --http.cors_origins "*"
 
 # ─── Mainnet ─────────────────────────────────────────────
 
@@ -71,10 +68,7 @@ build-mainnet:
 	npm run build:mainnet
 
 torii-mainnet:
-	@WORLD_ADDR=$$(python3 -c "import json; print(json.load(open('$(CONTRACTS_DIR)/manifest_mainnet.json'))['world']['address'])" 2>/dev/null); \
-	if [ -z "$$WORLD_ADDR" ]; then echo "Error: world address not found. Run 'make migrate-mainnet' first."; exit 1; fi; \
-	echo "Starting Torii for Mainnet with world address: $$WORLD_ADDR"; \
-	torii --world $$WORLD_ADDR --rpc https://api.cartridge.gg/x/starknet/mainnet --http.cors_origins "*"
+	torii --config $(CONTRACTS_DIR)/torii_mainnet.toml --http.cors_origins "*"
 
 # ─── Slot ─────────────────────────────────────────────────────
 

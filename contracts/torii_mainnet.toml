@@ -1,0 +1,6 @@
+world_address = "0x61fa5821f5ddfe1602ee50d5a73fa67e5078c557f21fb846b6221974850583e"
+
+rpc = "https://api.cartridge.gg/x/starknet/mainnet"
+
+[indexing]
+transactions = true

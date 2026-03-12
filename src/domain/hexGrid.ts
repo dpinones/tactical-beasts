@@ -79,18 +79,41 @@ export function getCellsInRange(pos: HexCoord, range: number): HexCoord[] {
   return cells;
 }
 
-// Get valid move targets (in range, not obstacle, not occupied)
+// Get valid move targets reachable by walking (BFS, no jumping over obstacles)
 export function getValidMoveTargets(
   pos: HexCoord,
   moveRange: number,
   occupiedCells: HexCoord[],
   obstacles: HexCoord[] = OBSTACLES
 ): HexCoord[] {
-  return getCellsInRange(pos, moveRange).filter(
-    (cell) =>
-      !isObstacle(cell.row, cell.col, obstacles) &&
-      !occupiedCells.some((o) => o.row === cell.row && o.col === cell.col)
-  );
+  const key = (h: HexCoord) => `${h.row},${h.col}`;
+  const visited = new Set<string>();
+  visited.add(key(pos));
+
+  // BFS layer by layer up to moveRange steps
+  let frontier: HexCoord[] = [pos];
+  const reachable: HexCoord[] = [];
+
+  for (let step = 0; step < moveRange; step++) {
+    const nextFrontier: HexCoord[] = [];
+    for (const cell of frontier) {
+      for (const neighbor of getCellsInRange(cell, 1)) {
+        const nk = key(neighbor);
+        if (visited.has(nk)) continue;
+        if (!isValidCell(neighbor.row, neighbor.col)) continue;
+        if (isObstacle(neighbor.row, neighbor.col, obstacles)) continue;
+        visited.add(nk);
+        nextFrontier.push(neighbor);
+        // Only add as valid target if not occupied
+        if (!occupiedCells.some((o) => o.row === neighbor.row && o.col === neighbor.col)) {
+          reachable.push(neighbor);
+        }
+      }
+    }
+    frontier = nextFrontier;
+  }
+
+  return reachable;
 }
 
 // Horizontal stretch factor — makes hexes wider without changing height
@@ -157,26 +180,55 @@ function cubeToOffset(q: number, r: number): HexCoord {
   return { row, col };
 }
 
-// Get hex path from A to B stepping through adjacent hexes (Red Blob Games line algorithm)
-export function hexLinePath(a: HexCoord, b: HexCoord): HexCoord[] {
-  const n = hexDistance(a, b);
-  if (n === 0) return [a];
-  const aCube = offsetToCube(a.row, a.col);
-  const bCube = offsetToCube(b.row, b.col);
-  const path: HexCoord[] = [];
-  for (let i = 0; i <= n; i++) {
-    const t = i / n;
-    const q = aCube.q + (bCube.q - aCube.q) * t;
-    const r = aCube.r + (bCube.r - aCube.r) * t;
-    const s = aCube.s + (bCube.s - aCube.s) * t;
-    const rounded = cubeRound(q, r, s);
-    const offset = cubeToOffset(rounded.q, rounded.r);
-    // Deduplicate consecutive identical cells
-    if (path.length === 0 || path[path.length - 1].row !== offset.row || path[path.length - 1].col !== offset.col) {
-      path.push(offset);
+// Get hex neighbors of a cell (all 6 adjacent valid cells)
+export function getHexNeighbors(pos: HexCoord): HexCoord[] {
+  const neighbors: HexCoord[] = [];
+  const cells = getCellsInRange(pos, 1);
+  for (const c of cells) {
+    if (isValidCell(c.row, c.col)) neighbors.push(c);
+  }
+  return neighbors;
+}
+
+// BFS shortest path from A to B avoiding obstacles
+export function hexPathBFS(a: HexCoord, b: HexCoord, obstacles: HexCoord[] = OBSTACLES): HexCoord[] {
+  if (a.row === b.row && a.col === b.col) return [a];
+
+  const key = (h: HexCoord) => `${h.row},${h.col}`;
+  const visited = new Set<string>();
+  const parent = new Map<string, HexCoord | null>();
+  const queue: HexCoord[] = [a];
+  visited.add(key(a));
+  parent.set(key(a), null);
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    if (current.row === b.row && current.col === b.col) {
+      // Reconstruct path
+      const path: HexCoord[] = [];
+      let node: HexCoord | null = current;
+      while (node !== null) {
+        path.unshift(node);
+        node = parent.get(key(node)) ?? null;
+      }
+      return path;
+    }
+
+    for (const neighbor of getHexNeighbors(current)) {
+      const nk = key(neighbor);
+      if (visited.has(nk)) continue;
+      // Allow destination even if it looks blocked
+      if (neighbor.row !== b.row || neighbor.col !== b.col) {
+        if (isObstacle(neighbor.row, neighbor.col, obstacles)) continue;
+      }
+      visited.add(nk);
+      parent.set(nk, current);
+      queue.push(neighbor);
     }
   }
-  return path;
+
+  // No path found — fallback to direct line
+  return [a, b];
 }
 
 // Get all cells in the grid

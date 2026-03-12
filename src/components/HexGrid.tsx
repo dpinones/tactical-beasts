@@ -7,7 +7,7 @@ import {
   hexToPixel,
   hexPoints,
   isObstacle,
-  hexLinePath,
+  hexPathBFS,
 } from "../domain/hexGrid";
 import { BeastStateModel, ActionType, GameAction, HexCoord } from "../domain/types";
 import { getBeastImagePath, getSubclass, isPassiveActive } from "../data/beasts";
@@ -117,8 +117,7 @@ export function HexGrid({
       (b) => b.alive && Number(b.beast_index) === selectedBeastIndex
     );
     if (!selected) return false;
-    const pos = getEffectivePosition(selected);
-    return pos.row === row && pos.col === col;
+    return Number(selected.position_row) === row && Number(selected.position_col) === col;
   }
 
   function getCellClass(row: number, col: number): string {
@@ -518,10 +517,11 @@ export function HexGrid({
         const tgtVR = flipBoard ? tgtRW - 1 - action.targetRow : action.targetRow;
         const tgt = hexToPixel(tgtVR, action.targetCol, hexSize);
 
-        // Build hex-stepping path
-        const hexSteps = hexLinePath(
+        // Build hex-stepping path avoiding obstacles
+        const hexSteps = hexPathBFS(
           { row: srcRow, col: srcCol },
-          { row: action.targetRow, col: action.targetCol }
+          { row: action.targetRow, col: action.targetCol },
+          obstacles
         );
         const waypoints: { x: number; y: number }[] = [];
         for (const h of hexSteps) {
@@ -566,7 +566,6 @@ export function HexGrid({
             strokeLinecap="round"
             strokeLinejoin="round"
             markerEnd="url(#arrowhead-move)"
-            filter="url(#arrowGlow)"
             opacity={0.8}
             style={{ pointerEvents: "none", animation: "dash-flow-move 0.6s linear infinite" }}
           />
@@ -616,7 +615,6 @@ export function HexGrid({
             strokeWidth={3}
             strokeDasharray="6 3"
             markerEnd="url(#arrowhead-attack)"
-            filter="url(#arrowGlow)"
             style={{ pointerEvents: "none", animation: "dash-flow-attack 0.5s linear infinite, arrow-pulse-attack 1.5s ease-in-out infinite" }}
           />
         );

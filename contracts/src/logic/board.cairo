@@ -36,6 +36,11 @@ pub fn is_obstacle_in_map(map_state: MapState, row: u8, col: u8) -> bool {
         || (map_state.obstacle_6_row == row && map_state.obstacle_6_col == col)
 }
 
+/// Returns true if the cell is on the edge of the hex grid.
+fn is_border(row: u8, col: u8) -> bool {
+    col == 0 || col == GRID_NUM_ROWS - 1 || row == 0 || row == row_width(col) - 1
+}
+
 /// Returns true if the given cell is a spawn position (including 4th beast spawns).
 fn is_spawn(row: u8, col: u8) -> bool {
     // P1 spawns (left): (0,1), (0,3), (0,5), (1,0)
@@ -69,7 +74,7 @@ pub fn generate_obstacles(
             if row >= width {
                 break;
             }
-            if !is_spawn(row, col) {
+            if !is_spawn(row, col) && !is_border(row, col) {
                 candidates.append((row, col));
             }
             row += 1;

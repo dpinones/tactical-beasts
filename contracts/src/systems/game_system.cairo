@@ -1027,7 +1027,9 @@ pub mod game_system {
             }
 
             let mut defender_beast: BeastState = world.read_model((game_id, defender_index, action.target_index));
-            assert!(defender_beast.alive, "Target is not alive");
+            if !defender_beast.alive {
+                return;
+            }
 
             let dist = board::hex_distance(
                 attacker_beast.position_row,

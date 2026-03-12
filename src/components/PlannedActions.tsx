@@ -1,7 +1,7 @@
-import { Box, Button, Flex, Text, VStack, HStack } from "@chakra-ui/react";
+import { Box, Button, Flex, Text, VStack, HStack, Image } from "@chakra-ui/react";
 import { BeastStateModel, BeastType, ActionType, GameAction } from "../domain/types";
 import { getTypeColor } from "../domain/combat";
-import { getSpeciesNameByTokenId } from "../data/beasts";
+import { getSpeciesNameByTokenId, getBeastImagePath } from "../data/beasts";
 
 interface PlannedActionsProps {
   myBeasts: BeastStateModel[];
@@ -12,16 +12,16 @@ interface PlannedActionsProps {
   onClearAll: () => void;
 }
 
-function actionSymbol(type: ActionType): string {
+function actionLabel(type: ActionType): string {
   switch (type) {
-    case ActionType.MOVE: return "->";
-    case ActionType.ATTACK: return "x";
-    case ActionType.CONSUMABLE_ATTACK_POTION: return "+x";
+    case ActionType.MOVE: return "MOVE";
+    case ActionType.ATTACK: return "ATK";
+    case ActionType.CONSUMABLE_ATTACK_POTION: return "ATK+";
     default: return "?";
   }
 }
 
-function actionBorderColor(type: ActionType): string {
+function actionColor(type: ActionType): string {
   switch (type) {
     case ActionType.MOVE: return "#A7D5BF";
     case ActionType.ATTACK: return "#C78989";
@@ -30,21 +30,13 @@ function actionBorderColor(type: ActionType): string {
   }
 }
 
-function describeAction(action: GameAction): string {
-  switch (action.actionType) {
-    case ActionType.MOVE:
-      return "Moved";
-    case ActionType.ATTACK:
-    case ActionType.CONSUMABLE_ATTACK_POTION:
-      return "Attacked";
-    default:
-      return "?";
-  }
+function getBeastName(beast: BeastStateModel): string {
+  return getSpeciesNameByTokenId(Number(beast.token_id)) || getSpeciesNameByTokenId(Number(beast.beast_id)) || "???";
 }
 
 export function PlannedActions({
   myBeasts,
-  enemyBeasts: _enemyBeasts,
+  enemyBeasts,
   actions,
   actionHistory,
   onUndoLast,
@@ -53,89 +45,134 @@ export function PlannedActions({
   const aliveBeasts = myBeasts.filter((b) => b.alive);
   return (
     <VStack gap={1.5} align="stretch">
-      {/* Planned actions list */}
       <Box p={0}>
-        <VStack gap={0.5} align="stretch">
-          {/* Actions in execution order (selection order) */}
+        <VStack gap={1} align="stretch">
+          {/* Actions in execution order */}
           {actionHistory.map((idx) => {
             const beast = aliveBeasts.find((b) => Number(b.beast_index) === idx);
             if (!beast) return null;
             const action = actions.get(idx);
             if (!action) return null;
-            const bType = Number(beast.beast_type) as BeastType;
-            const color = getTypeColor(bType);
-            const beastName =
-              getSpeciesNameByTokenId(Number(beast.token_id)) || getSpeciesNameByTokenId(Number(beast.beast_id));
+            const isAttack = action.actionType === ActionType.ATTACK || action.actionType === ActionType.CONSUMABLE_ATTACK_POTION;
+            const targetBeast = isAttack
+              ? enemyBeasts.find((b) => Number(b.beast_index) === action.targetIndex)
+              : null;
 
             return (
               <Flex
                 key={idx}
                 align="center"
-                gap={1}
+                gap={1.5}
                 px={1.5}
                 py={1}
                 bg="rgba(122, 163, 142, 0.1)"
                 borderRadius="8px"
                 borderLeft="3px solid"
-                borderLeftColor={actionBorderColor(action.actionType)}
+                borderLeftColor={actionColor(action.actionType)}
               >
+                {/* My beast avatar + name */}
+                <Flex align="center" gap={1} minW="0" flex={1}>
+                  <Image
+                    src={getBeastImagePath(Number(beast.beast_id))}
+                    w="24px"
+                    h="24px"
+                    objectFit="contain"
+                    flexShrink={0}
+                  />
+                  <Text
+                    fontSize="10px"
+                    color={getTypeColor(Number(beast.beast_type) as BeastType)}
+                    fontFamily="mono"
+                    fontWeight="700"
+                    noOfLines={1}
+                  >
+                    {getBeastName(beast)}
+                  </Text>
+                </Flex>
+
+                {/* Action label */}
                 <Text
-                  fontSize="xs"
-                  color={color}
+                  fontSize="9px"
                   fontFamily="mono"
-                  fontWeight="700"
-                  minW="54px"
-                  maxW="72px"
-                  noOfLines={1}
+                  fontWeight="800"
+                  color={actionColor(action.actionType)}
+                  bg="rgba(0,0,0,0.3)"
+                  px={1.5}
+                  py={0.5}
+                  borderRadius="4px"
+                  flexShrink={0}
                 >
-                  {beastName}
+                  {actionLabel(action.actionType)}
                 </Text>
-                <Text fontSize="xs" color="rgba(167,213,191,0.6)" fontFamily="mono" fontWeight="700" minW="16px">
-                  {actionSymbol(action.actionType)}
-                </Text>
-                <Text fontSize="xs" color="#BFDCCB" fontFamily="mono" flex={1} noOfLines={1}>
-                  {describeAction(action)}
-                </Text>
+
+                {/* Target beast (for attacks) */}
+                {isAttack && targetBeast && (
+                  <Flex align="center" gap={1} minW="0" flex={1}>
+                    <Image
+                      src={getBeastImagePath(Number(targetBeast.beast_id), "left")}
+                      w="24px"
+                      h="24px"
+                      objectFit="contain"
+                      flexShrink={0}
+                    />
+                    <Text
+                      fontSize="10px"
+                      color={getTypeColor(Number(targetBeast.beast_type) as BeastType)}
+                      fontFamily="mono"
+                      fontWeight="700"
+                      noOfLines={1}
+                    >
+                      {getBeastName(targetBeast)}
+                    </Text>
+                  </Flex>
+                )}
+
+                {/* Move destination */}
+                {action.actionType === ActionType.MOVE && (
+                  <Text fontSize="10px" color="rgba(167,213,191,0.5)" fontFamily="mono" flex={1}>
+                    ({action.targetRow},{action.targetCol})
+                  </Text>
+                )}
               </Flex>
             );
           })}
+
           {/* Pending beasts without action */}
           {aliveBeasts
             .filter((b) => !actions.has(Number(b.beast_index)))
-            .map((beast) => {
-              const bType = Number(beast.beast_type) as BeastType;
-              const color = getTypeColor(bType);
-              const beastName =
-                getSpeciesNameByTokenId(Number(beast.token_id)) || getSpeciesNameByTokenId(Number(beast.beast_id));
-
-              return (
-                <Flex
-                  key={Number(beast.beast_index)}
-                  align="center"
-                  gap={1}
-                  px={1.5}
-                  py={1}
-                  borderRadius="8px"
+            .map((beast) => (
+              <Flex
+                key={Number(beast.beast_index)}
+                align="center"
+                gap={1}
+                px={1.5}
+                py={1}
+                borderRadius="8px"
+                opacity={0.5}
+              >
+                <Image
+                  src={getBeastImagePath(Number(beast.beast_id))}
+                  w="24px"
+                  h="24px"
+                  objectFit="contain"
+                  flexShrink={0}
+                />
+                <Text
+                  fontSize="10px"
+                  color={getTypeColor(Number(beast.beast_type) as BeastType)}
+                  fontFamily="mono"
+                  fontWeight="700"
+                  noOfLines={1}
                 >
-                  <Text
-                    fontSize="xs"
-                    color={color}
-                    fontFamily="mono"
-                    fontWeight="700"
-                    minW="54px"
-                    maxW="72px"
-                    noOfLines={1}
-                  >
-                    {beastName}
-                  </Text>
-                  <Box as="span" w="6px" h="6px" borderRadius="50%" bg="#8BB8A0" className="pending-dot" />
-                </Flex>
-              );
-            })}
+                  {getBeastName(beast)}
+                </Text>
+                <Box as="span" w="6px" h="6px" borderRadius="50%" bg="#8BB8A0" className="pending-dot" ml="auto" />
+              </Flex>
+            ))}
         </VStack>
       </Box>
 
-      {/* Undo / Clear / Confirm buttons */}
+      {/* Undo / Clear buttons */}
       <HStack gap={1}>
         <Button
           size="xs"

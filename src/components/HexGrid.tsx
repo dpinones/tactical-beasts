@@ -592,28 +592,60 @@ export function HexGrid({
       } else if (action.actionType === ActionType.ATTACK || action.actionType === ActionType.CONSUMABLE_ATTACK_POTION) {
         const target = enemyBeasts.find((b) => Number(b.beast_index) === action.targetIndex);
         if (!target || !target.alive) continue;
-        const tgtRW = ARENA_ROWS[Number(target.position_col)];
+        const tgtRow = Number(target.position_row);
+        const tgtCol = Number(target.position_col);
+        const tgtRW = ARENA_ROWS[tgtCol];
         if (tgtRW === undefined) continue;
-        const tgtVR = flipBoard ? tgtRW - 1 - Number(target.position_row) : Number(target.position_row);
-        const tgt = hexToPixel(tgtVR, Number(target.position_col), hexSize);
+        const tgtVR = flipBoard ? tgtRW - 1 - tgtRow : tgtRow;
+        const tgt = hexToPixel(tgtVR, tgtCol, hexSize);
 
-        const dx = tgt.x - src.x;
-        const dy = tgt.y - src.y;
-        const len = Math.sqrt(dx * dx + dy * dy);
-        if (len === 0) continue;
-        const sh = hexSize * 0.5;
-        const x1 = src.x + (dx / len) * sh;
-        const y1 = src.y + (dy / len) * sh;
-        const x2 = tgt.x - (dx / len) * sh;
-        const y2 = tgt.y - (dy / len) * sh;
+        // Build hex-stepping path avoiding obstacles
+        const atkHexSteps = hexPathBFS(
+          { row: srcRow, col: srcCol },
+          { row: tgtRow, col: tgtCol },
+          obstacles
+        );
+        const atkWaypoints: { x: number; y: number }[] = [];
+        for (const h of atkHexSteps) {
+          const rw = ARENA_ROWS[h.col];
+          if (rw === undefined) continue;
+          const vr = flipBoard ? rw - 1 - h.row : h.row;
+          atkWaypoints.push(hexToPixel(vr, h.col, hexSize));
+        }
+        if (atkWaypoints.length < 2) {
+          atkWaypoints.length = 0;
+          atkWaypoints.push({ x: src.x, y: src.y }, { x: tgt.x, y: tgt.y });
+        }
+
+        // Shorten start and end
+        const atkShrink = hexSize * 0.4;
+        if (atkWaypoints.length >= 2) {
+          const a = atkWaypoints[0];
+          const b = atkWaypoints[1];
+          const d = Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2);
+          if (d > atkShrink) {
+            atkWaypoints[0] = { x: a.x + ((b.x - a.x) / d) * atkShrink, y: a.y + ((b.y - a.y) / d) * atkShrink };
+          }
+          const last = atkWaypoints[atkWaypoints.length - 1];
+          const prev = atkWaypoints[atkWaypoints.length - 2];
+          const d2 = Math.sqrt((prev.x - last.x) ** 2 + (prev.y - last.y) ** 2);
+          if (d2 > atkShrink) {
+            atkWaypoints[atkWaypoints.length - 1] = { x: last.x + ((prev.x - last.x) / d2) * atkShrink, y: last.y + ((prev.y - last.y) / d2) * atkShrink };
+          }
+        }
+
+        const atkPts = atkWaypoints.map((p) => `${p.x},${p.y}`).join(" ");
 
         elements.push(
-          <line
+          <polyline
             key={`arrow-atk-${beastIdx}`}
-            x1={x1} y1={y1} x2={x2} y2={y2}
+            points={atkPts}
+            fill="none"
             stroke="#C78989"
             strokeWidth={3}
             strokeDasharray="6 3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
             markerEnd="url(#arrowhead-attack)"
             style={{ pointerEvents: "none", animation: "dash-flow-attack 0.5s linear infinite, arrow-pulse-attack 1.5s ease-in-out infinite" }}
           />

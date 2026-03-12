@@ -37,6 +37,7 @@ import {
 import {
   OBSTACLES,
   getValidMoveTargets,
+  getReachableCells,
   getCellsInRange,
   hexDistance,
 } from "../domain/hexGrid";
@@ -191,11 +192,12 @@ export function BattlePage() {
       hp: 0, hpMax: 0, extraLives: 0, position: pos, alive: true, powerBase: 0,
     };
     const atkRange = getAttackRange(dummyBeast);
+    const reachable = getReachableCells(pos, atkRange, obstacles);
     return enemyBeasts
       .filter((b) => b.alive)
       .map((b) => ({ row: Number(b.position_row), col: Number(b.position_col) }))
-      .filter((ep) => hexDistance(pos, ep) <= atkRange);
-  }, [selectedBeast, enemyBeasts]);
+      .filter((ep) => reachable.has(`${ep.row},${ep.col}`));
+  }, [selectedBeast, enemyBeasts, obstacles]);
 
   // Auto-advance: select next beast without an action (receives updated map)
   const autoAdvance = useCallback(
@@ -570,12 +572,12 @@ export function BattlePage() {
           <Box
             className={`battle-panel ${actions.size > 0 && canConfirm ? "battle-panel--ready" : ""}`}
             mt={3}
-            h="160px"
+            h="auto"
           >
             <Box className="battle-panel__header">
               <Text className="battle-panel__title">Your Actions</Text>
             </Box>
-            <Box className="battle-panel__body" h="calc(100% - 36px)" overflowY="auto">
+            <Box className="battle-panel__body">
               <PlannedActions
                 myBeasts={myBeasts}
                 enemyBeasts={enemyBeasts}
@@ -623,7 +625,7 @@ export function BattlePage() {
           </Box>
         </Box>
 
-        <Box className="battle-panel" mt={3} h="160px">
+        <Box className="battle-panel" mt={3} h="240px">
           <Box className="battle-panel__header">
             <Text className="battle-panel__title">Battle Log</Text>
           </Box>

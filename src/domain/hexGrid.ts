@@ -79,6 +79,35 @@ export function getCellsInRange(pos: HexCoord, range: number): HexCoord[] {
   return cells;
 }
 
+// Get all cells reachable within range by walking (BFS, no jumping over obstacles)
+export function getReachableCells(
+  pos: HexCoord,
+  range: number,
+  obstacles: HexCoord[] = OBSTACLES
+): Set<string> {
+  const key = (h: HexCoord) => `${h.row},${h.col}`;
+  const visited = new Set<string>();
+  visited.add(key(pos));
+  let frontier: HexCoord[] = [pos];
+
+  for (let step = 0; step < range; step++) {
+    const nextFrontier: HexCoord[] = [];
+    for (const cell of frontier) {
+      for (const neighbor of getCellsInRange(cell, 1)) {
+        const nk = key(neighbor);
+        if (visited.has(nk)) continue;
+        if (!isValidCell(neighbor.row, neighbor.col)) continue;
+        if (isObstacle(neighbor.row, neighbor.col, obstacles)) continue;
+        visited.add(nk);
+        nextFrontier.push(neighbor);
+      }
+    }
+    frontier = nextFrontier;
+  }
+
+  return visited;
+}
+
 // Get valid move targets reachable by walking (BFS, no jumping over obstacles)
 export function getValidMoveTargets(
   pos: HexCoord,

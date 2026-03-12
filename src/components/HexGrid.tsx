@@ -772,7 +772,6 @@ export function HexGrid({
                 )}
 
                 {/* Attack target flash */}
-                {isAttackTarget(logicalRow, col) && renderAttackFlash(x, y, `atk-flash-${logicalRow}-${col}`)}
               </g>
             );
           });

@@ -493,6 +493,7 @@ export function BattlePage() {
           attackCells={attackCells}
           myPlayerIndex={myPlayerIndex}
           actions={actions}
+          actionHistory={actionHistory}
           obstacles={obstacles}
         />
       </Box>

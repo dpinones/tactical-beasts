@@ -7,6 +7,7 @@ import {
   hexToPixel,
   hexPoints,
   isObstacle,
+  hexLinePath,
 } from "../domain/hexGrid";
 import { BeastStateModel, ActionType, GameAction, HexCoord } from "../domain/types";
 import { getBeastImagePath, getSubclass, isPassiveActive } from "../data/beasts";
@@ -24,6 +25,7 @@ interface HexGridProps {
   attackCells?: HexCoord[];
   myPlayerIndex: number;
   actions?: Map<number, GameAction>;
+  actionHistory?: number[];
   obstacles?: HexCoord[];
 }
 
@@ -43,6 +45,7 @@ export function HexGrid({
   attackCells = [],
   myPlayerIndex,
   actions = new Map(),
+  actionHistory = [],
   obstacles = OBSTACLES,
 }: HexGridProps) {
   // Flip board so the current player's beasts are always on the left
@@ -488,11 +491,147 @@ export function HexGrid({
     );
   }
 
+  // Render action arrows (move + attack) and ghost sprites
+  function renderActionArrows() {
+    const elements: React.ReactNode[] = [];
+
+    const entries = Array.from(actions.entries());
+    for (let ei = 0; ei < entries.length; ei++) {
+      const beastIdx = entries[ei][0];
+      const action = entries[ei][1];
+
+      const beast = myBeasts.find((b) => Number(b.beast_index) === beastIdx);
+      if (!beast || !beast.alive) continue;
+
+      // Source pixel position (beast's real position)
+      const srcRow = Number(beast.position_row);
+      const srcCol = Number(beast.position_col);
+      const srcRW = ARENA_ROWS[srcCol];
+      if (srcRW === undefined) continue;
+      const srcVR = flipBoard ? srcRW - 1 - srcRow : srcRow;
+      const src = hexToPixel(srcVR, srcCol, hexSize);
+
+      if (action.actionType === ActionType.MOVE) {
+        // Target pixel position
+        const tgtRW = ARENA_ROWS[action.targetCol];
+        if (tgtRW === undefined) continue;
+        const tgtVR = flipBoard ? tgtRW - 1 - action.targetRow : action.targetRow;
+        const tgt = hexToPixel(tgtVR, action.targetCol, hexSize);
+
+        // Build hex-stepping path
+        const hexSteps = hexLinePath(
+          { row: srcRow, col: srcCol },
+          { row: action.targetRow, col: action.targetCol }
+        );
+        const waypoints: { x: number; y: number }[] = [];
+        for (const h of hexSteps) {
+          const rw = ARENA_ROWS[h.col];
+          if (rw === undefined) continue;
+          const vr = flipBoard ? rw - 1 - h.row : h.row;
+          waypoints.push(hexToPixel(vr, h.col, hexSize));
+        }
+        // Fallback to straight line
+        if (waypoints.length < 2) {
+          waypoints.length = 0;
+          waypoints.push({ x: src.x, y: src.y }, { x: tgt.x, y: tgt.y });
+        }
+
+        // Shorten start and end so arrow doesn't overlap sprites
+        const shrinkAmt = hexSize * 0.4;
+        if (waypoints.length >= 2) {
+          const a = waypoints[0];
+          const b = waypoints[1];
+          const d = Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2);
+          if (d > shrinkAmt) {
+            waypoints[0] = { x: a.x + ((b.x - a.x) / d) * shrinkAmt, y: a.y + ((b.y - a.y) / d) * shrinkAmt };
+          }
+          const last = waypoints[waypoints.length - 1];
+          const prev = waypoints[waypoints.length - 2];
+          const d2 = Math.sqrt((prev.x - last.x) ** 2 + (prev.y - last.y) ** 2);
+          if (d2 > shrinkAmt) {
+            waypoints[waypoints.length - 1] = { x: last.x + ((prev.x - last.x) / d2) * shrinkAmt, y: last.y + ((prev.y - last.y) / d2) * shrinkAmt };
+          }
+        }
+
+        const pts = waypoints.map((p) => `${p.x},${p.y}`).join(" ");
+
+        elements.push(
+          <polyline
+            key={`arrow-move-${beastIdx}`}
+            points={pts}
+            fill="none"
+            stroke="#87B49B"
+            strokeWidth={3}
+            strokeDasharray="8 4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            markerEnd="url(#arrowhead-move)"
+            filter="url(#arrowGlow)"
+            opacity={0.8}
+            style={{ pointerEvents: "none", animation: "dash-flow-move 0.6s linear infinite" }}
+          />
+        );
+
+        // Ghost sprite at destination
+        const ghostImg = getBeastImagePath(Number(beast.beast_id), "right");
+        const gs = hexSize * 0.82;
+        const gScale = 2.45;
+        elements.push(
+          <image
+            key={`ghost-${beastIdx}`}
+            href={ghostImg}
+            x={tgt.x - gs * (gScale / 2)}
+            y={tgt.y - gs * 1.34}
+            width={gs * gScale}
+            height={gs * gScale}
+            preserveAspectRatio="xMidYMid meet"
+            opacity={0.25}
+            style={{ pointerEvents: "none" }}
+          />
+        );
+
+      } else if (action.actionType === ActionType.ATTACK || action.actionType === ActionType.CONSUMABLE_ATTACK_POTION) {
+        const target = enemyBeasts.find((b) => Number(b.beast_index) === action.targetIndex);
+        if (!target || !target.alive) continue;
+        const tgtRW = ARENA_ROWS[Number(target.position_col)];
+        if (tgtRW === undefined) continue;
+        const tgtVR = flipBoard ? tgtRW - 1 - Number(target.position_row) : Number(target.position_row);
+        const tgt = hexToPixel(tgtVR, Number(target.position_col), hexSize);
+
+        const dx = tgt.x - src.x;
+        const dy = tgt.y - src.y;
+        const len = Math.sqrt(dx * dx + dy * dy);
+        if (len === 0) continue;
+        const sh = hexSize * 0.5;
+        const x1 = src.x + (dx / len) * sh;
+        const y1 = src.y + (dy / len) * sh;
+        const x2 = tgt.x - (dx / len) * sh;
+        const y2 = tgt.y - (dy / len) * sh;
+
+        elements.push(
+          <line
+            key={`arrow-atk-${beastIdx}`}
+            x1={x1} y1={y1} x2={x2} y2={y2}
+            stroke="#C78989"
+            strokeWidth={3}
+            strokeDasharray="6 3"
+            markerEnd="url(#arrowhead-attack)"
+            filter="url(#arrowGlow)"
+            style={{ pointerEvents: "none", animation: "dash-flow-attack 0.5s linear infinite, arrow-pulse-attack 1.5s ease-in-out infinite" }}
+          />
+        );
+      }
+    }
+
+    return elements;
+  }
+
   function getBeastRenderPositions() {
     return allBeasts
       .filter((beast) => beast.alive)
       .map((beast) => {
-        const pos = getEffectivePosition(beast);
+        // Always render at real position — ghost sprite shows planned destination
+        const pos = { row: Number(beast.position_row), col: Number(beast.position_col) };
         const rowWidth = ARENA_ROWS[pos.col];
         if (rowWidth === undefined) return null;
         const visualRow = flipBoard ? rowWidth - 1 - pos.row : pos.row;
@@ -542,6 +681,20 @@ export function HexGrid({
           {/* Hex cell 3D depth effect */}
           <filter id="hexDepth" x="-10%" y="-10%" width="120%" height="120%">
             <feDropShadow dx="0" dy="2" stdDeviation="1" floodColor="#000" floodOpacity="0.3" />
+          </filter>
+          {/* Arrow markers */}
+          <marker id="arrowhead-move" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+            <polygon points="0,0 10,4 0,8" fill="#87B49B" />
+          </marker>
+          <marker id="arrowhead-attack" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+            <polygon points="0,0 10,4 0,8" fill="#C78989" />
+          </marker>
+          <filter id="arrowGlow" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="2" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
           </filter>
         </defs>
 
@@ -594,6 +747,9 @@ export function HexGrid({
             );
           });
         })}
+
+        {/* Action arrows between cells and beasts */}
+        {renderActionArrows()}
 
         {/* Beasts are rendered as a top layer so cells/overlays never cover them */}
         {beastRenderPositions.map(({ beast, x, y }) => renderBeast(beast, x, y))}

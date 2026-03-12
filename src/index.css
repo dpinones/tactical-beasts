@@ -375,6 +375,20 @@ body {
   50% { fill: rgba(212, 94, 94, 0.38); }
 }
 
+/* Action arrow animations */
+@keyframes dash-flow-move {
+  to { stroke-dashoffset: -20; }
+}
+
+@keyframes dash-flow-attack {
+  to { stroke-dashoffset: -16; }
+}
+
+@keyframes arrow-pulse-attack {
+  0%, 100% { opacity: 0.65; }
+  50% { opacity: 1; }
+}
+
 /* ---------------------------------------------------------------------------
    Top HUD bar (Tactical Monsters style)
    --------------------------------------------------------------------------- */

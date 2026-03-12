@@ -132,6 +132,53 @@ export function hexPoints(cx: number, cy: number, size: number): string {
   return points.join(" ");
 }
 
+// Cube-round for hex line interpolation
+function cubeRound(q: number, r: number, s: number): { q: number; r: number; s: number } {
+  let rq = Math.round(q);
+  let rr = Math.round(r);
+  let rs = Math.round(s);
+  const dq = Math.abs(rq - q);
+  const dr = Math.abs(rr - r);
+  const ds = Math.abs(rs - s);
+  if (dq > dr && dq > ds) rq = -rr - rs;
+  else if (dr > ds) rr = -rq - rs;
+  else rs = -rq - rr;
+  return { q: rq, r: rr, s: rs };
+}
+
+// Convert cube coords back to offset (row, col) — inverse of offsetToCube
+function cubeToOffset(q: number, r: number): HexCoord {
+  const col = r;
+  const isOddCol = col % 2 === 1;
+  const maxW = isOddCol ? MAX_ODD_W : MAX_EVEN_W;
+  const rowWidth = ROW_WIDTHS[col] ?? 0;
+  const logicalRow = q + Math.floor(col / 2);
+  const row = logicalRow - (maxW - rowWidth) / 2;
+  return { row, col };
+}
+
+// Get hex path from A to B stepping through adjacent hexes (Red Blob Games line algorithm)
+export function hexLinePath(a: HexCoord, b: HexCoord): HexCoord[] {
+  const n = hexDistance(a, b);
+  if (n === 0) return [a];
+  const aCube = offsetToCube(a.row, a.col);
+  const bCube = offsetToCube(b.row, b.col);
+  const path: HexCoord[] = [];
+  for (let i = 0; i <= n; i++) {
+    const t = i / n;
+    const q = aCube.q + (bCube.q - aCube.q) * t;
+    const r = aCube.r + (bCube.r - aCube.r) * t;
+    const s = aCube.s + (bCube.s - aCube.s) * t;
+    const rounded = cubeRound(q, r, s);
+    const offset = cubeToOffset(rounded.q, rounded.r);
+    // Deduplicate consecutive identical cells
+    if (path.length === 0 || path[path.length - 1].row !== offset.row || path[path.length - 1].col !== offset.col) {
+      path.push(offset);
+    }
+  }
+  return path;
+}
+
 // Get all cells in the grid
 export function getAllCells(): HexCoord[] {
   const cells: HexCoord[] = [];

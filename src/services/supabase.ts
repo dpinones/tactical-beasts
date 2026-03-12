@@ -68,6 +68,19 @@ export async function updateDisplayName(wallet: string, displayName: string) {
     .eq("wallet_address", wallet);
 }
 
+export async function getProfilesBatch(wallets: string[]): Promise<Record<string, PlayerConfig>> {
+  if (wallets.length === 0) return {};
+  const { data } = await supabase
+    .from("player_config")
+    .select("*")
+    .in("wallet_address", wallets);
+  const map: Record<string, PlayerConfig> = {};
+  for (const p of data || []) {
+    map[(p as PlayerConfig).wallet_address] = p as PlayerConfig;
+  }
+  return map;
+}
+
 // --- Friendships ---
 
 export interface Friendship {

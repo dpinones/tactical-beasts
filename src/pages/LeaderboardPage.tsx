@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -10,7 +11,9 @@ import {
 } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import { useLeaderboard } from "../hooks/useGameQuery";
+import { getProfilesBatch } from "../services/supabase";
 import type { PlayerProfileModel } from "../domain/types";
+import type { PlayerConfig } from "../services/supabase";
 
 const SCORE_WIN = 500;
 const SCORE_PER_KILL = 50;
@@ -28,6 +31,14 @@ function truncateAddr(addr: string): string {
 export function LeaderboardPage() {
   const navigate = useNavigate();
   const { players, loading, refetch } = useLeaderboard();
+  const [profiles, setProfiles] = useState<Record<string, PlayerConfig>>({});
+
+  useEffect(() => {
+    const wallets = players.filter((p) => p.games_played > 0).map((p) => p.player);
+    if (wallets.length > 0) {
+      getProfilesBatch(wallets).then(setProfiles);
+    }
+  }, [players]);
 
   // Sort by score (same formula as contract: wins*500 + kills*50), filter out 0 games
   const ranked = players
@@ -122,9 +133,16 @@ export function LeaderboardPage() {
               >
                 #{i + 1}
               </Text>
-              <Text fontSize="sm" color="text.primary" flex={1} fontFamily="mono">
-                {truncateAddr(p.player)}
-              </Text>
+              <Box flex={1}>
+                <Text fontSize="sm" color="text.primary" fontFamily="mono">
+                  {profiles[p.player]?.display_name || truncateAddr(p.player)}
+                </Text>
+                {profiles[p.player]?.display_name && (
+                  <Text fontSize="9px" color="text.muted" fontFamily="mono">
+                    {truncateAddr(p.player)}
+                  </Text>
+                )}
+              </Box>
               <Text
                 fontSize="sm"
                 fontFamily="mono"

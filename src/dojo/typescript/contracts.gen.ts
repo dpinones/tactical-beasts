@@ -152,7 +152,7 @@ export function setupWorld(provider: DojoProvider) {
 		}
 	};
 
-	const build_game_system_executeTurn_calldata = (gameId: BigNumberish, actions: Array<Action>): DojoCall => {
+	const build_game_system_executeTurn_calldata = (gameId: BigNumberish, actions: Array<models.Action>): DojoCall => {
 		return {
 			contractName: "game_system",
 			entrypoint: "execute_turn",
@@ -160,7 +160,7 @@ export function setupWorld(provider: DojoProvider) {
 		};
 	};
 
-	const game_system_executeTurn = async (snAccount: Account | AccountInterface, gameId: BigNumberish, actions: Array<Action>) => {
+	const game_system_executeTurn = async (snAccount: Account | AccountInterface, gameId: BigNumberish, actions: Array<models.Action>) => {
 		try {
 			return await provider.execute(
 				snAccount,
@@ -419,7 +419,7 @@ export function setupWorld(provider: DojoProvider) {
 		}
 	};
 
-	const build_game_system_mintGame_calldata = (playerName: CairoOption<BigNumberish>, settingsId: CairoOption<BigNumberish>, start: CairoOption<BigNumberish>, end: CairoOption<BigNumberish>, objectiveId: CairoOption<BigNumberish>, context: CairoOption<GameContextDetails>, clientUrl: CairoOption<string>, rendererAddress: CairoOption<string>, skillsAddress: CairoOption<string>, to: string, soulbound: boolean, paymaster: boolean, salt: BigNumberish, metadata: BigNumberish): DojoCall => {
+	const build_game_system_mintGame_calldata = (playerName: CairoOption<BigNumberish>, settingsId: CairoOption<BigNumberish>, start: CairoOption<BigNumberish>, end: CairoOption<BigNumberish>, objectiveId: CairoOption<BigNumberish>, context: CairoOption<models.GameContextDetails>, clientUrl: CairoOption<string>, rendererAddress: CairoOption<string>, skillsAddress: CairoOption<string>, to: string, soulbound: boolean, paymaster: boolean, salt: BigNumberish, metadata: BigNumberish): DojoCall => {
 		return {
 			contractName: "game_system",
 			entrypoint: "mint_game",
@@ -427,7 +427,7 @@ export function setupWorld(provider: DojoProvider) {
 		};
 	};
 
-	const game_system_mintGame = async (playerName: CairoOption<BigNumberish>, settingsId: CairoOption<BigNumberish>, start: CairoOption<BigNumberish>, end: CairoOption<BigNumberish>, objectiveId: CairoOption<BigNumberish>, context: CairoOption<GameContextDetails>, clientUrl: CairoOption<string>, rendererAddress: CairoOption<string>, skillsAddress: CairoOption<string>, to: string, soulbound: boolean, paymaster: boolean, salt: BigNumberish, metadata: BigNumberish) => {
+	const game_system_mintGame = async (playerName: CairoOption<BigNumberish>, settingsId: CairoOption<BigNumberish>, start: CairoOption<BigNumberish>, end: CairoOption<BigNumberish>, objectiveId: CairoOption<BigNumberish>, context: CairoOption<models.GameContextDetails>, clientUrl: CairoOption<string>, rendererAddress: CairoOption<string>, skillsAddress: CairoOption<string>, to: string, soulbound: boolean, paymaster: boolean, salt: BigNumberish, metadata: BigNumberish) => {
 		try {
 			return await provider.call(DOJO_NAMESPACE, build_game_system_mintGame_calldata(playerName, settingsId, start, end, objectiveId, context, clientUrl, rendererAddress, skillsAddress, to, soulbound, paymaster, salt, metadata));
 		} catch (error) {
@@ -436,7 +436,7 @@ export function setupWorld(provider: DojoProvider) {
 		}
 	};
 
-	const build_game_system_mintGameBatch_calldata = (mints: Array<MintGameParams>): DojoCall => {
+	const build_game_system_mintGameBatch_calldata = (mints: Array<models.MintGameParams>): DojoCall => {
 		return {
 			contractName: "game_system",
 			entrypoint: "mint_game_batch",
@@ -444,7 +444,7 @@ export function setupWorld(provider: DojoProvider) {
 		};
 	};
 
-	const game_system_mintGameBatch = async (mints: Array<MintGameParams>) => {
+	const game_system_mintGameBatch = async (mints: Array<models.MintGameParams>) => {
 		try {
 			return await provider.call(DOJO_NAMESPACE, build_game_system_mintGameBatch_calldata(mints));
 		} catch (error) {

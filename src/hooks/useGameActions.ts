@@ -3,22 +3,7 @@ import { useDojo } from "../dojo/DojoContext";
 import { useContractActions } from "./useContractActions";
 import { GameAction } from "../domain/types";
 import { waitForTx } from "../utils/waitForTx";
-
-const EVENT_EMITTED = "0x1c93f6e4703ae90f75338f29bffbe9c1662200cee981f49afeec26e892debcd";
-
-/** Extract gameId from tx receipt events. */
-function parseGameIdFromReceipt(receipt: any): number | null {
-  const events = receipt?.events || [];
-  for (const event of events) {
-    if (event.keys?.[0] === EVENT_EMITTED && event.data && event.data.length >= 2) {
-      const gameId = parseInt(event.data[1], 16);
-      if (gameId > 0 && gameId < 100000) {
-        return gameId;
-      }
-    }
-  }
-  return null;
-}
+import { getViewCalls } from "../services/viewCalls";
 
 /** Wait for tx and return receipt, logging errors without throwing. */
 async function confirmTx(account: any, txHash: string, label: string): Promise<any> {
@@ -43,13 +28,11 @@ export function useGameActions() {
 
     const txHash = (response as any)?.transaction_hash;
     if (txHash) {
-      const receipt = await confirmTx(account, txHash, "createGame");
-      if (receipt) {
-        const gameId = parseGameIdFromReceipt(receipt);
-        console.log("[TB] parsed gameId:", gameId);
-        if (!gameId) console.warn("[TB] no gameId found in events");
-        return gameId;
-      }
+      await confirmTx(account, txHash, "createGame");
+      const config = await getViewCalls().getGameConfig();
+      const gameId = config.game_count;
+      console.log("[TB] createGame gameId:", gameId);
+      return gameId > 0 ? gameId : null;
     }
     return null;
   }, [client, account, execute]);
@@ -63,13 +46,11 @@ export function useGameActions() {
 
     const txHash = (response as any)?.transaction_hash;
     if (txHash) {
-      const receipt = await confirmTx(account, txHash, "createFriendlyGame");
-      if (receipt) {
-        const gameId = parseGameIdFromReceipt(receipt);
-        console.log("[TB] parsed friendly gameId:", gameId);
-        if (!gameId) console.warn("[TB] no gameId found in events (friendly)");
-        return gameId;
-      }
+      await confirmTx(account, txHash, "createFriendlyGame");
+      const config = await getViewCalls().getGameConfig();
+      const gameId = config.game_count;
+      console.log("[TB] createFriendlyGame gameId:", gameId);
+      return gameId > 0 ? gameId : null;
     }
     return null;
   }, [client, account, execute]);
@@ -147,18 +128,34 @@ export function useGameActions() {
   );
 
   const findMatch = useCallback(async (): Promise<number | null> => {
+    // Check queue before tx — if someone is waiting, we'll join their game
+    const queueBefore = await getViewCalls().getMatchmakingQueue();
+    const joinGameId = queueBefore.waiting_game_id > 0 ? queueBefore.waiting_game_id : null;
+
     const response = await execute(client.game_system.findMatch, [account]);
     if (!response) return null;
 
     const txHash = (response as any)?.transaction_hash;
     if (txHash) {
-      const receipt = await confirmTx(account, txHash, "findMatch");
-      if (receipt) {
-        const gameId = parseGameIdFromReceipt(receipt);
-        console.log("[TB] findMatch parsed gameId:", gameId);
-        if (!gameId) console.warn("[TB] findMatch: no gameId found in events");
-        return gameId;
+      await confirmTx(account, txHash, "findMatch");
+
+      if (joinGameId) {
+        // We joined an existing game from the queue
+        console.log("[TB] findMatch joined existing game:", joinGameId);
+        return joinGameId;
       }
+
+      // We created a new game — read queue to get our waiting_game_id
+      const queueAfter = await getViewCalls().getMatchmakingQueue();
+      if (queueAfter.waiting_game_id > 0) {
+        console.log("[TB] findMatch created new game:", queueAfter.waiting_game_id);
+        return queueAfter.waiting_game_id;
+      }
+
+      // Fallback: use game_count
+      const config = await getViewCalls().getGameConfig();
+      console.log("[TB] findMatch fallback gameId:", config.game_count);
+      return config.game_count > 0 ? config.game_count : null;
     }
     return null;
   }, [client, account, execute]);

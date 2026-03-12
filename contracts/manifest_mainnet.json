@@ -34,7 +34,7 @@
   "contracts": [
     {
       "address": "0x8a20f116b2ea66d630fd035fcfcad9e9c4a0cc898498d7f894d055b7e38403",
-      "class_hash": "0xedd8929a8c3c04c9059af762ffb75b56a6137d1ba7a2b465f18cc0044fa847",
+      "class_hash": "0x540338e24ccd8822f687c47e325268d7da528d96b63818bbd1aafd8e287ca3d",
       "init_calldata": [
         "0x0018c73096812e8e6cd99372f78003d1dbdcaac8f72d791a4fab7162a8a1d081",
         "0x0"
@@ -4131,6 +4131,163 @@
           "outputs": [
             {
               "type": "tactical_beats::models::index::GameSettings"
+            }
+          ],
+          "state_mutability": "view"
+        },
+        {
+          "type": "function",
+          "name": "get_game",
+          "inputs": [
+            {
+              "name": "game_id",
+              "type": "core::integer::u32"
+            }
+          ],
+          "outputs": [
+            {
+              "type": "tactical_beats::models::index::Game"
+            }
+          ],
+          "state_mutability": "view"
+        },
+        {
+          "type": "function",
+          "name": "get_game_config",
+          "inputs": [],
+          "outputs": [
+            {
+              "type": "tactical_beats::models::index::GameConfig"
+            }
+          ],
+          "state_mutability": "view"
+        },
+        {
+          "type": "function",
+          "name": "get_beast_state",
+          "inputs": [
+            {
+              "name": "game_id",
+              "type": "core::integer::u32"
+            },
+            {
+              "name": "player_index",
+              "type": "core::integer::u8"
+            },
+            {
+              "name": "beast_index",
+              "type": "core::integer::u8"
+            }
+          ],
+          "outputs": [
+            {
+              "type": "tactical_beats::models::index::BeastState"
+            }
+          ],
+          "state_mutability": "view"
+        },
+        {
+          "type": "function",
+          "name": "get_all_beast_states",
+          "inputs": [
+            {
+              "name": "game_id",
+              "type": "core::integer::u32"
+            }
+          ],
+          "outputs": [
+            {
+              "type": "core::array::Array::<tactical_beats::models::index::BeastState>"
+            }
+          ],
+          "state_mutability": "view"
+        },
+        {
+          "type": "function",
+          "name": "get_player_state",
+          "inputs": [
+            {
+              "name": "game_id",
+              "type": "core::integer::u32"
+            },
+            {
+              "name": "player",
+              "type": "core::starknet::contract_address::ContractAddress"
+            }
+          ],
+          "outputs": [
+            {
+              "type": "tactical_beats::models::index::PlayerState"
+            }
+          ],
+          "state_mutability": "view"
+        },
+        {
+          "type": "function",
+          "name": "get_map_state",
+          "inputs": [
+            {
+              "name": "game_id",
+              "type": "core::integer::u32"
+            }
+          ],
+          "outputs": [
+            {
+              "type": "tactical_beats::models::index::MapState"
+            }
+          ],
+          "state_mutability": "view"
+        },
+        {
+          "type": "function",
+          "name": "get_player_profile",
+          "inputs": [
+            {
+              "name": "player",
+              "type": "core::starknet::contract_address::ContractAddress"
+            }
+          ],
+          "outputs": [
+            {
+              "type": "tactical_beats::models::index::PlayerProfile"
+            }
+          ],
+          "state_mutability": "view"
+        },
+        {
+          "type": "function",
+          "name": "get_matchmaking_queue",
+          "inputs": [],
+          "outputs": [
+            {
+              "type": "tactical_beats::models::index::MatchmakingQueue"
+            }
+          ],
+          "state_mutability": "view"
+        },
+        {
+          "type": "function",
+          "name": "get_open_games",
+          "inputs": [
+            {
+              "name": "max",
+              "type": "core::integer::u32"
+            }
+          ],
+          "outputs": [
+            {
+              "type": "core::array::Array::<tactical_beats::models::index::Game>"
+            }
+          ],
+          "state_mutability": "view"
+        },
+        {
+          "type": "function",
+          "name": "get_all_settings",
+          "inputs": [],
+          "outputs": [
+            {
+              "type": "core::array::Array::<tactical_beats::models::index::GameSettings>"
             }
           ],
           "state_mutability": "view"

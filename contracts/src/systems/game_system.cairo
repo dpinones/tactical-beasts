@@ -500,6 +500,9 @@ pub mod game_system {
 
             let mut game: Game = world.read_model(game_id);
             assert!(game.status == GAME_STATUS_WAITING, "Game is not waiting");
+            assert!(game.player1 != zero_address(), "Game has no player1");
+            assert!(game.player2 != zero_address(), "Game has no player2");
+            assert!(caller == game.player1 || caller == game.player2, "Not a player in this game");
 
             let settings = get_settings(ref world, game.settings_id);
 
@@ -509,13 +512,10 @@ pub mod game_system {
                 assert!(!game.p1_team_set, "Team already set");
                 game.p1_team_set = true;
                 1
-            } else if caller == game.player2 {
+            } else {
                 assert!(!game.p2_team_set, "Team already set");
                 game.p2_team_set = true;
                 2
-            } else {
-                panic!("Not a player in this game");
-                0
             };
 
             world.write_model(@game);
@@ -546,15 +546,22 @@ pub mod game_system {
             };
             world.write_model(@player_state);
 
+            let mut t2_count: u8 = 0;
+            let mut t3_count: u8 = 0;
             let mut i: u32 = 0;
             while i < beasts.len() {
-                create_beast(ref world, game_id, player_index, i.try_into().unwrap(), *beasts.at(i), caller, @settings);
+                let tier = create_beast(ref world, game_id, player_index, i.try_into().unwrap(), *beasts.at(i), caller, @settings);
+                if tier == 2 {
+                    t2_count += 1;
+                } else if tier == 3 {
+                    t3_count += 1;
+                }
                 i += 1;
             }
+            assert!(t2_count <= settings.max_t2_per_team, "Too many T2 beasts per team");
+            assert!(t3_count <= settings.max_t3_per_team, "Too many T3 beasts per team");
 
-            validate_team_tiers(ref world, game_id, player_index, @settings);
-
-            try_start_game(ref world, game_id);
+            try_start_game(ref world, game, @settings);
         }
 
         fn execute_turn(ref self: ContractState, game_id: u32, actions: Array<Action>) {
@@ -902,39 +909,45 @@ pub mod game_system {
         beast_id: u32,
         caller: ContractAddress,
         settings: @GameSettings,
-    ) {
-        let config: BeastConfig = world.read_model(0);
-        let beast_nft_addr = if config.beast_nft_address != zero_address() {
-            config.beast_nft_address
-        } else {
-            let chain_id = starknet::get_tx_info().unbox().chain_id;
-            if chain_id == MAINNET_CHAIN_ID {
-                let addr: ContractAddress = BEAST_NFT_ADDRESS.try_into().unwrap();
-                addr
-            } else {
-                zero_address()
-            }
-        };
-
+    ) -> u8 {
         let is_default_beast = beast_id >= DEFAULT_BEAST_TOKEN_MIN;
-        let (species_id, beast_type, tier, level, hp) = if !is_default_beast && beast_nft_addr != zero_address() {
-            let beast_dispatcher = IBeastsDispatcher { contract_address: beast_nft_addr };
-            let erc721_dispatcher = IERC721Dispatcher { contract_address: beast_nft_addr };
-
-            let chain_id = starknet::get_tx_info().unbox().chain_id;
-            if chain_id == MAINNET_CHAIN_ID {
-                let owner = erc721_dispatcher.owner_of(beast_id.into());
-                assert!(owner == caller, "Not beast owner");
-            }
-
-            let packable = beast_dispatcher.get_beast(beast_id.into());
-            let beast_type = beast::get_beast_type(packable.id.into());
-            let tier = beast::derive_tier(packable.id);
-            (packable.id, beast_type, tier, packable.level, packable.health)
-        } else {
+        let (species_id, beast_type, tier, level, hp) = if is_default_beast {
             let (species, tier, level, hp) = beast::get_beast_stats_by_token(beast_id);
             assert!(species > 0, "Unknown token_id");
             (species, beast::get_beast_type(species.into()), tier, level, hp)
+        } else {
+            let config: BeastConfig = world.read_model(0);
+            let beast_nft_addr = if config.beast_nft_address != zero_address() {
+                config.beast_nft_address
+            } else {
+                let chain_id = starknet::get_tx_info().unbox().chain_id;
+                if chain_id == MAINNET_CHAIN_ID {
+                    let addr: ContractAddress = BEAST_NFT_ADDRESS.try_into().unwrap();
+                    addr
+                } else {
+                    zero_address()
+                }
+            };
+
+            if beast_nft_addr != zero_address() {
+                let beast_dispatcher = IBeastsDispatcher { contract_address: beast_nft_addr };
+                let erc721_dispatcher = IERC721Dispatcher { contract_address: beast_nft_addr };
+
+                let chain_id = starknet::get_tx_info().unbox().chain_id;
+                if chain_id == MAINNET_CHAIN_ID {
+                    let owner = erc721_dispatcher.owner_of(beast_id.into());
+                    assert!(owner == caller, "Not beast owner");
+                }
+
+                let packable = beast_dispatcher.get_beast(beast_id.into());
+                let beast_type = beast::get_beast_type(packable.id.into());
+                let tier = beast::derive_tier(packable.id);
+                (packable.id, beast_type, tier, packable.level, packable.health)
+            } else {
+                let (species, tier, level, hp) = beast::get_beast_stats_by_token(beast_id);
+                assert!(species > 0, "Unknown token_id");
+                (species, beast::get_beast_type(species.into()), tier, level, hp)
+            }
         };
 
         let tier_val = beast::derive_tier(species_id);
@@ -949,6 +962,8 @@ pub mod game_system {
             (hp, hp)
         };
 
+        let (spawn_row, spawn_col) = board::get_spawn_position(player_index, beast_index);
+
         let beast_state = BeastState {
             game_id,
             player_index,
@@ -961,30 +976,15 @@ pub mod game_system {
             hp: final_hp,
             hp_max: final_hp_max,
             extra_lives: DEFAULT_EXTRA_LIVES,
-            position_row: 0,
-            position_col: 0,
+            position_row: spawn_row,
+            position_col: spawn_col,
             alive: true,
             last_moved: false,
         };
         world.write_model(@beast_state);
+        tier
     }
 
-    fn validate_team_tiers(ref world: WorldStorage, game_id: u32, player_index: u8, settings: @GameSettings) {
-        let mut t2_count: u8 = 0;
-        let mut t3_count: u8 = 0;
-        let mut i: u8 = 0;
-        while i < *settings.beasts_per_player {
-            let bs: BeastState = world.read_model((game_id, player_index, i));
-            if bs.tier == 2 {
-                t2_count += 1;
-            } else if bs.tier == 3 {
-                t3_count += 1;
-            }
-            i += 1;
-        }
-        assert!(t2_count <= *settings.max_t2_per_team, "Too many T2 beasts per team");
-        assert!(t3_count <= *settings.max_t3_per_team, "Too many T3 beasts per team");
-    }
 
     fn resolve_action(
         ref world: WorldStorage,
@@ -1270,15 +1270,11 @@ pub mod game_system {
         }
     }
 
-    fn try_start_game(ref world: WorldStorage, game_id: u32) {
-        let mut game: Game = world.read_model(game_id);
+    fn try_start_game(ref world: WorldStorage, mut game: Game, settings: @GameSettings) {
         if game.player2 != zero_address() && game.p1_team_set && game.p2_team_set {
             game.status = GAME_STATUS_PLAYING;
             game.round = 1;
             game.current_attacker = 1;
-
-            let settings = get_settings(ref world, game.settings_id);
-            assign_spawn_positions(ref world, game_id, settings.beasts_per_player);
 
             if !game.is_friendly {
                 let mut p1_profile: PlayerProfile = world.read_model(game.player1);
@@ -1339,25 +1335,4 @@ pub mod game_system {
         world.write_model(@lp);
     }
 
-    fn assign_spawn_positions(ref world: WorldStorage, game_id: u32, beasts_per_player: u8) {
-        let mut player: u8 = 1;
-        loop {
-            if player > 2 {
-                break;
-            }
-            let mut i: u8 = 0;
-            loop {
-                if i >= beasts_per_player {
-                    break;
-                }
-                let mut beast_state: BeastState = world.read_model((game_id, player, i));
-                let (row, col) = board::get_spawn_position(player, i);
-                beast_state.position_row = row;
-                beast_state.position_col = col;
-                world.write_model(@beast_state);
-                i += 1;
-            }
-            player += 1;
-        };
-    }
 }

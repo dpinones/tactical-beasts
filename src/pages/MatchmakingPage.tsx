@@ -135,7 +135,16 @@ export function MatchmakingPage() {
     return (
       <Flex direction="column" align="center" justify="center" minH="100vh" gap={4}>
         <Text fontSize="sm" color="danger.300">{errorMsg}</Text>
-        <Button variant="secondary" onClick={() => navigate("/")}>Back to Home</Button>
+        <Flex gap={3}>
+          <Button variant="secondary" onClick={() => {
+            setPhase("searching");
+            setErrorMsg("");
+            calledRef.current = false;
+          }}>
+            Retry
+          </Button>
+          <Button variant="ghost" onClick={() => navigate("/")}>Back to Home</Button>
+        </Flex>
       </Flex>
     );
   }

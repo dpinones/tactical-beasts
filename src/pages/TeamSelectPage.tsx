@@ -507,7 +507,15 @@ export function TeamSelectPage() {
     return (
       <Flex direction="column" align="center" justify="center" minH="100vh" gap={4}>
         <Text fontSize="sm" color="danger.300">{statusMsg}</Text>
-        <Button variant="secondary" onClick={() => navigate("/")}>Back to Home</Button>
+        <HStack gap={3}>
+          <Button variant="secondary" onClick={() => {
+            setPhase("select");
+            setStatusMsg("");
+          }}>
+            Retry
+          </Button>
+          <Button variant="ghost" onClick={() => navigate("/")}>Back to Home</Button>
+        </HStack>
       </Flex>
     );
   }

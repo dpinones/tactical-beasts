@@ -115,7 +115,7 @@ export function HomePage() {
   const allowGuest = CHAIN !== "mainnet" && CHAIN !== "sepolia";
   const isLoggedIn = !!finalAccount;
 
-  const { clearSelectedBeasts, setIsPracticeMode } = useGameStore();
+  const { clearSelectedBeasts, setIsPracticeMode, setActiveGameId, clearPlannedActions, clearBattleLog, setSelectedBeastIndex, setActiveTokenId } = useGameStore();
   const { createFriendlyGame } = useGameActions();
   const [isPracticeLoading, setIsPracticeLoading] = useState(false);
 
@@ -127,6 +127,17 @@ export function HomePage() {
   const profileModal = useDisclosure();
   const howToModal = useDisclosure();
   const { musicVolume, sfxVolume, musicMuted, sfxMuted, setMusicVolume, setSfxVolume, toggleMusicMute, toggleSfxMute } = useAudioStore();
+
+  // Clear stale game state when returning to home
+  useEffect(() => {
+    setActiveGameId(null);
+    setActiveTokenId(null);
+    clearSelectedBeasts();
+    clearPlannedActions();
+    clearBattleLog();
+    setSelectedBeastIndex(null);
+    setIsPracticeMode(false);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Start music on first user click
   useEffect(() => {

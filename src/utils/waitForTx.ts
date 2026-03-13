@@ -49,7 +49,7 @@ async function waitWithRetry(
 ): Promise<unknown> {
   if (attempt > MAX_RETRIES) {
     throw new Error(
-      `Transaction ${txHash} confirmation timed out after ${MAX_RETRIES} retries`
+      `Transaction confirmation timed out after ${MAX_RETRIES} retries — the network may be congested. Try again.`
     );
   }
 
